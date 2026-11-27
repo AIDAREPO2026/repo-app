@@ -11,6 +11,8 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
+from migrations.grants import grant_to_app_role
+
 revision: str = "0003"
 down_revision: str | None = "0002"
 branch_labels: str | Sequence[str] | None = None
@@ -29,19 +31,6 @@ CREATE TRIGGER audit_event_no_update_delete
 CREATE TRIGGER audit_event_no_truncate
     BEFORE TRUNCATE ON audit_event
     FOR EACH STATEMENT EXECUTE FUNCTION audit_event_block_change();
-"""
-
-# The application role may only add and read audit rows (data-model.md grants). Servers
-# create the role; locally and in CI it may not exist, so the grant is skipped there.
-GRANT_APP_ROLE = """
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'aida_app') THEN
-        GRANT SELECT, INSERT ON audit_event TO aida_app;
-        GRANT USAGE ON SEQUENCE audit_event_id_seq TO aida_app;
-    END IF;
-END;
-$$;
 """
 
 
@@ -73,7 +62,8 @@ def upgrade() -> None:
     op.create_index("ix_audit_event_target", "audit_event", ["target_type", "target_id"])
     op.create_index("ix_audit_event_actor", "audit_event", ["actor_login_id", "occurred_at"])
     op.execute(BLOCK_CHANGES)
-    op.execute(GRANT_APP_ROLE)
+    # The application role may only add and read audit rows.
+    grant_to_app_role("audit_event", "SELECT, INSERT", sequence="audit_event_id_seq")
     # No login has existed yet, so there are no values to convert.
     op.alter_column("app_setting", "updated_by", type_=postgresql.UUID(), postgresql_using="NULL")
 

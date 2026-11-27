@@ -3,7 +3,7 @@
 import logging
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from starlette.exceptions import HTTPException
 
 from app.core.navigation import nav_for
@@ -27,8 +27,10 @@ def render_error(request: Request, status_code: int) -> HTMLResponse:
     return templates.TemplateResponse(request, "errors/error.html", context, status_code=status_code)
 
 
-def http_error(request: Request, exc: Exception) -> HTMLResponse:
-    """Show the friendly page for 403, 404 and every other HTTP error."""
+def http_error(request: Request, exc: Exception) -> Response:
+    """Follow a guard's redirect to sign in, else show the friendly page for 403, 404 and other errors."""
+    if isinstance(exc, HTTPException) and exc.status_code == 303 and exc.headers:
+        return RedirectResponse(exc.headers["Location"], status_code=303)
     status_code = exc.status_code if isinstance(exc, HTTPException) else 500
     return render_error(request, status_code)
 

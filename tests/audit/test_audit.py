@@ -87,12 +87,12 @@ def test_p1_aud_01_sensitive_keys_dropped(db: Session) -> None:
 
 
 def test_p1_aud_01_member_action_needs_session_and_ip(db: Session) -> None:
-    shared_login = Actor(kind="member", login_id=uuid.uuid4())
+    shared_login = Actor(kind="member")
 
     with pytest.raises(ValueError, match="session ID and IP"):
         record(db, shared_login, "content.submit", "content", "x", "success")
 
-    traced = Actor(kind="member", login_id=uuid.uuid4(), session_id=uuid.uuid4(), ip="10.0.0.7")
+    traced = Actor(kind="member", session_id=uuid.uuid4(), ip="10.0.0.7")
     record(db, traced, "content.submit", "content", "traced", "success")
     assert str(events_for(db, "traced")[0].ip) == "10.0.0.7"
 

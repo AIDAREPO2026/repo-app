@@ -4,7 +4,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from sqlalchemy import DateTime, String
+from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
@@ -23,8 +23,7 @@ class AppSetting(Base):
 
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[SettingValue] = mapped_column(JSONB)
-    # Becomes a foreign key to login once that table exists (P1-ACC-08).
-    updated_by: Mapped[uuid.UUID | None] = mapped_column(UUID)
+    updated_by: Mapped[uuid.UUID | None] = mapped_column(UUID, ForeignKey("login.id"))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
