@@ -171,10 +171,11 @@ def render_accounts(
     if error:
         messages.append(("error", error))
     if done in DONE_MESSAGES:
-        messages.append(("info", DONE_MESSAGES[done]))
+        messages.append(("success", DONE_MESSAGES[done]))
     context = {
         "title": "Accounts",
         "nav": nav_for("admin"),
+        "breadcrumbs": breadcrumbs("admin", Crumb("Accounts")),
         "accounts": privileged_accounts(db),
         "admin_id": admin.id,
         "messages": messages,

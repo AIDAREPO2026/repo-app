@@ -1,101 +1,140 @@
 {% extends "base.html" %}
 {% from "macros/forms.html" import field, csrf_field with context %}
-{% set button = "rounded border border-slate-400 px-3 py-1 text-sm hover:bg-slate-100 active:bg-slate-200" %}
+{% from "macros/ui.html" import page_header, button, card, badge, modal, drawer, empty_state with context %}
 {% set role_names = {"admin": "Admin", "reviewer": "Reviewer", "approver": "Approver"} %}
+{% set user_id_help = "4 to 50 lowercase letters, numbers, dots, dashes or underscores." %}
+{% set user_id_pattern = "[a-z0-9._\\-]{4,50}" %}
+
+{# The named person behind an account: used by the add form and each reassign form. #}
+{% macro person_fields(prefix) %}
+{{ field("full_name", "Full name", required=true, autocomplete="off", maxlength=200, id=prefix ~ "full_name") }}
+{{ field("email", "Email", type="email", required=true, autocomplete="off", maxlength=254, id=prefix ~ "email") }}
+{{ field("user_id", "User ID", required=true, autocomplete="off", pattern=user_id_pattern, help=user_id_help, id=prefix ~ "user_id") }}
+{% endmacro %}
+
+{% macro status_badge(account) %}
+{% if account.status != "active" %}{{ badge("Deactivated") }}
+{% elif account.password_hash is none %}{{ badge("Waiting for password", "warning") }}
+{% else %}{{ badge("Active", "success") }}{% endif %}
+{% endmacro %}
+
 {% block content %}
-<h1 class="mb-6 text-3xl font-semibold">{{ _("Accounts") }}</h1>
+{% call page_header("Accounts", "Named Admin, Reviewer and Approver accounts. Each belongs to one person with their own email.") %}
+  {{ button("Add account", type="button", commandfor="add-account", command="show-modal") }}
+{% endcall %}
 
-<section aria-labelledby="current-heading" class="mb-10">
-  <h2 id="current-heading" class="mb-4 text-xl font-semibold">{{ _("Admin, Reviewer and Approver accounts") }}</h2>
-  <table class="w-full border-collapse text-left">
-    <thead>
-      <tr class="border-b border-slate-300">
-        <th scope="col" class="py-2 pr-4">{{ _("Name") }}</th>
-        <th scope="col" class="py-2 pr-4">{{ _("User ID and email") }}</th>
-        <th scope="col" class="py-2 pr-4">{{ _("Role") }}</th>
-        <th scope="col" class="py-2 pr-4">{{ _("Status") }}</th>
-        <th scope="col" class="py-2">{{ _("Actions") }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for account in accounts %}
-      <tr class="border-b border-slate-200 align-top">
-        <td class="py-3 pr-4">{{ account.full_name }}</td>
-        <td class="py-3 pr-4">{{ account.user_id }}<br><span class="text-sm text-slate-700">{{ account.email }}</span></td>
-        <td class="py-3 pr-4">
-          {{ _(role_names[account.login_type]) }}
-          {% if account.login_type == "reviewer" %}({{ _("alternate") if account.is_alternate else _("primary") }}){% endif %}
-        </td>
-        <td class="py-3 pr-4">
-          {% if account.status != "active" %}{{ _("Deactivated") }}
-          {% elif account.password_hash is none %}{{ _("Waiting for password") }}
-          {% else %}{{ _("Active") }}{% endif %}
-        </td>
-        <td class="py-3">
-          {% if account.status == "active" and account.id != admin_id %}
-          <div class="flex flex-wrap gap-2">
-            <form method="post" action="/admin/accounts/{{ account.id }}/deactivate">
-              {{ csrf_field() }}
-              <button type="submit" class="{{ button }}">{{ _("Deactivate") }}</button>
-            </form>
-            {% if account.login_type == "reviewer" %}
-            <form method="post" action="/admin/accounts/{{ account.id }}/reviewer-role">
-              {{ csrf_field() }}
-              <input type="hidden" name="is_alternate" value="{{ 'false' if account.is_alternate else 'true' }}">
-              <button type="submit" class="{{ button }}">{{ _("Make primary") if account.is_alternate else _("Make alternate") }}</button>
-            </form>
-            {% endif %}
-            {% if account.password_hash is none %}
-            <form method="post" action="/admin/accounts/{{ account.id }}/set-password-link">
-              {{ csrf_field() }}
-              <button type="submit" class="{{ button }}">{{ _("Send a new link") }}</button>
-            </form>
-            {% endif %}
+{% call card(flush=true) %}
+{% if accounts %}
+<div class="overflow-x-auto">
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">{{ _("Person") }}</th>
+      <th scope="col">{{ _("Role") }}</th>
+      <th scope="col">{{ _("Status") }}</th>
+      <th scope="col"><span class="sr-only">{{ _("Actions") }}</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for account in accounts %}
+    {% set is_self = account.id == admin_id %}
+    {% set can_change = account.status == "active" and not is_self %}
+    <tr>
+      <td>
+        <div class="flex items-center gap-3">
+          <span class="avatar" aria-hidden="true">{{ account.full_name[:1]|upper }}</span>
+          <div class="min-w-0">
+            <p class="font-semibold">{{ account.full_name }}{% if is_self %} {{ badge("You", "accent") }}{% endif %}</p>
+            <p class="text-xs text-muted">{{ account.email }} · <span class="font-mono">{{ account.user_id }}</span></p>
           </div>
-          <details class="mt-2">
-            <summary class="cursor-pointer text-sm underline">{{ _("Reassign to someone else") }}</summary>
-            <form method="post" action="/admin/accounts/{{ account.id }}/reassign" class="mt-2 max-w-sm">
-              {{ csrf_field() }}
-              {# Field IDs carry the account ID, so labels stay unique when several forms are open. #}
-              {% set prefix = "reassign-" ~ account.id ~ "-" %}
-              <label for="{{ prefix }}full_name" class="mb-1 block font-medium">{{ _("Full name") }}</label>
-              <input id="{{ prefix }}full_name" name="full_name" required maxlength="200" autocomplete="off" class="mb-3 block w-full rounded border border-slate-400 px-3 py-2">
-              <label for="{{ prefix }}email" class="mb-1 block font-medium">{{ _("Email") }}</label>
-              <input id="{{ prefix }}email" name="email" type="email" required maxlength="254" autocomplete="off" class="mb-3 block w-full rounded border border-slate-400 px-3 py-2">
-              <label for="{{ prefix }}user_id" class="mb-1 block font-medium">{{ _("User ID") }}</label>
-              <input id="{{ prefix }}user_id" name="user_id" required pattern="[a-z0-9._\-]{4,50}" autocomplete="off" class="mb-3 block w-full rounded border border-slate-400 px-3 py-2">
-              <button type="submit" class="{{ button }}">{{ _("Deactivate and replace") }}</button>
-            </form>
-          </details>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</section>
+        </div>
+      </td>
+      <td>
+        {{ _(role_names[account.login_type]) }}
+        {% if account.login_type == "reviewer" %}{{ badge("Alternate" if account.is_alternate else "Primary") }}{% endif %}
+      </td>
+      <td>{{ status_badge(account) }}</td>
+      <td>
+        {% if can_change %}
+        <div class="flex justify-end">
+          {{ button("Manage", "secondary", type="button", size="sm", commandfor="manage-" ~ account.id, command="show-modal") }}
+        </div>
 
-<section aria-labelledby="add-heading" class="max-w-md">
-  <h2 id="add-heading" class="mb-4 text-xl font-semibold">{{ _("Add an account") }}</h2>
-  <p class="mb-4 text-slate-700">{{ _("Each account belongs to one named person with their own email. They get a link to set their password, valid once for 60 minutes.") }}</p>
-  <form method="post" action="/admin/accounts">
-    {{ csrf_field() }}
-    <div class="mb-4">
-      <label for="login_type" class="mb-1 block font-medium">{{ _("Role") }} <span aria-hidden="true">*</span></label>
-      <select id="login_type" name="login_type" required class="block w-full rounded border border-slate-400 px-3 py-2">
-        <option value="admin">{{ _("Admin") }}</option>
-        <option value="reviewer">{{ _("Reviewer") }}</option>
-        <option value="approver">{{ _("Approver") }}</option>
-      </select>
-    </div>
-    <div class="mb-4 flex items-center gap-2">
-      <input id="is_alternate" name="is_alternate" type="checkbox" value="true">
-      <label for="is_alternate">{{ _("Alternate Reviewer (Reviewers only)") }}</label>
-    </div>
-    {{ field("full_name", "Full name", required=true, autocomplete="off") }}
-    {{ field("email", "Email", type="email", required=true, autocomplete="off") }}
-    {{ field("user_id", "User ID", required=true, autocomplete="off", help="4 to 50 lowercase letters, numbers, dots, dashes or underscores.") }}
-    <button type="submit" class="rounded bg-slate-900 px-4 py-2 font-medium text-white hover:bg-slate-700 active:bg-slate-800">{{ _("Add account") }}</button>
-  </form>
-</section>
+        {% call drawer("manage-" ~ account.id, account.full_name) %}
+        <p class="text-sm text-muted">{{ _(role_names[account.login_type]) }} · {{ account.email }}</p>
+
+        {% if account.password_hash is none or account.login_type == "reviewer" %}
+        <div class="mt-5 flex flex-wrap gap-2">
+          {% if account.password_hash is none %}
+          <form method="post" action="/admin/accounts/{{ account.id }}/set-password-link">
+            {{ csrf_field() }}
+            {{ button("Send a new set-password link", "secondary", size="sm") }}
+          </form>
+          {% endif %}
+          {% if account.login_type == "reviewer" %}
+          <form method="post" action="/admin/accounts/{{ account.id }}/reviewer-role">
+            {{ csrf_field() }}
+            <input type="hidden" name="is_alternate" value="{{ 'false' if account.is_alternate else 'true' }}">
+            {{ button("Make primary" if account.is_alternate else "Make alternate", "secondary", size="sm") }}
+          </form>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <h3 class="section-title mt-8">{{ _("Reassign this role") }}</h3>
+        <p class="mb-5 text-sm text-muted">{{ _("%(name)s is deactivated and their sessions end. The new person gets the same role and a link to set their password.", name=account.full_name) }}</p>
+        <form method="post" action="/admin/accounts/{{ account.id }}/reassign">
+          {{ csrf_field() }}
+          {{ person_fields("reassign-" ~ account.id ~ "-") }}
+          {{ button("Deactivate and replace", "danger") }}
+        </form>
+
+        <h3 class="section-title mt-8">{{ _("Deactivate") }}</h3>
+        <p class="mb-4 text-sm text-muted">{{ _("Use this when the person leaves and nobody takes over the role yet.") }}</p>
+        {{ button("Deactivate account", "danger", type="button", commandfor="deactivate-" ~ account.id, command="show-modal") }}
+        {% endcall %}
+
+        {% call modal("deactivate-" ~ account.id, "Deactivate this account?") %}
+        <p class="text-sm text-muted">{{ _("%(name)s can no longer sign in, and every session they have open ends at once. This cannot be undone; create a new account to give them access again.", name=account.full_name) }}</p>
+        <form method="post" action="/admin/accounts/{{ account.id }}/deactivate" class="dialog-actions">
+          {{ csrf_field() }}
+          {{ button("Cancel", "secondary", type="button", commandfor="deactivate-" ~ account.id, command="close") }}
+          {{ button("Deactivate", "danger") }}
+        </form>
+        {% endcall %}
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+{{ empty_state("No accounts yet", "Add the Admins, Reviewers and the Approver who will run the portal.", "+") }}
+{% endif %}
+{% endcall %}
+
+{% call modal("add-account", "Add an account") %}
+<p class="mb-5 text-sm text-muted">{{ _("They get an email with a link to set their password. The link works once, for 60 minutes.") }}</p>
+<form method="post" action="/admin/accounts">
+  {{ csrf_field() }}
+  <div class="field">
+    <label for="login_type" class="field-label">{{ _("Role") }} <span class="field-required" aria-hidden="true">*</span></label>
+    <select id="login_type" name="login_type" required class="input">
+      <option value="admin">{{ _("Admin") }}</option>
+      <option value="reviewer">{{ _("Reviewer") }}</option>
+      <option value="approver">{{ _("Approver") }}</option>
+    </select>
+  </div>
+  <label class="check">
+    <input name="is_alternate" type="checkbox" value="true">
+    {{ _("Alternate Reviewer (Reviewers only)") }}
+  </label>
+  {{ person_fields("add-") }}
+  <div class="dialog-actions">
+    {{ button("Cancel", "secondary", type="button", commandfor="add-account", command="close") }}
+    {{ button("Add account") }}
+  </div>
+</form>
+{% endcall %}
 {% endblock %}

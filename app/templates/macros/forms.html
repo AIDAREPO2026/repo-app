@@ -6,19 +6,26 @@
     {% from "macros/forms.html" import field %}
     {{ field("email", "Email address", type="email", autocomplete="email", required=true, error=errors.email) }}
 #}
-{% macro field(name, label, type="text", value="", help="", error="", required=false, autocomplete="") %}
+{#
+  id defaults to the name. Pass one when the same form appears more than once on a page,
+  such as a form in each row of a table, so every id stays unique.
+#}
+{% macro field(name, label, type="text", value="", help="", error="", required=false, autocomplete="", id="", pattern="", maxlength="") %}
+{% set field_id = id or name %}
 {% set described_by = [] %}
-{% if help %}{% set described_by = described_by + [name ~ "-help"] %}{% endif %}
-{% if error %}{% set described_by = described_by + [name ~ "-error"] %}{% endif %}
+{% if help %}{% set described_by = described_by + [field_id ~ "-help"] %}{% endif %}
+{% if error %}{% set described_by = described_by + [field_id ~ "-error"] %}{% endif %}
 <div class="field">
-  <label for="{{ name }}" class="field-label">{{ _(label) }}{% if required %} <span class="field-required" aria-hidden="true">*</span>{% endif %}</label>
-  <input id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value }}" class="input"
+  <label for="{{ field_id }}" class="field-label">{{ _(label) }}{% if required %} <span class="field-required" aria-hidden="true">*</span>{% endif %}</label>
+  <input id="{{ field_id }}" name="{{ name }}" type="{{ type }}" value="{{ value }}" class="input"
          {% if required %}required{% endif %}
          {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+         {% if pattern %}pattern="{{ pattern }}"{% endif %}
+         {% if maxlength %}maxlength="{{ maxlength }}"{% endif %}
          {% if described_by %}aria-describedby="{{ described_by|join(' ') }}"{% endif %}
          {% if error %}aria-invalid="true"{% endif %}>
-  {% if help %}<p id="{{ name }}-help" class="field-help">{{ _(help) }}</p>{% endif %}
-  {% if error %}<p id="{{ name }}-error" class="field-error">{{ error }}</p>{% endif %}
+  {% if help %}<p id="{{ field_id }}-help" class="field-help">{{ _(help) }}</p>{% endif %}
+  {% if error %}<p id="{{ field_id }}-error" class="field-error">{{ error }}</p>{% endif %}
 </div>
 {% endmacro %}
 
