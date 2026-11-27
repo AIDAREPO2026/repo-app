@@ -50,6 +50,8 @@ Before writing a helper, search the codebase. These shared functions must be use
 | Describe the signed-in login for an audit event | `app.accounts.guards.actor_for()` | `P1-ACC-08` |
 | Hash, check or validate a password | `app.accounts.passwords` (`hash_password`, `verify_password`, `check_password_policy`) | `P1-ACC-04` |
 | Check a sign-in, with lockout and attempt logging | `app.accounts.service.authenticate()` | `P1-ACC-04` |
+| Start or end a session, with its cookie and audit | `app.core.sessions.start_session()` and `end_session()` | `P1-ACC-06` |
+| Put the CSRF token in a form | `csrf_field()` in `templates/macros/forms.html`, imported `with context` | `P1-ACC-06` |
 | Issue and verify a CAPTCHA | `app.core.captcha.new_challenge()` and `verify()` | `P0-SEC-01` |
 | Send an email | `app.core.email.send_email()` | `P1-ACC-03` |
 | Create a notification | `app.workflow.notifications.notify()` | `P2-WF-05` |

@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Follow-up in `P1-ACC-06`: the commit and rollback tests in `tests/core/test_db.py` use GET routes, because every POST now needs a CSRF token. What they test is unchanged. |
 | 2026-11-27 | Raghvendra Singh | Added the `storage_reserve_percent` setting (default 10, 5 to 50) and the storage constants for D-14, as part of `P0-OPS-02`. |
 | 2026-11-27 | Raghvendra Singh | Pull request merged; set status to Done in this follow-up, because it was merged while the journal still said In review. CI and the staging check arrive with `P0-OPS-03` and `P0-OPS-02`. |
 | 2026-11-27 | Raghvendra Singh | Opened [the pull request](https://github.com/AIDAREPO2026/repo-app/pull/2) and set status to In review. Next: review and approval. |
