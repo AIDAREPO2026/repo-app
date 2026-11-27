@@ -24,11 +24,11 @@ New to the project? Read in this order:
 | [conventions.md](conventions.md) | How to code, branch, commit, review and close a task |
 | [architecture.md](architecture.md) | Technical design every task builds on |
 | [security.md](security.md) | Threats, mandatory controls, secure process and release gates |
-| [decisions.md](decisions.md) | Decisions D-01 to D-13 and the taxonomy baseline |
+| [decisions.md](decisions.md) | Decisions D-01 to D-14 and the taxonomy baseline |
 | [workflow.md](workflow.md) | States, transitions, permissions and side effects |
 | [plan.md](plan.md) | Schedule, capacity, risks and open decisions |
 | [acceptance.md](acceptance.md) | MVP and go-live acceptance criteria |
-| [tasks/README.md](tasks/README.md) | Index of all 124 tasks, with live status from the journal |
+| [tasks/README.md](tasks/README.md) | Index of all 125 tasks, with live status from the journal |
 | [journal/README.md](journal/README.md) | One file per started task: status, owner, log, decisions, blockers |
 | [tasks/phase-0-mobilise.md](tasks/phase-0-mobilise.md) | Phase 0 task specs |
 | [tasks/phase-1-platform-access.md](tasks/phase-1-platform-access.md) | Phase 1 task specs |

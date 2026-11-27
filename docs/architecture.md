@@ -103,7 +103,9 @@ Files are stored in one private bucket on SeaweedFS, an open-source S3-compatibl
 
 The database and SeaweedFS's data live in host folders under `DATA_DIR` on the encrypted data disk, not in Docker volumes, so removing containers never deletes them. SeaweedFS sits on its own `storage` network, reachable only from `app`, `worker`, `tusd` and `nginx`.
 
-The storage disk has a fixed size, such as 100 GB. Before an upload starts, the tusd pre-create hook refuses it when the stored files plus the new file would pass `storage_limit_gb` (`P2-UPL-02`). No byte is stored for a refused upload.
+The data disk has a fixed size, such as 100 GB, shared by the files and the database. Before an upload starts, the tusd pre-create hook reads the disk's real free space from SeaweedFS and refuses the upload if it would leave less than the reserve: `storage_reserve_percent` of the disk (default 10%), and never less than 5 GB (`P2-UPL-02`). No byte is stored for a refused upload. A bigger disk is used as soon as it is mounted, with no setting to change.
+
+Admins see used and free space, a 30-day trend and an estimate of days until full on the Storage page. A scheduled check every 15 minutes alerts every Admin, in the portal and by email, when the disk passes 75% (warning) and 85% (critical) full (`P2-UPL-04`). The operations monitoring in `P6-OPS-02` alerts the on-call team as well.
 
 ## Data model overview
 
@@ -122,6 +124,7 @@ The storage disk has a fixed size, such as 100 GB. Before an upload starts, the 
 | `content_version` | title, module, subcategory, functional_group, access_tier, jurisdiction, source fields, year, summary, external_url, rights declaration, public_teaser, search vector | `P2-CON-02` |
 | `content_file` | version_id, storage_key, original_filename, mime_type, size_bytes, sha256, scan_status, preview_storage_key, media metadata | `P2-CON-02` |
 | `workflow_event` | subject_type, subject_id, from_state, to_state, action, actor_login_id, comment, at | `P2-WF-01` |
+| `storage_check` | checked_at, total_bytes, used_bytes, level | `P2-UPL-04` |
 | `notification` | recipient_login_id, event_type, subject reference, channel, status, created_at, read_at | `P2-WF-05` |
 | `view_event`, `download_event`, `search_log` | subject, actor_kind, login_id, session_id, ip_hash, query, results, at | `P3-LIST-02`, `P3-SRCH-01` |
 | `expert_profile` | Appendix B fields, consent per field, state | `P3-EXP-01` |
@@ -140,7 +143,7 @@ These values are configurable by Admin through `app_setting` and read with `get_
 | `anon_downloads_per_hour` | 50 | Yes | FR-13.7 |
 | `newly_added_count` | 2 | Yes | FR-6.1, Q-05 |
 | `newly_added_days` | 15 | Yes | FR-6.1 |
-| `storage_limit_gb` | 100 | Yes (match the storage disk size) | D-14 |
+| `storage_reserve_percent` | 10 | Yes (5 to 50; never under 5 GB) | D-14 |
 | `digest_frequency` | `daily` | Yes (`daily` or `weekly`, Phase 5) | FR-6.5 |
 
 | Constant | Value | Source |
@@ -154,6 +157,9 @@ These values are configurable by Admin through `app_setting` and read with `get_
 | `AUDIT_ONLINE_DAYS` | 180 | FR-12.1 |
 | `EXPERT_DELETION_WORKING_DAYS` | 2 | FR-8.3 |
 | `IMAGE_LIMIT_MAX_MB` | 20 | D-01 |
+| `STORAGE_RESERVE_MIN_GB` | 5 | D-14 |
+| `STORAGE_WARNING_PERCENT` | 75 | D-14 |
+| `STORAGE_CRITICAL_PERCENT` | 85 | D-14 |
 
 ## Environments
 

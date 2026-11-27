@@ -1,6 +1,6 @@
 # Decisions
 
-The build follows these decisions. D-01 to D-08 resolve conflicts and gaps in the SRS. D-09 to D-13 fill gaps the SRS leaves open.
+The build follows these decisions. D-01 to D-08 resolve conflicts and gaps in the SRS. D-09 to D-14 fill gaps the SRS leaves open.
 
 All of them need ITPED confirmation, because the SRS is ITPED's document. `P0-GOV-01` records each confirmation in the status column. A changed decision must update every task spec that cites it.
 
@@ -20,7 +20,7 @@ All of them need ITPED confirmation, because the SRS is ITPED's document. `P0-GO
 | D-10 | FR-2.3 gives no default for the sixth-session policy | The default is `block`. Admin can switch to `end_oldest` | `P1-ACC-07` | Awaiting confirmation |
 | D-11 | FR-1.3 does not say how the System knows which Discom a registrant belongs to | The registrant picks their Discom from the master list, and the email domain must match that Discom's recorded domain | `P1-ACC-02`, `P1-ACC-03` | Awaiting confirmation |
 | D-12 | The SRS does not say which state bulk-imported content enters | Imported items enter Submitted as ITPED-sourced items, so they still pass Reviewer and Approver | `P2-CON-07` | Awaiting confirmation |
-| D-14 | The SRS does not say where files are stored, and no managed object storage is available yet | Files are stored in self-hosted SeaweedFS (open-source edition, Apache-2.0, no licence fee), an S3-compatible server running on our own server in India, on an encrypted disk of fixed size such as 100 GB. An upload is refused before it starts when it would pass `storage_limit_gb`. A managed S3 in India can replace it later by changing the endpoint and keys | `P0-OPS-01`, `P0-OPS-02`, `P2-UPL-02`, `P4-OPS-01` | Awaiting confirmation |
+| D-14 | The SRS does not say where files are stored, and no managed object storage is available yet | Files are stored in self-hosted SeaweedFS (open-source edition, Apache-2.0, no licence fee), an S3-compatible server running on our own server in India, on an encrypted data disk. Before each upload the app reads the disk's real free space from SeaweedFS, and refuses the upload if it would leave less than the reserve (`storage_reserve_percent`, default 10%, never under 5 GB). Admins see usage on a Storage page and are alerted at 75% and 85% full. A managed S3 in India can replace SeaweedFS later by changing the endpoint and keys | `P0-OPS-01`, `P0-OPS-02`, `P2-UPL-02`, `P2-UPL-04`, `P4-OPS-01` | Awaiting confirmation |
 | D-13 | The SRS does not say whose views count | View and download counts include Members and visitors only. Views and downloads by Admin, Reviewer and Approver are not counted | `P3-LIST-02` | Awaiting confirmation |
 
 ## Open items from the SRS

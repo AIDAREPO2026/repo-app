@@ -1,15 +1,16 @@
 # Phase 2: Content and governance
 
-**Dates:** 1 to 7 December 2026 · **Tasks:** 22 · **Points:** 51 (Dev 40, QA 11)
+**Dates:** 1 to 7 December 2026 · **Tasks:** 23 · **Points:** 53 (Dev 42, QA 11)
 
 **Goal:** Members and Admin can submit content safely, and every item passes Admin, Reviewer and Approver before it is published.
 
-**Build order:** `P2-CON-01` → `P2-CON-02` → `P2-CON-06` and `P2-WF-01`, while `P2-UPL-01` → `P2-UPL-02` → `P2-UPL-03` run in parallel. Then `P2-CON-03` to `P2-CON-05` and `P2-WF-02` to `P2-WF-06`. `P2-CON-07`, `P2-END-01` and `P2-SEC-01` come last.
+**Build order:** `P2-CON-01` → `P2-CON-02` → `P2-CON-06` and `P2-WF-01`, while `P2-UPL-01` → `P2-UPL-02` → `P2-UPL-03` run in parallel, with `P2-UPL-04` once `P2-WF-05` is done. Then `P2-CON-03` to `P2-CON-05` and `P2-WF-02` to `P2-WF-06`. `P2-CON-07`, `P2-END-01` and `P2-SEC-01` come last.
 
 **Exit criteria**
 
 - [ ] An item passes every workflow path in [workflow.md](../workflow.md)
 - [ ] An infected file is quarantined, a 1 GB upload resumes, and a 21 MB image is refused before upload
+- [ ] Admins see storage usage and are alerted as the disk fills
 - [ ] Admin-only fields never appear in any Member view
 
 ---
@@ -183,7 +184,7 @@ Format and size rules are added in `P2-UPL-02`.
 - `app/content/formats.py`: one table of format groups, extensions, MIME types and setting keys, used by both the client and the server.
 - Uppy restrictions built from that table, so the browser refuses before upload with a message such as "Images must be 20 MB or smaller. This file is 21.3 MB."
 - The same check in the tusd pre-create hook, using `Upload-Length` and the file extension. The server check is the one that counts.
-- A storage check in the same pre-create hook (D-14). It refuses the upload when the stored files plus `Upload-Length` would pass `storage_limit_gb`, with "The repository is full. Ask the Admin to free space or add storage." Each refusal is logged.
+- A storage check in the same pre-create hook (D-14). It reads the data disk's free space from SeaweedFS (`/status` on the volume server, summing every disk) and refuses the upload when `Upload-Length` would leave less than the reserve: `storage_reserve_percent` of the disk, and never less than `STORAGE_RESERVE_MIN_GB`. The message is "The repository is full. Ask the Admin to free space or add storage." Each refusal is logged and notifies every Admin. If SeaweedFS does not answer, the upload is refused.
 - SCORM ZIP files are refused until Phase 5, with "SCORM packages will be supported later."
 - Help text on the form lists every limit, including the 20 MB image limit (D-01).
 
@@ -198,7 +199,8 @@ Format and size rules are added in `P2-UPL-02`.
 - [ ] A 26 MB PDF and a file over 1 GB are refused the same way
 - [ ] An unsupported extension is refused
 - [ ] Bypassing the browser and calling tusd directly with an oversized `Upload-Length` is refused
-- [ ] An upload that would pass `storage_limit_gb` is refused before any byte is stored
+- [ ] An upload that would leave less free space than the reserve is refused before any byte is stored
+- [ ] When the storage server does not answer, uploads are refused rather than allowed
 
 **Tests:** `test_fr_3_5_image_over_20mb_refused`, `test_fr_3_5_document_over_25mb_refused`, `test_fr_3_5_media_over_1gb_refused`, `test_fr_3_12_server_refuses_without_client_check`, `test_d01_error_message_states_limit`, `test_d14_upload_refused_when_storage_full`.
 
@@ -238,6 +240,49 @@ Format and size rules are added in `P2-UPL-02`.
 - [ ] A submission cannot be sent while any of its files is pending or failed
 
 **Tests:** `test_fr_3_11_eicar_quarantined`, `test_fr_3_11_type_mismatch_rejected`, `test_fr_3_11_clean_file_moved`, `test_fr_3_11_scanner_error_retries`.
+
+---
+
+### P2-UPL-04 — Show storage usage to Admin and alert as the disk fills
+
+| Points | Role | Depends on | References |
+| --- | --- | --- | --- |
+| 2 | Dev | `P2-UPL-02`, `P2-WF-05` | D-14, [architecture.md](../architecture.md) file storage |
+
+**Goal:** Admins always know how full the data disk is, and are warned well before uploads stop.
+
+**Scope**
+
+- A `storage_check` table: `checked_at`, `total_bytes`, `used_bytes`, `level` (`ok`, `warning` or `critical`). A Celery beat job runs every 15 minutes, reads the disk figures from SeaweedFS the same way as the upload check, and stores one row. Rows older than 180 days are removed.
+- Levels use `STORAGE_WARNING_PERCENT` (75%) and `STORAGE_CRITICAL_PERCENT` (85%). Uploads stop earlier than full, at the reserve (`P2-UPL-02`).
+- Alerts to every Admin, in the portal through `notify()` and by email through `send_email()`:
+    - once when the level rises to warning or critical
+    - once a day while it stays critical
+    - once when it drops back to ok
+    - at once when an upload is refused for lack of space (`P2-UPL-02`)
+- An audit event for every level change.
+- An Admin-only Storage page showing:
+    - total, used and free space, and percent full, as a bar coloured by level
+    - space used by the database and by each storage prefix (`files/`, `previews/`, `quarantine/`, `incoming/`)
+    - a 30-day usage trend from `storage_check`
+    - an estimate of days until uploads stop, from the 30-day trend, or "not enough data yet"
+    - the time of the last check, and a warning when it is older than 1 hour
+- A banner on every Admin page while the level is warning or critical, linking to the Storage page.
+
+**Security**
+
+- Only Admin can open the Storage page; every other login type gets 404.
+- The page shows totals only, never file names or storage keys.
+
+**Acceptance criteria**
+
+- [ ] With the disk figures above 75%, one warning notification and email reach every Admin, and a second check at the same level sends nothing more
+- [ ] Above 85%, the level becomes critical, the banner shows on Admin pages, and the reminder repeats once a day
+- [ ] Dropping back below 75% sends one all-clear
+- [ ] A refused upload notifies every Admin immediately
+- [ ] The Storage page shows the figures, the trend and the days-until-full estimate, and a Member, Reviewer or Approver gets 404
+
+**Tests:** `test_d14_storage_warning_alerts_admins_once`, `test_d14_storage_critical_repeats_daily`, `test_d14_storage_all_clear_sent_once`, `test_d14_refused_upload_alerts_admins`, `test_d14_storage_page_admin_only`.
 
 ---
 

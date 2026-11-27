@@ -8,7 +8,7 @@
 
 - [ ] `docker compose up` starts every container locally, and `/healthz` returns 200
 - [ ] A merge to `main` deploys to staging automatically through CI
-- [ ] ITPED has confirmed or changed decisions D-01 to D-13
+- [ ] ITPED has confirmed or changed decisions D-01 to D-14
 - [ ] The data model and the test plan are reviewed and merged
 
 ---
@@ -33,7 +33,7 @@
 
 **Acceptance criteria**
 
-- [ ] Every decision D-01 to D-13 has a Status other than "Awaiting confirmation"
+- [ ] Every decision D-01 to D-14 has a Status other than "Awaiting confirmation"
 - [ ] Every changed decision is reflected in the affected task specs in the same pull request
 - [ ] Q-01 is closed in the planning tracker
 
