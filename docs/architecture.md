@@ -7,7 +7,7 @@ The system is a layered modular monolith: one FastAPI application, one PostgreSQ
 | Layer | Technology | Responsibility |
 | --- | --- | --- |
 | Edge | Nginx | TLS, HSTS, rate limits, protected file and video delivery |
-| Web pages | Jinja2, HTMX, Bootstrap 5 (all served locally, no CDN) | Server-rendered portal and indexable public pages |
+| Web pages | Jinja2, Tailwind CSS (compiled at build time), HTMX (all served locally, no CDN) | Server-rendered portal and indexable public pages |
 | Application | FastAPI, Pydantic v2, Uvicorn, plain `def` routes | Routing and input validation |
 | Business rules | `service.py` in each module | Workflow, permissions, consent and limits |
 | Data | PostgreSQL 19 (official Docker image `postgres:19`), SQLAlchemy 2, Alembic, psycopg 3 | Records, full-text search and the append-only audit table |
@@ -21,7 +21,9 @@ The system is a layered modular monolith: one FastAPI application, one PostgreSQ
 
 **Runtime:** fastapi, uvicorn, pydantic, pydantic-settings, sqlalchemy, alembic, psycopg, jinja2, python-multipart, argon2-cffi, pyotp, qrcode, cryptography, celery, redis, boto3, python-magic, openpyxl, pypdf, httpx, and the ALTCHA server library (confirmed in `P0-SEC-01`).
 
-**Front end, served locally:** Bootstrap 5, HTMX, Uppy, PDF.js.
+**Front end, served locally:** Tailwind CSS, HTMX, Uppy, PDF.js.
+
+**CSS build:** Node.js and npm, for development and the Docker build only. `package.json` and `package-lock.json` pin `tailwindcss` and `@tailwindcss/cli`. The Dockerfile compiles `app/static/css/app.css` in a throwaway Node stage, so servers never run Node. Tailwind replaced Bootstrap 5 in `P1-UI-01`, approved by the tech lead.
 
 **Development and test:** pytest, playwright, locust, ruff, mypy, pip-audit.
 

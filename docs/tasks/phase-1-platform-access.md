@@ -64,7 +64,7 @@ The Admin audit search screen is built in `P3-UI-01`.
 - `templates/base.html` with a header, a navigation menu per login type, a skip link, `main` and `nav` landmarks, a footer, and a place for flash messages.
 - `templates/macros/forms.html` with field macros: label, input, help text and an error linked by `aria-describedby`.
 - Error pages for 403, 404 and 500 that reveal no internal details.
-- Bootstrap 5 and HTMX vendored into `static/`.
+- Tailwind CSS, compiled from `static/css/app.src.css` by the npm CLI at build time (Tailwind replaced Bootstrap 5 in this task). HTMX is vendored into `static/vendor/` with the first page that uses it.
 - `_()` translation wrapping set up through Jinja's i18n extension, English only.
 - Empty dashboard pages for Member, Admin, Reviewer and Approver, linked from the navigation.
 
@@ -99,7 +99,7 @@ The Admin audit search screen is built in `P3-UI-01`.
     - spacing scale in `rem`, corner radii and two shadow depths
     - type scale using the `system-ui` font stack, with line height and letter-spacing per size (tighter on large headings, none on body text)
     - motion: three durations (150, 200 and 300 ms) and two easing curves, one for entering and one for leaving
-- Map the tokens onto Bootstrap's `--bs-*` variables, so Bootstrap components pick up the look without restyling each one.
+- Expose the tokens to Tailwind as theme variables (`@theme` in `static/css/app.src.css`), so utility classes use them and no page needs a one-off value.
 - `static/css/components.css` and `templates/macros/ui.html` with these components:
     - button (primary, secondary, danger and link)
     - card and item card

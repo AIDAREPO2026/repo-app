@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ _(title) }}{% endblock %} | {{ _("AIDA Digital Resource Repository") }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}">
+</head>
+<body class="flex min-h-screen flex-col bg-white text-slate-900">
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:rounded focus:bg-white focus:px-4 focus:py-2">{{ _("Skip to main content") }}</a>
+
+  <header class="border-b border-slate-200">
+    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-3">
+      <a href="/" class="text-lg font-semibold">{{ _("AIDA Digital Resource Repository") }}</a>
+      {% if nav %}
+      <nav aria-label="{{ _('Main') }}">
+        <ul class="flex flex-wrap gap-2">
+          {% for link in nav %}
+          <li>
+            <a href="{{ link.path }}"
+               class="block rounded px-3 py-2 hover:bg-slate-100{% if request.url.path == link.path %} font-semibold underline{% endif %}"
+               {% if request.url.path == link.path %}aria-current="page"{% endif %}>{{ _(link.label) }}</a>
+          </li>
+          {% endfor %}
+        </ul>
+      </nav>
+      {% endif %}
+    </div>
+  </header>
+
+  {# Flash messages: later tasks pass a list of (category, text) pairs as `messages`. #}
+  <div class="mx-auto w-full max-w-6xl px-4" role="status" aria-live="polite">
+    {% for category, text in messages|default([]) %}
+    <p class="mt-4 rounded border px-4 py-3{% if category == 'error' %} border-red-700 text-red-800{% else %} border-slate-300{% endif %}">{{ text }}</p>
+    {% endfor %}
+  </div>
+
+  <main id="main" tabindex="-1" class="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="border-t border-slate-200">
+    <div class="mx-auto max-w-6xl px-4 py-4 text-sm text-slate-700">
+      {{ _("Digital Resource Repository for DISCOMs, maintained by ITPED.") }}
+    </div>
+  </footer>
+</body>
+</html>

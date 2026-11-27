@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{# Shows only a fixed message for the status code: never the exception, path or trace. #}
+{% block content %}
+<h1 class="mb-4 text-3xl font-semibold">{{ _(title) }}</h1>
+<p class="mb-6">{{ _(message) }}</p>
+<p class="text-sm text-slate-700">{{ _("Error code: %(code)s", code=status_code) }}</p>
+{% endblock %}

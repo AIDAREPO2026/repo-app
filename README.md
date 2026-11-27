@@ -59,6 +59,19 @@ uv sync
 cp .env.example .env
 ```
 
+The pages need their CSS, built with Tailwind. Install [Node.js](https://nodejs.org/) 24 once, then:
+
+```bash
+npm ci
+```
+
+```bash
+npm run watch:css
+```
+
+`watch:css` rebuilds `app/static/css/app.css` whenever a template changes. Use `npm run build:css` for a single build.
+
+
 ```bash
 uv run uvicorn app.main:app --reload
 ```
@@ -84,10 +97,11 @@ Set `TEST_DATABASE_URL` or `TEST_REDIS_URL` to use different ones.
 - Add a library with `uv add <name>==<version>`, or a dev tool with `uv add --dev <name>==<version>`. Only approved libraries (see [docs/architecture.md](docs/architecture.md)).
 - Commit `pyproject.toml` and `uv.lock` together. Never edit `uv.lock` by hand.
 - Servers install without dev tools: `uv sync --frozen --no-dev`.
+- The CSS build tools are npm packages: add one with `npm install --save-exact --save-dev <name>@<version>`, then commit `package.json` and `package-lock.json` together.
 
 ## Checks
 
-Run these before every pull request. CI runs the same ones (`P0-OPS-03`).
+Run these before every pull request. CI runs the same ones (`P0-OPS-03`). Build the CSS first (`npm run build:css`), because a test checks the stylesheet is served.
 
 ```bash
 uv run ruff check .

@@ -1,6 +1,16 @@
 # One Dockerfile, two targets, so app and worker share the same Python layer:
 #   app:    docker build --target app -f deploy/Dockerfile .
 #   worker: docker build --target worker -f deploy/Dockerfile .
+# Builds the portal CSS with Tailwind. Only app.css leaves this stage, so no Node reaches the servers.
+FROM node:24.22.3-alpine3.24 AS css
+WORKDIR /build
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY app/templates ./app/templates
+COPY app/static/css/app.src.css ./app/static/css/
+RUN npm run build:css
+
+
 FROM python:3.12.16-slim-trixie AS base
 
 COPY --from=ghcr.io/astral-sh/uv:0.13.10 /uv /usr/local/bin/uv
@@ -22,6 +32,7 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY alembic.ini ./
 COPY migrations ./migrations
 COPY app ./app
+COPY --from=css /build/app/static/css/app.css ./app/static/css/app.css
 COPY workers ./workers
 
 # Fixed uid and gid 10001 so every container agrees who owns the files volume (D-14).

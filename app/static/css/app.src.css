@@ -1,0 +1,12 @@
+/* Source for app.css, built by `npm run build:css` (never edit app.css by hand).
+   P1-UI-02 adds the design tokens here as Tailwind theme variables. */
+@import "tailwindcss";
+@source "../../templates";
+
+@layer base {
+  /* WCAG 2.4.7: a focus ring everyone can see, on every focusable element. */
+  :focus-visible {
+    outline: 3px solid var(--color-blue-700);
+    outline-offset: 2px;
+  }
+}

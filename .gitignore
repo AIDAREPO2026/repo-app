@@ -38,3 +38,7 @@ deploy/nginx/certs/
 
 # Local database and file storage (DATA_DIR)
 /data/
+
+# Front-end build
+node_modules/
+app/static/css/app.css
