@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-27 | Raghvendra Singh | Moved the database target from PostgreSQL 16 to PostgreSQL 19, the latest release, in `docs/architecture.md` and `P0-OPS-02`. |
 | 2026-11-27 | Raghvendra Singh | Pushed `main` and the task branch, opened [the pull request](https://github.com/AIDAREPO2026/repo-app/pull/1), set status to In review. Next: review and approval. |
 | 2026-11-27 | Raghvendra Singh | Added the rule that any later change to a task updates its journal, and a CI journal check to `P0-OPS-03`. |
 | 2026-11-27 | Raghvendra Singh | Added the task journal (this folder), the `P1-UI-02` design-system task and open question Q-11, and updated the shared tracker to match. Waiting for `main` on GitHub to open the pull request. |
@@ -33,6 +34,7 @@ Newest first. One line per working session: what was done, what is next.
 | 2026-11-27 | Server-rendered pages with Jinja2 and HTMX, no separate frontend app; mobile apps later get JSON routes over the same services | Indexable public pages, simpler security, one stack for the MVP | Raghvendra Singh |
 | 2026-11-27 | Added the shared `apple-design` skill and the UI and motion rules, plus the `P1-UI-02` design-system task | Consistent look and motion across five developers and AI tools | Raghvendra Singh |
 | 2026-11-27 | Added `scripts/build_task_index.py` and this journal; the journal is the single home for task status | Status is updated in the same pull request as the code, so it cannot drift from the work | Raghvendra Singh |
+| 2026-11-27 | PostgreSQL 19 (released 2026-11-19, supported to 2031-11-19) through the official Docker image, pinned to a minor tag in Compose | We run it in Docker, so the newest major costs nothing to adopt and gives the longest support window before an upgrade | Raghvendra Singh |
 
 ## Blockers
 

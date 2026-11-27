@@ -117,7 +117,7 @@
 
 **Scope**
 
-- `deploy/docker-compose.yml` with the containers `nginx`, `app`, `worker`, `beat`, `tusd`, `clamav`, `postgres` and `redis`.
+- `deploy/docker-compose.yml` with the containers `nginx`, `app`, `worker`, `beat`, `tusd`, `clamav`, `postgres` and `redis`. The `postgres` service uses the official image pinned to a PostgreSQL 19 minor tag, such as `postgres:19.0-trixie`.
 - `deploy/docker-compose.dev.yml` for local development, adding a local S3-compatible container and a mail catcher. The tech lead picks both and records them in `architecture.md`.
 - `Dockerfile` for `app`, and `Dockerfile.worker` adding LibreOffice, FFmpeg and libmagic.
 - `deploy/nginx/default.conf` with:
@@ -161,7 +161,7 @@
     - `ruff check`, with rules `E`, `F`, `I`, `B`, `S`, `D` and `C901` (max complexity 10)
     - `ruff format --check`
     - `mypy app`
-    - `pytest`, with a PostgreSQL service container
+    - `pytest`, with a PostgreSQL service container on the same image as `deploy/docker-compose.yml`
     - `pip-audit`
     - a secret scan of the diff, using a tool the tech lead approves
     - `uv run python scripts/build_task_index.py --check`

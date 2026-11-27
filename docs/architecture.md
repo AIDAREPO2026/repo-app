@@ -10,7 +10,7 @@ The system is a layered modular monolith: one FastAPI application, one PostgreSQ
 | Web pages | Jinja2, HTMX, Bootstrap 5 (all served locally, no CDN) | Server-rendered portal and indexable public pages |
 | Application | FastAPI, Pydantic v2, Uvicorn, plain `def` routes | Routing and input validation |
 | Business rules | `service.py` in each module | Workflow, permissions, consent and limits |
-| Data | PostgreSQL 16, SQLAlchemy 2, Alembic, psycopg 3 | Records, full-text search and the append-only audit table |
+| Data | PostgreSQL 19 (official Docker image `postgres:19`), SQLAlchemy 2, Alembic, psycopg 3 | Records, full-text search and the append-only audit table |
 | Files | S3-compatible object storage in India, tusd, Uppy | Stored files and resumable uploads |
 | Background work | Celery, Redis | Scanning, previews, notifications and scheduled jobs |
 | Scanning and previews | ClamAV (clamd), LibreOffice headless, PDF.js, FFmpeg (`ffprobe`) | Malware checks, Office previews and media metadata |
@@ -68,7 +68,7 @@ Each module contains `router.py`, `service.py`, `models.py` and `schemas.py` (se
 | `beat` | Celery beat for scheduled jobs |
 | `tusd` | Resumable upload server writing to object storage |
 | `clamav` | clamd with daily signature updates (`freshclam`) |
-| `postgres` | Database. Production can use a managed PostgreSQL in India instead |
+| `postgres` | Database, official image pinned to a minor tag such as `postgres:19.0-trixie` so every environment runs the same build. Production can use a managed PostgreSQL 19 in India instead |
 | `redis` | Celery broker and rate-limit counters |
 
 ## Key flows
