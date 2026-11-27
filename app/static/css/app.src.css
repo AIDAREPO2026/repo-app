@@ -1,12 +1,104 @@
 /* Source for app.css, built by `npm run build:css` (never edit app.css by hand).
-   P1-UI-02 adds the design tokens here as Tailwind theme variables. */
+   Design values come only from tokens.css. Shared components live in components.css,
+   with their markup in templates/macros/ui.html. */
 @import "tailwindcss";
+@import "./tokens.css";
+@import "./components.css";
 @source "../../templates";
 
+/* Tailwind utilities read the tokens. Tailwind's own palette, radii and shadows are
+   switched off, so a page cannot use a one-off colour or size (P1-UI-02). */
+@theme inline {
+  --color-*: initial;
+  --color-canvas: var(--aida-canvas);
+  --color-surface: var(--aida-surface);
+  --color-sunken: var(--aida-surface-sunken);
+  --color-text: var(--aida-text);
+  --color-muted: var(--aida-text-muted);
+  --color-border: var(--aida-border);
+  --color-border-strong: var(--aida-border-strong);
+  --color-accent: var(--aida-accent);
+  --color-accent-subtle: var(--aida-accent-subtle);
+  --color-accent-hover: var(--aida-accent-hover);
+  --color-success: var(--aida-success);
+  --color-success-subtle: var(--aida-success-subtle);
+  --color-warning: var(--aida-warning);
+  --color-warning-subtle: var(--aida-warning-subtle);
+  --color-danger: var(--aida-danger);
+  --color-danger-subtle: var(--aida-danger-subtle);
+  --color-transparent: transparent;
+
+  --radius-*: initial;
+  --radius-sm: var(--aida-radius-sm);
+  --radius-md: var(--aida-radius-md);
+  --radius-lg: var(--aida-radius-lg);
+  --radius-full: var(--aida-radius-full);
+
+  --shadow-*: initial;
+  --shadow-1: var(--aida-shadow-1);
+  --shadow-2: var(--aida-shadow-2);
+
+  --font-sans: var(--aida-font);
+  --font-mono: var(--aida-font-mono);
+
+  --text-*: initial;
+  --text-xs: var(--aida-text-xs);
+  --text-xs--line-height: var(--aida-text-xs-leading);
+  --text-sm: var(--aida-text-sm);
+  --text-sm--line-height: var(--aida-text-sm-leading);
+  --text-base: var(--aida-text-base);
+  --text-base--line-height: var(--aida-text-base-leading);
+  --text-lg: var(--aida-text-lg);
+  --text-lg--line-height: var(--aida-text-lg-leading);
+  --text-xl: var(--aida-text-xl);
+  --text-xl--line-height: var(--aida-text-xl-leading);
+  --text-xl--letter-spacing: var(--aida-text-xl-tracking);
+  --text-2xl: var(--aida-text-2xl);
+  --text-2xl--line-height: var(--aida-text-2xl-leading);
+  --text-2xl--letter-spacing: var(--aida-text-2xl-tracking);
+  --text-3xl: var(--aida-text-3xl);
+  --text-3xl--line-height: var(--aida-text-3xl-leading);
+  --text-3xl--letter-spacing: var(--aida-text-3xl-tracking);
+
+  --ease-enter: var(--aida-ease-enter);
+  --ease-exit: var(--aida-ease-exit);
+}
+
 @layer base {
+  html {
+    background: var(--aida-canvas);
+    color: var(--aida-text);
+    font-family: var(--aida-font);
+    -webkit-font-smoothing: antialiased;
+  }
+
   /* WCAG 2.4.7: a focus ring everyone can see, on every focusable element. */
   :focus-visible {
-    outline: 3px solid var(--color-blue-700);
+    outline: 3px solid var(--aida-focus-ring);
     outline-offset: 2px;
   }
+
+  a {
+    color: var(--aida-accent);
+    text-underline-offset: 0.2em;
+  }
+
+  a:hover {
+    color: var(--aida-accent-hover);
+  }
+
+  ::selection {
+    background: var(--aida-accent-subtle);
+  }
+}
+
+/* Page transitions: a short cross-fade between pages, with the top bar held still.
+   The page renders first; the browser only fades between the two pictures. */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--aida-duration-base);
 }
