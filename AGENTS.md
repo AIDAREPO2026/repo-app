@@ -11,6 +11,7 @@ The sections below are copied from [docs/conventions.md](docs/conventions.md) an
 3. Branch `type/<task-code>-short-description`, for example `feat/p1-acc-04-password-lockout`.
 4. Copy `docs/journal/_template.md` to `docs/journal/<CODE>.md`, set Status to `In progress`, and commit it first. Keep it updated in the same pull request as the code: log, decisions, deviations, status. See [docs/journal/README.md](docs/journal/README.md).
     - Coming back to a task later, even after it is Done (review fix, bug fix, follow-up, refactor, a `DEF-###`), always add a log line and any new decision to that task's journal file in the same pull request, and set it back to `In progress` if the change reopens its acceptance criteria. Never change a task's code without updating its journal.
+    - Keep the [shared planning tracker](https://claude.ai/artifact/LnUnS1xkX7cgrTGuwDgY7q) in step with the repository. When a pull request changes a task's status, adds, removes or re-scopes a task, changes its points or dependencies, or adds or changes a decision (`D-##`) or open question (`Q-##`), update the matching rows and totals in the tracker when the pull request opens and again when it merges, and note it in the journal log line. Change the repository first and copy to the tracker, never the other way round.
 5. Commit subjects start with the task code: `P1-ACC-04: Lock account after five failed sign-ins`.
 6. No AI attribution lines in commits, pull requests or code comments.
 
@@ -193,3 +194,4 @@ A task is Done when:
 - [ ] Any doc this task affects is updated in the same pull request
 - [ ] Every state change it adds writes an audit event
 - [ ] The task's journal file (`docs/journal/<CODE>.md`) says Done, with its log and decisions complete
+- [ ] The shared planning tracker shows the task as Done, and its totals match the task index

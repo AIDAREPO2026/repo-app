@@ -13,6 +13,7 @@ The shared planning tracker is a summary for ITPED, refreshed from this folder. 
 5. **Merging:** set Status to `Done` and fill in Finished, in the pull request itself, so the merge and the status land together.
 6. **Coming back to a task later:** any later change that belongs to a task (a review fix, a bug fix, a follow-up, a refactor of its code, a defect `DEF-###` raised against it) updates that task's journal file in the same pull request. Add a log line saying what changed and why, record any new decision or deviation, and add the pull request to the log entry. If the task was `Done` and the change reopens its acceptance criteria, set Status back to `In progress` until the fix merges. A change that touches several tasks updates each of their journal files.
 7. **No silent changes:** if the code of a task changes and its journal does not, the journal is wrong. CI refuses a pull request when the task code in its branch name, or at the start of any commit subject, has no change to that task's journal file (`P0-OPS-03`).
+8. **Tracker:** after any status change above, update the task's row and the phase totals in the shared planning tracker, so ITPED never sees stale numbers. See [conventions](../conventions.md#task-journal).
 
 Status is one of: `Not started`, `In progress`, `In review`, `Blocked`, `Done`. A task with no journal file counts as `Not started`.
 

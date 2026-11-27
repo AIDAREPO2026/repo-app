@@ -35,6 +35,7 @@ A task is Done when:
 - [ ] Any doc this task affects is updated in the same pull request
 - [ ] Every state change it adds writes an audit event
 - [ ] The task's journal file (`docs/journal/<CODE>.md`) says Done, with its log and decisions complete
+- [ ] The shared planning tracker shows the task as Done, and its totals match the task index
 
 ## Task journal
 
@@ -46,6 +47,7 @@ Every task that has started has its own file in [docs/journal/](journal/README.m
 - Coming back to a task later, even after it is Done: any change that belongs to it (review fix, bug fix, follow-up, refactor, a `DEF-###` against it) adds a log line, and any new decision, to that task's journal file in the same pull request. Set it back to `In progress` if the change reopens its acceptance criteria. A change touching several tasks updates each of their files.
 - CI refuses a pull request when the task code in its branch name, or at the start of any commit subject, has no change to that task's journal file (`P0-OPS-03`).
 - Run `uv run python scripts/build_task_index.py` after changing it, so the task index shows the new status.
+- Keep the [shared planning tracker](https://claude.ai/artifact/LnUnS1xkX7cgrTGuwDgY7q) in step with the repository. When a pull request changes a task's status, adds, removes or re-scopes a task, changes its points or dependencies, or adds or changes a decision (`D-##`) or open question (`Q-##`), update the matching rows and totals in the tracker when the pull request opens and again when it merges, and note it in the journal log line. Change the repository first and copy to the tracker, never the other way round.
 
 ## Git workflow
 
@@ -64,7 +66,7 @@ The pull request body must contain Summary, Changes, How to test, and Risks or s
 1. **Drift:** does the change match the task spec, these docs and existing patterns?
 2. **Duplication:** is any logic copied from elsewhere? Move it into one shared function.
 3. **Readability:** is any function long or hard to follow? Simplify it.
-4. **Docs:** are the affected docs updated?
+4. **Docs:** are the affected docs, the journal and the shared planning tracker updated?
 
 Do not use `--no-verify`, force-push a shared branch or merge your own pull request. Commit messages and pull requests must not contain AI attribution lines.
 
