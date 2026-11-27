@@ -161,7 +161,7 @@
     - `ruff check`, with rules `E`, `F`, `I`, `B`, `S`, `D` and `C901` (max complexity 10)
     - `ruff format --check`
     - `mypy app`
-    - `pytest`, with a PostgreSQL service container on the same image as `deploy/docker-compose.yml`
+    - `pytest`, with PostgreSQL and Redis service containers on the same images as `deploy/docker-compose.yml`
     - `pip-audit`
     - a secret scan of the diff, using a tool the tech lead approves
     - `uv run python scripts/build_task_index.py --check`
