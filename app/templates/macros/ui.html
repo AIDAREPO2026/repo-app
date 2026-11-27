@@ -1,0 +1,157 @@
+{#
+  Shared UI components (P1-UI-02). Every page builds from these; styles live in
+  static/css/components.css. Labels are message ids: pass English text, the macro translates.
+  A new component is added here, never inside a feature template.
+
+    {% from "macros/ui.html" import button, card, badge, alert with context %}
+#}
+
+{# Tone names for flash message categories. #}
+{% set FLASH_TONES = {"error": "danger", "success": "success", "warning": "warning", "info": "info"} %}
+{% set ALERT_MARKS = {"danger": "!", "warning": "!", "success": "✓", "info": "i"} %}
+
+{#
+  A button. variant: primary, secondary, danger or link. size: "" or "sm".
+  To open or close a dialog, pass commandfor (the dialog id) and command
+  ("show-modal" or "close"), so the dialog opens from, and returns to, this control.
+#}
+{% macro button(label, variant="primary", type="submit", size="", block=false, name="", value="", commandfor="", command="") %}
+<button type="{{ type }}" class="btn btn-{{ variant }}{% if size %} btn-{{ size }}{% endif %}{% if block %} btn-block{% endif %}"
+  {%- if name %} name="{{ name }}" value="{{ value }}"{% endif %}
+  {%- if commandfor %} commandfor="{{ commandfor }}" command="{{ command }}"{% endif %}>{{ _(label) }}</button>
+{% endmacro %}
+
+{# A link that looks like a button. #}
+{% macro link_button(label, href, variant="secondary", size="") %}
+<a href="{{ href }}" class="btn btn-{{ variant }}{% if size %} btn-{{ size }}{% endif %}">{{ _(label) }}</a>
+{% endmacro %}
+
+{#
+  Where the reader is: a list of Crumb(label, path) from app.core.navigation.breadcrumbs().
+  The last crumb is the current page and is not a link.
+#}
+{% macro breadcrumbs(trail) %}
+{% from "macros/icons.html" import icon %}
+<nav aria-label="{{ _('Breadcrumb') }}">
+  <ol class="breadcrumbs">
+    {% for crumb in trail %}
+    <li class="crumb">
+      {% if not loop.first %}<span class="crumb-separator">{{ icon("chevron") }}</span>{% endif %}
+      {% if crumb.path %}<a href="{{ crumb.path }}" class="crumb-link">{{ _(crumb.label) }}</a>
+      {% else %}<span class="crumb-current" aria-current="page">{{ _(crumb.label) }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+</nav>
+{% endmacro %}
+
+{# The heading block at the top of a page, with optional actions from the caller. #}
+{% macro page_header(title, lead="") %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">{{ _(title) }}</h1>
+    {% if lead %}<p class="page-lead">{{ _(lead) }}</p>{% endif %}
+  </div>
+  {% if caller %}<div class="flex flex-wrap gap-2">{{ caller() }}</div>{% endif %}
+</header>
+{% endmacro %}
+
+{# A card. The caller fills the body. flush drops the padding, for tables. #}
+{% macro card(title="", text="", flush=false, heading="h2") %}
+<section class="card{% if flush %} card-flush{% endif %}">
+  {% if title %}<{{ heading }} class="card-title">{{ _(title) }}</{{ heading }}>{% endif %}
+  {% if text %}<p class="card-text">{{ _(text) }}</p>{% endif %}
+  {% if caller %}{{ caller() }}{% endif %}
+</section>
+{% endmacro %}
+
+{# A card for one item in a listing. The whole card is the link. Title and text are data, not message ids. #}
+{% macro item_card(href, title, text="", meta=[]) %}
+<a href="{{ href }}" class="card item-card">
+  <span class="card-title">{{ title }}</span>
+  {% if text %}<span class="card-text">{{ text }}</span>{% endif %}
+  {% if meta %}<span class="item-meta">{% for part in meta %}<span>{{ part }}</span>{% endfor %}</span>{% endif %}
+  {% if caller %}{{ caller() }}{% endif %}
+</a>
+{% endmacro %}
+
+{# A small label. tone: neutral, accent, info, success, warning or danger. #}
+{% macro badge(label, tone="neutral") %}
+<span class="badge{% if tone != 'neutral' %} badge-{{ tone }}{% endif %}">{{ _(label) }}</span>
+{% endmacro %}
+
+{# FR-13.3: the label on Restricted items shown to visitors. #}
+{% macro lock_badge() %}
+<span class="badge badge-warning">{{ _("Available to member Discoms – log in") }}</span>
+{% endmacro %}
+
+{# A message box. tone: info, success, warning or danger. text is shown as given (already translated). #}
+{% macro alert(text, tone="info", id="") %}
+<div class="alert alert-{{ tone }}"{% if id %} id="{{ id }}"{% endif %}{% if tone == "danger" %} role="alert"{% endif %}>
+  <span class="alert-icon" aria-hidden="true">{{ ALERT_MARKS[tone] }}</span>
+  <p class="alert-text">{{ text }}</p>
+</div>
+{% endmacro %}
+
+{# Flash messages: a list of (category, text) pairs. Categories: error, success, warning, info. #}
+{% macro flash_messages(messages) %}
+<div class="page mt-4 grid gap-2 empty:hidden" role="status" aria-live="polite">
+  {%- for category, text in messages -%}
+  {{ alert(text, FLASH_TONES.get(category, "info")) }}
+  {%- endfor -%}
+</div>
+{% endmacro %}
+
+{# A modal dialog. Open it with button(..., commandfor=id, command="show-modal"). #}
+{% macro modal(id, title) %}
+<dialog id="{{ id }}" class="modal" aria-labelledby="{{ id }}-title" closedby="any">
+  <div class="dialog-header">
+    <h2 id="{{ id }}-title" class="section-title mb-0">{{ _(title) }}</h2>
+    {{ button("Close", "secondary", type="button", size="sm", commandfor=id, command="close") }}
+  </div>
+  {{ caller() }}
+</dialog>
+{% endmacro %}
+
+{# A side drawer: a modal dialog that slides in from the right and leaves the same way. #}
+{% macro drawer(id, title) %}
+<dialog id="{{ id }}" class="drawer" aria-labelledby="{{ id }}-title" closedby="any">
+  <div class="dialog-header">
+    <h2 id="{{ id }}-title" class="section-title mb-0">{{ _(title) }}</h2>
+    {{ button("Close", "secondary", type="button", size="sm", commandfor=id, command="close") }}
+  </div>
+  {{ caller() }}
+</dialog>
+{% endmacro %}
+
+{# What to show when a list has nothing in it. The caller may add an action. #}
+{% macro empty_state(title, text="", mark="○") %}
+<div class="empty-state">
+  <span class="empty-state-mark" aria-hidden="true">{{ mark }}</span>
+  <p class="card-title">{{ _(title) }}</p>
+  {% if text %}<p class="empty-state-text">{{ _(text) }}</p>{% endif %}
+  {% if caller %}<div class="mt-2">{{ caller() }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{# Grey placeholder lines while content loads. #}
+{% macro skeleton(lines=3) %}
+<div class="grid gap-2" aria-hidden="true">
+  {% for line in range(lines) %}<span class="skeleton{% if loop.last %} w-2/3{% endif %}"></span>{% endfor %}
+</div>
+{% endmacro %}
+
+{# Page links. base_url must end in "?" or "&"; the page number is added after it. #}
+{% macro pagination(page, pages, base_url) %}
+{% if pages > 1 %}
+<nav aria-label="{{ _('Pages') }}">
+  <ul class="pagination">
+    <li>{% if page > 1 %}<a class="page-link" href="{{ base_url }}page={{ page - 1 }}">{{ _("Previous") }}</a>{% else %}<span class="page-link" aria-disabled="true">{{ _("Previous") }}</span>{% endif %}</li>
+    {% for number in range(1, pages + 1) %}
+    <li><a class="page-link" href="{{ base_url }}page={{ number }}"{% if number == page %} aria-current="page"{% endif %}>{{ number }}</a></li>
+    {% endfor %}
+    <li>{% if page < pages %}<a class="page-link" href="{{ base_url }}page={{ page + 1 }}">{{ _("Next") }}</a>{% else %}<span class="page-link" aria-disabled="true">{{ _("Next") }}</span>{% endif %}</li>
+  </ul>
+</nav>
+{% endif %}
+{% endmacro %}

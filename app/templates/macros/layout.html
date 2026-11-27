@@ -1,0 +1,62 @@
+{#
+  Pieces of the signed-in app shell (P1-UI-02), written once and used in both the desktop
+  sidebar and the small-screen menu drawer.
+    {% from "macros/layout.html" import brand, nav_menu, account_panel with context %}
+#}
+{% from "macros/icons.html" import icon %}
+
+{% set ROLE_NAMES = {"member": "Member", "admin": "Admin", "reviewer": "Reviewer", "approver": "Approver"} %}
+
+{% macro brand() %}
+<a href="/" class="brand">
+  <span class="brand-mark" aria-hidden="true">A</span>
+  <span>AIDA <span class="brand-sub">Digital Resource Repository</span></span>
+</a>
+{% endmacro %}
+
+{# The menu for the login type. label names the landmark, so two menus on a page stay distinct. #}
+{% macro nav_menu(nav, label="Main") %}
+<nav aria-label="{{ _(label) }}">
+  <ul class="side-nav">
+    {% for link in nav %}
+    <li>
+      <a href="{{ link.path }}" class="side-link"
+         {% if request.url.path == link.path %}aria-current="page"{% endif %}>{{ icon(link.icon) }}<span>{{ _(link.label) }}</span></a>
+    </li>
+    {% endfor %}
+  </ul>
+</nav>
+{% endmacro %}
+
+{# The visitors' menu, across the top bar. Empty until public pages arrive (P3-PUB-01). #}
+{% macro top_nav(nav) %}
+{% if nav %}
+<nav aria-label="{{ _('Main') }}">
+  <ul class="nav-list">
+    {% for link in nav %}
+    <li><a href="{{ link.path }}" class="nav-link"{% if request.url.path == link.path %} aria-current="page"{% endif %}>{{ _(link.label) }}</a></li>
+    {% endfor %}
+  </ul>
+</nav>
+{% endif %}
+{% endmacro %}
+
+{% macro site_footer() %}
+<footer class="footer">
+  <div class="page py-5">{{ _("Digital Resource Repository for DISCOMs, maintained by ITPED.") }}</div>
+</footer>
+{% endmacro %}
+
+{# Who is signed in, and the way out. #}
+{% macro account_panel(login) %}
+{% from "macros/forms.html" import csrf_field with context %}
+{% set name = login.full_name or login.user_id %}
+<div class="account-panel">
+  <span class="avatar" aria-hidden="true">{{ name[:1]|upper }}</span>
+  <p class="account-name">{{ name }}<span class="account-role">{{ _(ROLE_NAMES[login.login_type]) }}</span></p>
+  <form method="post" action="/logout">
+    {{ csrf_field() }}
+    <button type="submit" class="icon-button" aria-label="{{ _('Sign out') }}" title="{{ _('Sign out') }}">{{ icon("sign-out") }}</button>
+  </form>
+</div>
+{% endmacro %}

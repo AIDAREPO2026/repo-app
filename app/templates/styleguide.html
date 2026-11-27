@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% from "macros/ui.html" import page_header, button, link_button, card, item_card, badge, lock_badge, alert, modal, drawer, empty_state, skeleton, pagination with context %}
+{% from "macros/forms.html" import field with context %}
+{#
+  The style guide (P1-UI-02): every token and component, shown once forced light and once
+  forced dark. Class names are written out in full so Tailwind finds them.
+#}
+{% set swatches = [
+  ("Canvas", "bg-canvas"), ("Surface", "bg-surface"), ("Sunken", "bg-sunken"),
+  ("Text", "bg-text"), ("Muted text", "bg-muted"), ("Border", "bg-border"), ("Strong border", "bg-border-strong"),
+  ("Accent", "bg-accent"), ("Accent hover", "bg-accent-hover"), ("Accent subtle", "bg-accent-subtle"),
+  ("Success", "bg-success"), ("Success subtle", "bg-success-subtle"),
+  ("Warning", "bg-warning"), ("Warning subtle", "bg-warning-subtle"),
+  ("Danger", "bg-danger"), ("Danger subtle", "bg-danger-subtle"),
+] %}
+{% set type_scale = [
+  ("3xl, page titles", "text-3xl font-bold"), ("2xl", "text-2xl font-bold"), ("xl, section titles", "text-xl font-semibold"),
+  ("lg, lead text", "text-lg"), ("base, body text", "text-base"), ("sm, controls", "text-sm"), ("xs, help and labels", "text-xs"),
+] %}
+{% set spacing = [("1", "w-1"), ("2", "w-2"), ("3", "w-3"), ("4", "w-4"), ("6", "w-6"), ("8", "w-8"), ("12", "w-12"), ("16", "w-16")] %}
+
+{% macro showcase(scheme, label) %}
+<section class="theme-{{ scheme }} bg-canvas text-text mb-8 rounded-lg border border-border p-6" aria-labelledby="{{ scheme }}-heading">
+  <h2 id="{{ scheme }}-heading" class="mb-6 text-2xl font-bold">{{ _(label) }}</h2>
+
+  <div class="grid gap-6">
+    {% call card("Colour") %}
+    <ul class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8">
+      {% for name, classes in swatches %}
+      <li><span class="swatch block {{ classes }}"></span><span class="mt-1 block text-xs text-muted">{{ _(name) }}</span></li>
+      {% endfor %}
+    </ul>
+    {% endcall %}
+
+    {% call card("Type") %}
+    <div class="mt-4 grid gap-3">
+      {% for name, classes in type_scale %}
+      <p class="{{ classes }}">{{ _(name) }}: {{ _("Digital resources for every Discom") }}</p>
+      {% endfor %}
+    </div>
+    {% endcall %}
+
+    <div class="grid gap-6 md:grid-cols-2">
+      {% call card("Spacing") %}
+      <ul class="mt-4 grid gap-2">
+        {% for name, classes in spacing %}
+        <li class="flex items-center gap-3 text-xs text-muted"><span class="h-3 rounded-sm bg-accent {{ classes }}"></span>{{ name }}</li>
+        {% endfor %}
+      </ul>
+      {% endcall %}
+      {% call card("Radius, depth and motion") %}
+      <div class="mt-4 flex flex-wrap gap-4">
+        <span class="grid h-16 w-16 place-items-center rounded-sm bg-sunken text-xs">sm</span>
+        <span class="grid h-16 w-16 place-items-center rounded-md bg-sunken text-xs">md</span>
+        <span class="grid h-16 w-16 place-items-center rounded-lg bg-sunken text-xs">lg</span>
+        <span class="grid h-16 w-16 place-items-center rounded-lg bg-surface text-xs shadow-1">{{ _("depth 1") }}</span>
+        <span class="grid h-16 w-16 place-items-center rounded-lg bg-surface text-xs shadow-2">{{ _("depth 2") }}</span>
+      </div>
+      <p class="mt-4 text-sm text-muted">{{ _("Motion: 150, 200 and 300 ms; enter and leave easings; transform and opacity only.") }}</p>
+      {% endcall %}
+    </div>
+
+    {% call card("Buttons") %}
+    <div class="mt-4 flex flex-wrap items-center gap-3">
+      {{ button("Primary", type="button") }}
+      {{ button("Secondary", "secondary", type="button") }}
+      {{ button("Danger", "danger", type="button") }}
+      {{ button("Link", "link", type="button") }}
+      {{ button("Small", "secondary", type="button", size="sm") }}
+      {{ link_button("Link as button", "#" ~ scheme ~ "-heading") }}
+    </div>
+    {% endcall %}
+
+    <div class="grid gap-6 md:grid-cols-2">
+      {% call card("Badges") %}
+      <div class="mt-4 flex flex-wrap gap-2">
+        {{ badge("Neutral") }}{{ badge("Accent", "accent") }}{{ badge("Published", "success") }}
+        {{ badge("Under review", "warning") }}{{ badge("Rejected", "danger") }}{{ lock_badge() }}
+      </div>
+      {% endcall %}
+      {% call card("Alerts") %}
+      <div class="mt-4 grid gap-2">
+        {{ alert(_("Information for the reader."), "info") }}
+        {{ alert(_("The change was saved."), "success") }}
+        {{ alert(_("Check this before going on."), "warning") }}
+        {{ alert(_("Something went wrong."), "danger") }}
+      </div>
+      {% endcall %}
+    </div>
+
+    <div class="grid gap-6 md:grid-cols-2">
+      {% call card("Form fields") %}
+      <div class="mt-4">
+        {{ field(scheme ~ "-name", "Full name", required=true, help="As it should appear on the account.") }}
+        {{ field(scheme ~ "-email", "Email", type="email", value="not-an-email", error="Enter an email address, such as name@itped.example.") }}
+      </div>
+      {% endcall %}
+      <div class="grid gap-4">
+        {{ item_card("#" ~ scheme ~ "-heading", "Smart meter rollout playbook", "Lessons from three Discoms on planning and procurement.", ["PDF", "12 pages"]) }}
+        {% call card("Modal and drawer", "Both open from their button and close back to it.") %}
+        <div class="mt-4 flex flex-wrap gap-3">
+          {{ button("Open modal", "secondary", type="button", commandfor=scheme ~ "-modal", command="show-modal") }}
+          {{ button("Open drawer", "secondary", type="button", commandfor=scheme ~ "-drawer", command="show-modal") }}
+        </div>
+        {% endcall %}
+      </div>
+    </div>
+
+    {% call card("Table", flush=true) %}
+    <table class="table">
+      <thead><tr><th scope="col">{{ _("Name") }}</th><th scope="col">{{ _("Role") }}</th><th scope="col">{{ _("Status") }}</th></tr></thead>
+      <tbody>
+        <tr><td>Asha Rao</td><td>{{ _("Approver") }}</td><td>{{ badge("Active", "success") }}</td></tr>
+        <tr><td>Ravi Menon</td><td>{{ _("Reviewer") }}</td><td>{{ badge("Deactivated") }}</td></tr>
+      </tbody>
+    </table>
+    {% endcall %}
+
+    <div class="grid gap-6 md:grid-cols-3">
+      {% call card() %}{{ empty_state("No items yet", "Items you upload will appear here.", "+") }}{% endcall %}
+      {% call card("Loading") %}<div class="mt-4">{{ skeleton(4) }}</div>{% endcall %}
+      {% call card("Pagination") %}<div class="mt-4">{{ pagination(2, 5, "?") }}</div>{% endcall %}
+    </div>
+  </div>
+
+  {% call modal(scheme ~ "-modal", "Deactivate this account?") %}
+  <p class="text-muted">{{ _("Their sessions end at once. You can create a replacement afterwards.") }}</p>
+  <div class="dialog-actions">
+    {{ button("Cancel", "secondary", type="button", commandfor=scheme ~ "-modal", command="close") }}
+    {{ button("Deactivate", "danger", type="button", commandfor=scheme ~ "-modal", command="close") }}
+  </div>
+  {% endcall %}
+  {% call drawer(scheme ~ "-drawer", "Filters") %}
+  <p class="text-muted">{{ _("A side panel for filters and details.") }}</p>
+  {% endcall %}
+</section>
+{% endmacro %}
+
+{% block content %}
+{{ page_header("Style guide", "Every design token and component, in light and dark. Pages build only from these.") }}
+{{ showcase("light", "Light") }}
+{{ showcase("dark", "Dark") }}
+{% endblock %}

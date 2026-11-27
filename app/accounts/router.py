@@ -38,7 +38,7 @@ from app.accounts.service import (
 from app.audit.service import Actor
 from app.core.constants import LOGIN_TYPES
 from app.core.db import DbSession
-from app.core.navigation import nav_for
+from app.core.navigation import Crumb, breadcrumbs, nav_for
 from app.core.sessions import VISITOR_CSRF_COOKIE, client_ip, new_visitor_csrf_cookie, set_cookie, user_agent
 from app.core.templates import templates
 
@@ -110,7 +110,11 @@ def sign_out_submit(
 
 def render_dashboard(request: Request, login: Login) -> HTMLResponse:
     """Render the empty dashboard shell for the login's own type."""
-    context = {"title": DASHBOARD_TITLES[login.login_type], "nav": nav_for(login.login_type)}
+    context = {
+        "title": DASHBOARD_TITLES[login.login_type],
+        "nav": nav_for(login.login_type),
+        "breadcrumbs": breadcrumbs(login.login_type),
+    }
     return templates.TemplateResponse(request, "accounts/dashboard.html", context)
 
 
@@ -311,3 +315,20 @@ def set_password_submit(
     if problems:
         return render_set_password(request, token, usable=True, problems=problems, status_code=400)
     return RedirectResponse(LOGIN_PATH, status_code=303)
+
+
+@router.get("/_styleguide", response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def styleguide(request: Request, login: Annotated[Login | None, Depends(current_login)]) -> HTMLResponse:
+    """Show every design token and component, in light and dark, for design review (P1-UI-02).
+
+    Open to the route registry as public, because Members and visitors must get 404, not
+    the sign-in redirect or 403 the login type guard gives: the page is not advertised.
+    """
+    if login is None or login.login_type == "member":
+        raise HTTPException(status_code=404)
+    context = {
+        "title": "Style guide",
+        "nav": nav_for(login.login_type),
+        "breadcrumbs": breadcrumbs(login.login_type, Crumb("Style guide")),
+    }
+    return templates.TemplateResponse(request, "styleguide.html", context)

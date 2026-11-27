@@ -1,0 +1,156 @@
+/* Design tokens (P1-UI-02). Every colour, size, radius, shadow and motion value the
+   portal uses lives here, and nowhere else. Pages and components read these variables,
+   through Tailwind's theme (app.src.css) or directly (components.css).
+
+   Light and dark: each colour is light-dark(light, dark), so it follows the element's
+   colour scheme. The page follows the system setting; .theme-light and .theme-dark force
+   one, which the style guide uses to show both side by side.
+
+   Accessibility preferences are handled once, here, by changing tokens, so no component
+   needs its own media query (conventions.md UI and motion rules). */
+
+:root {
+  color-scheme: light dark;
+
+  /* Surfaces, from the page behind everything to raised cards. */
+  --aida-canvas: light-dark(#f4f5f7, #0f1012);
+  --aida-surface: light-dark(#ffffff, #1a1b1e);
+  --aida-surface-sunken: light-dark(#eceef1, #232428);
+  --aida-surface-hover: light-dark(#eef0f3, #26282c);
+  --aida-surface-pressed: light-dark(#e3e6ea, #2e3035);
+
+  /* Text. Every pair meets WCAG AA (4.5:1) on canvas, surface and sunken surfaces. */
+  --aida-text: light-dark(#17181a, #f2f3f5);
+  --aida-text-muted: light-dark(#585d66, #a9aeb7);
+  --aida-text-on-accent: #ffffff;
+
+  /* Borders. */
+  --aida-border: light-dark(#d9dce1, #34363b);
+  --aida-border-strong: light-dark(#8d939c, #6b707a);
+
+  /* Brand accent: a calm grid blue for links, primary buttons and focus. */
+  --aida-accent: light-dark(#1d5bbf, #7aaeff);
+  --aida-accent-hover: light-dark(#174a9c, #9cc3ff);
+  --aida-accent-pressed: light-dark(#123c80, #b8d4ff);
+  --aida-accent-subtle: light-dark(#e8f0fc, #1b2a43);
+  --aida-accent-contrast: light-dark(#ffffff, #0f1012);
+  --aida-focus-ring: light-dark(#1d5bbf, #9cc3ff);
+
+  /* Status colours: text colour on its own subtle background, and the border between. */
+  --aida-success: light-dark(#1b6e36, #6fd28f);
+  --aida-success-subtle: light-dark(#e7f4ec, #15291c);
+  --aida-warning: light-dark(#8a5300, #f0b75a);
+  --aida-warning-subtle: light-dark(#fcf1de, #2e2412);
+  --aida-danger: light-dark(#b42318, #ff8f86);
+  --aida-danger-hover: light-dark(#93190f, #ffb0aa);
+  --aida-danger-subtle: light-dark(#fdecea, #3a1917);
+  --aida-info: var(--aida-accent);
+  --aida-info-subtle: var(--aida-accent-subtle);
+
+  /* Spacing scale, in rem so it grows with the reader's text size. */
+  --aida-space-1: 0.25rem;
+  --aida-space-2: 0.5rem;
+  --aida-space-3: 0.75rem;
+  --aida-space-4: 1rem;
+  --aida-space-5: 1.5rem;
+  --aida-space-6: 2rem;
+  --aida-space-7: 3rem;
+  --aida-space-8: 4rem;
+
+  /* Corner radii. */
+  --aida-radius-sm: 0.375rem;
+  --aida-radius-md: 0.625rem;
+  --aida-radius-lg: 1rem;
+  --aida-radius-full: 999px;
+
+  /* Two shadow depths: resting cards, and things that float (menus, modals). */
+  --aida-shadow-1: 0 1px 2px rgb(16 18 22 / 0.06), 0 1px 3px rgb(16 18 22 / 0.08);
+  --aida-shadow-2: 0 12px 32px rgb(16 18 22 / 0.16), 0 2px 6px rgb(16 18 22 / 0.08);
+
+  /* Type: the system font, sizes in rem. Large sizes get tighter tracking and leading;
+     body text has none (apple-design §15). */
+  --aida-font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+  --aida-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --aida-text-xs: 0.75rem;
+  --aida-text-xs-leading: 1.4;
+  --aida-text-sm: 0.875rem;
+  --aida-text-sm-leading: 1.45;
+  --aida-text-base: 1rem;
+  --aida-text-base-leading: 1.55;
+  --aida-text-lg: 1.125rem;
+  --aida-text-lg-leading: 1.45;
+  --aida-text-xl: 1.375rem;
+  --aida-text-xl-leading: 1.3;
+  --aida-text-xl-tracking: -0.01em;
+  --aida-text-2xl: 1.75rem;
+  --aida-text-2xl-leading: 1.2;
+  --aida-text-2xl-tracking: -0.018em;
+  --aida-text-3xl: 2.25rem;
+  --aida-text-3xl-leading: 1.1;
+  --aida-text-3xl-tracking: -0.022em;
+
+  /* Motion: three durations, an easing for entering and one for leaving. Only transform
+     and opacity are animated, and never for longer than 300 ms. */
+  --aida-duration-fast: 150ms;
+  --aida-duration-base: 200ms;
+  --aida-duration-slow: 300ms;
+  --aida-ease-enter: cubic-bezier(0.2, 0, 0, 1);
+  --aida-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  /* How far things move and shrink. Reduced motion sets these to none. */
+  --aida-press-scale: 0.97;
+  --aida-enter-offset: 0.5rem;
+  --aida-drawer-offset: 100%;
+  /* The loading placeholder's pulse (keyframes in components.css). */
+  --aida-skeleton-animation: aida-pulse 1.6s ease-in-out infinite;
+
+  /* Translucent glass, used only by the top bar and modal scrims. */
+  --aida-glass: light-dark(rgb(255 255 255 / 0.72), rgb(26 27 30 / 0.72));
+  --aida-glass-filter: blur(20px) saturate(180%);
+  --aida-scrim: rgb(10 12 16 / 0.45);
+  --aida-scrim-filter: blur(4px);
+}
+
+/* Force one scheme for part of a page. Tokens resolve per element, so this is enough. */
+.theme-light {
+  color-scheme: light;
+}
+
+.theme-dark {
+  color-scheme: dark;
+}
+
+/* Reduced motion: no movement or scaling, only short cross-fades. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --aida-duration-fast: 0ms;
+    --aida-duration-base: 120ms;
+    --aida-duration-slow: 120ms;
+    --aida-press-scale: 1;
+    --aida-enter-offset: 0rem;
+    --aida-drawer-offset: 0%;
+    --aida-skeleton-animation: none;
+  }
+}
+
+/* Reduced transparency: solid top bar and scrims. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --aida-glass: var(--aida-surface);
+    --aida-glass-filter: none;
+    --aida-scrim: rgb(10 12 16 / 0.7);
+    --aida-scrim-filter: none;
+  }
+}
+
+/* More contrast: solid surfaces, stronger borders and text. */
+@media (prefers-contrast: more) {
+  :root {
+    --aida-border: light-dark(#5c626b, #9ba0a8);
+    --aida-border-strong: light-dark(#17181a, #f2f3f5);
+    --aida-text-muted: light-dark(#33373d, #d3d6db);
+    --aida-glass: var(--aida-surface);
+    --aida-glass-filter: none;
+    --aida-scrim: rgb(10 12 16 / 0.8);
+    --aida-scrim-filter: none;
+  }
+}
