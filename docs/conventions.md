@@ -100,7 +100,7 @@ Before writing a helper, search the codebase. These shared functions must be use
 | Check who may see or open an item | `app.content.visibility` functions | `P2-CON-06` |
 | Change a workflow state | `app.workflow.service.apply_action()` | `P2-WF-01` |
 | Require a login type on a route | `app.accounts.guards.require_login_type()` | `P1-ACC-08` |
-| Verify a CAPTCHA | `app.core.captcha.verify()` | `P1-ACC-02` |
+| Issue and verify a CAPTCHA | `app.core.captcha.new_challenge()` and `verify()` | `P0-SEC-01` |
 | Send an email | `app.core.email.send_email()` | `P1-ACC-03` |
 | Create a notification | `app.workflow.notifications.notify()` | `P2-WF-05` |
 | Serve a protected file | `app.content.delivery.protected_file_response()` | `P3-VIEW-03` |

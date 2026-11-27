@@ -396,7 +396,10 @@ Later pages only reuse these components. A new component is added here, not insi
     - official email address
     - desired User ID
     - password and confirmation
-- `app/core/captcha.py` with `verify(payload)`, using the approach chosen in `P0-SEC-01`. Reuse it everywhere else.
+- The CAPTCHA from `P0-SEC-01` ([decision record 0006](../adr/0006-self-hosted-captcha.md)):
+    - a public route that returns `app.core.captcha.new_challenge()` as JSON
+    - the ALTCHA widget's `dist/external` build, its CSS and workers, served from `static/vendor/`
+    - `app.core.captcha.verify()` called on submit, reused everywhere else a CAPTCHA is needed
 - Validation:
     - the email domain matches the Discom's domain (D-11)
     - the User ID is unique and well formed
