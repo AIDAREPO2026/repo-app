@@ -7,7 +7,7 @@ Each code links to its full spec. Status and owner come from each task's file in
 | Phase | Tasks | Dev points | QA points | Total | Done |
 | --- | --- | --- | --- | --- | --- |
 | 0 Mobilise | 12 | 20 | 6 | 26 | 11 |
-| 1 Platform and access | 17 | 31 | 8 | 39 | 9 |
+| 1 Platform and access | 17 | 31 | 8 | 39 | 11 |
 | 2 Content and governance | 23 | 42 | 11 | 53 | 0 |
 | 3 Discovery and directories | 16 | 28 | 9 | 37 | 0 |
 | 4 Hardening and release | 19 | 37 | 12 | 49 | 0 |
@@ -41,7 +41,7 @@ Each code links to its full spec. Status and owner come from each task's file in
 | [`P1-UI-02`](phase-1-platform-access.md#p1-ui-02--build-the-design-system-tokens-components-and-motion-rules) | Build the design system: tokens, components and motion rules | Dev | 3 | Not started |  | `P1-UI-01`, `P1-ACC-08` |
 | [`P1-ACC-08`](phase-1-platform-access.md#p1-acc-08--add-the-four-login-types-and-role-guards) | Add the four login types and role guards | Dev | 2 | Done | Raghvendra Singh | `P0-ARC-01`, `P1-AUD-01` |
 | [`P1-ACC-04`](phase-1-platform-access.md#p1-acc-04--add-password-policy-lockout-and-failed-attempt-logging) | Add password policy, lockout and failed-attempt logging | Dev | 3 | Done | Raghvendra Singh | `P1-ACC-08` |
-| [`P1-ACC-06`](phase-1-platform-access.md#p1-acc-06--build-server-side-sessions-csrf-protection-and-idle-timeout) | Build server-side sessions, CSRF protection and idle timeout | Dev | 2 | In review | Raghvendra Singh | `P1-ACC-04` |
+| [`P1-ACC-06`](phase-1-platform-access.md#p1-acc-06--build-server-side-sessions-csrf-protection-and-idle-timeout) | Build server-side sessions, CSRF protection and idle timeout | Dev | 2 | Done | Raghvendra Singh | `P1-ACC-04` |
 | [`P1-ACC-07`](phase-1-platform-access.md#p1-acc-07--enforce-the-5-device-limit-with-the-sixth-session-policy) | Enforce the 5-device limit with the sixth-session policy | Dev | 2 | Not started |  | `P1-ACC-06` |
 | [`P1-ACC-09`](phase-1-platform-access.md#p1-acc-09--build-privileged-account-management) | Build privileged account management | Dev | 2 | Not started |  | `P1-ACC-06` |
 | [`P1-ACC-10`](phase-1-platform-access.md#p1-acc-10--add-mfa-by-authenticator-app-and-email-code) | Add MFA by authenticator app and email code | Dev | 3 | Not started |  | `P1-ACC-06`, `P1-ACC-09` |

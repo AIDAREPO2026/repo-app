@@ -2,12 +2,12 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In review |
+| Status | Done |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p1-acc-06-sessions-csrf` |
 | Pull request | #14 |
 | Started | 2026-11-28 |
-| Finished | Not finished |
+| Finished | 2026-11-28 |
 
 Spec: [docs/tasks/phase-1-platform-access.md](../tasks/phase-1-platform-access.md#p1-acc-06--build-server-side-sessions-csrf-protection-and-idle-timeout)
 
@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Approved by the tech lead and merged. Tracker row set to Done. |
 | 2026-11-28 | Raghvendra Singh | Built `user_session` (migration 0006) and `app/core/sessions.py`: session loading, the idle end, rotation at sign-in, cookies and CSRF. Added the sign-in and sign-out routes and pages, and a Sign out button in the layout. 16 new tests; 126 unit and 6 e2e tests pass, and Ruff, mypy and `alembic check` are clean. Checked by hand in the browser: a visitor is redirected, a wrong password gets the generic message, a right one opens the requested page, and after sign-out the dashboard redirects again, with no console errors. Opened #14 with the `security` label, and set the tracker row to In review. |
 | 2026-11-28 | Raghvendra Singh | Started the task. |
 
