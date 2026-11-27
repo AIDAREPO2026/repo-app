@@ -5,7 +5,7 @@
 | Status | In review |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p1-acc-04-password-lockout` |
-| Pull request | Not opened |
+| Pull request | #13 |
 | Started | 2026-11-28 |
 | Finished | Not finished |
 
@@ -17,7 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
-| 2026-11-28 | Raghvendra Singh | Built `app/accounts/passwords.py`, the lockout fields and `login_attempt` (migration 0005), and the service functions with `authenticate()`. 17 new tests. Removing the row lock makes the parallel test fail 3 runs out of 3; with the lock it passes. 109 tests pass, and Ruff, mypy and `alembic check` are clean. Next: pull request. |
+| 2026-11-28 | Raghvendra Singh | Built `app/accounts/passwords.py`, the lockout fields and `login_attempt` (migration 0005), and the service functions with `authenticate()`. 17 new tests. Removing the row lock makes the parallel test fail 3 runs out of 3; with the lock it passes. 109 tests pass, and Ruff, mypy and `alembic check` are clean. Opened #13 with the `security` label, and set the tracker row to In review. |
 | 2026-11-28 | Raghvendra Singh | Started the task. |
 
 ## Decisions and deviations
