@@ -26,6 +26,25 @@
 <a href="{{ href }}" class="btn btn-{{ variant }}{% if size %} btn-{{ size }}{% endif %}">{{ _(label) }}</a>
 {% endmacro %}
 
+{#
+  Where the reader is: a list of Crumb(label, path) from app.core.navigation.breadcrumbs().
+  The last crumb is the current page and is not a link.
+#}
+{% macro breadcrumbs(trail) %}
+{% from "macros/icons.html" import icon %}
+<nav aria-label="{{ _('Breadcrumb') }}">
+  <ol class="breadcrumbs">
+    {% for crumb in trail %}
+    <li class="crumb">
+      {% if not loop.first %}<span class="crumb-separator">{{ icon("chevron") }}</span>{% endif %}
+      {% if crumb.path %}<a href="{{ crumb.path }}" class="crumb-link">{{ _(crumb.label) }}</a>
+      {% else %}<span class="crumb-current" aria-current="page">{{ _(crumb.label) }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+</nav>
+{% endmacro %}
+
 {# The heading block at the top of a page, with optional actions from the caller. #}
 {% macro page_header(title, lead="") %}
 <header class="page-header">

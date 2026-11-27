@@ -7,7 +7,7 @@
   <title>{% block title %}{{ _(title) }}{% endblock %} | {{ _("AIDA Digital Resource Repository") }}</title>
   <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}">
 </head>
-{% from "macros/ui.html" import flash_messages with context %}
+{% from "macros/ui.html" import flash_messages, breadcrumbs as breadcrumb_trail with context %}
 {% from "macros/layout.html" import brand, nav_menu, top_nav, account_panel, site_footer with context %}
 {% from "macros/icons.html" import icon %}
 {% set login = request.state.login %}
@@ -39,6 +39,9 @@
     </dialog>
 
     <div class="app-main">
+      {% if breadcrumbs is defined %}
+      <div class="page-bar"><div class="page page-bar-inner">{{ breadcrumb_trail(breadcrumbs) }}</div></div>
+      {% endif %}
       {{ flash_messages(messages|default([])) }}
       <main id="main" tabindex="-1" class="page flex-1 py-8 focus:outline-none">
         {% block content %}{% endblock %}

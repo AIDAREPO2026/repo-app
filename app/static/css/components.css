@@ -223,6 +223,76 @@
     font-weight: 650;
   }
 
+  /* A slim translucent bar above the page content, holding the breadcrumbs. */
+  .page-bar {
+    border-bottom: 1px solid var(--aida-border);
+    background: var(--aida-glass);
+    -webkit-backdrop-filter: var(--aida-glass-filter);
+    backdrop-filter: var(--aida-glass-filter);
+  }
+
+  @media (min-width: 64rem) {
+    .page-bar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+  }
+
+  .page-bar-inner {
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  /* Breadcrumbs: small and quiet, with thin chevrons; the current page in full text colour. */
+  .breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--aida-space-1);
+    font-size: var(--aida-text-xs);
+    line-height: 1.5;
+  }
+
+  .crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--aida-space-1);
+    min-width: 0;
+  }
+
+  .crumb-separator {
+    display: inline-flex;
+    color: var(--aida-text-muted);
+  }
+
+  .crumb-separator .icon {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  .crumb-link {
+    padding: 0.125rem 0.25rem;
+    border-radius: var(--aida-radius-sm);
+    color: var(--aida-text-muted);
+    text-decoration: none;
+  }
+
+  .crumb-link:hover {
+    color: var(--aida-text);
+    text-decoration: underline;
+  }
+
+  .crumb-current {
+    padding: 0.125rem 0.25rem;
+    overflow: hidden;
+    color: var(--aida-text);
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .icon {
     flex: none;
     width: 1.25rem;

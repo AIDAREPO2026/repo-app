@@ -14,7 +14,7 @@ from app.accounts.schemas import SignInForm
 from app.accounts.service import after_sign_in_path, sign_in, sign_out
 from app.core.constants import LOGIN_TYPES
 from app.core.db import DbSession
-from app.core.navigation import nav_for
+from app.core.navigation import Crumb, breadcrumbs, nav_for
 from app.core.sessions import VISITOR_CSRF_COOKIE, new_visitor_csrf_cookie, set_cookie
 from app.core.templates import templates
 
@@ -84,7 +84,11 @@ def sign_out_submit(
 
 def render_dashboard(request: Request, login: Login) -> HTMLResponse:
     """Render the empty dashboard shell for the login's own type."""
-    context = {"title": DASHBOARD_TITLES[login.login_type], "nav": nav_for(login.login_type)}
+    context = {
+        "title": DASHBOARD_TITLES[login.login_type],
+        "nav": nav_for(login.login_type),
+        "breadcrumbs": breadcrumbs(login.login_type),
+    }
     return templates.TemplateResponse(request, "accounts/dashboard.html", context)
 
 
@@ -130,5 +134,9 @@ def styleguide(request: Request, login: Annotated[Login | None, Depends(current_
     """
     if login is None or login.login_type == "member":
         raise HTTPException(status_code=404)
-    context = {"title": "Style guide", "nav": nav_for(login.login_type)}
+    context = {
+        "title": "Style guide",
+        "nav": nav_for(login.login_type),
+        "breadcrumbs": breadcrumbs(login.login_type, Crumb("Style guide")),
+    }
     return templates.TemplateResponse(request, "styleguide.html", context)
