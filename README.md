@@ -92,6 +92,24 @@ docker run -d --name aida-redis-test -p 6390:6379 redis:8.8.4-trixie
 
 Set `TEST_DATABASE_URL` or `TEST_REDIS_URL` to use different ones.
 
+End-to-end tests drive a real browser with Playwright. Download its browser once, after `uv sync` and `npm ci` (the accessibility check uses the `axe-core` npm package):
+
+```bash
+uv run playwright install chromium
+```
+
+Then point them at a running portal, for example the local Docker stack:
+
+```bash
+E2E_BASE_URL=https://localhost:8443 uv run pytest tests/e2e
+```
+
+Large and antivirus test files are built on demand (see [tests/files/README.md](tests/files/README.md)):
+
+```bash
+uv run python scripts/make_test_files.py
+```
+
 ## Dependencies
 
 - Add a library with `uv add <name>==<version>`, or a dev tool with `uv add --dev <name>==<version>`. Only approved libraries (see [docs/architecture.md](docs/architecture.md)).
