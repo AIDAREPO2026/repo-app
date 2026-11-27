@@ -150,7 +150,7 @@ Later pages only reuse these components. A new component is added here, not insi
     - `organisation_id`: required for Members, optional for a Reviewer from a Discom
     - `full_name`: required for privileged logins
     - `is_alternate`: Reviewers only
-    - `status`: `pending`, `active` or `deactivated`
+    - `status`: `pending`, `active`, `declined` or `deactivated`
     - MFA fields and lockout fields, added by later tasks
 - A partial unique index allowing one `pending` or `active` Member login per organisation (FR-2.2).
 - `app.accounts.guards.require_login_type(*types)`, a FastAPI dependency that returns the current login or refuses the request.

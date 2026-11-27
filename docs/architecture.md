@@ -111,7 +111,7 @@ Admins see used and free space, a 30-day trend and an estimate of days until ful
 
 ## Data model overview
 
-`P0-ARC-01` produces the full schema in `docs/data-model.md`. The main tables are:
+The full schema, with columns, keys, indexes, admin-only fields and database grants, is in [data-model.md](data-model.md) (`P0-ARC-01`). The main tables are:
 
 | Table | Key fields | Created in |
 | --- | --- | --- |
@@ -120,6 +120,7 @@ Admins see used and free space, a 30-day trend and an estimate of days until ful
 | `login` | user_id, email, password_hash, login_type, organisation_id, is_alternate, status, mfa fields, lockout fields | `P1-ACC-08` |
 | `user_session` | token_hash, login_id, csrf_token, mfa_pending, created_at, last_seen_at, ended_at, end_reason, ip, user_agent | `P1-ACC-06` |
 | `login_attempt` | attempted_user_id, login_id, ip, user_agent, success, reason, at | `P1-ACC-04` |
+| `login_token` | login_id, purpose, token_hash, attempts, expires_at, used_at | `P1-ACC-05` |
 | `audit_event` | occurred_at, actor_login_id, actor_kind, session_id, ip, action, target_type, target_id, result, details | `P1-AUD-01` |
 | `module`, `subcategory`, `functional_group` | name, slug, status, display_order | `P2-CON-01` |
 | `content_item` | item_type, state, published_version_id, working_version_id, counters, endorsement, assignment, timestamps | `P2-CON-02` |
