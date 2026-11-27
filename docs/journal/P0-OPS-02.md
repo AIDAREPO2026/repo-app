@@ -2,10 +2,10 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In progress |
+| Status | In review |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p0-ops-02-docker-compose` |
-| Pull request | Not opened |
+| Pull request | [AIDAREPO2026/repo-app#4](https://github.com/AIDAREPO2026/repo-app/pull/4) |
 | Started | 2026-11-27 |
 | Finished | Not finished |
 
@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-27 | Raghvendra Singh | Opened [the pull request](https://github.com/AIDAREPO2026/repo-app/pull/4) and set status to In review. Next: review and approval. |
 | 2026-11-27 | Raghvendra Singh | Built the Dockerfile, Compose stack, Nginx config and header check script, and made `/healthz` check the database and Redis. From empty volumes, every container reports healthy, `https://localhost/healthz` returns 200, all security headers are present, and the internal paths return 404 (checked on ports 8080 and 8443 because this machine already uses 80 and 443). Next: review. |
 | 2026-11-27 | Raghvendra Singh | Changed D-14 from plain server disk to self-hosted SeaweedFS after review with the tech lead. |
 | 2026-11-27 | Raghvendra Singh | Started the task. |
@@ -43,5 +44,4 @@ Anything decided while building that the spec does not say, and any change from 
 
 What stops the task, who can unblock it, and since when. Write "None" if there are none.
 
-| Since | Blocker | Who can unblock it |
-| --- | --- | --- |
+None.
