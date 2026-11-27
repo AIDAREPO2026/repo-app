@@ -10,16 +10,15 @@
 {% set described_by = [] %}
 {% if help %}{% set described_by = described_by + [name ~ "-help"] %}{% endif %}
 {% if error %}{% set described_by = described_by + [name ~ "-error"] %}{% endif %}
-<div class="mb-4">
-  <label for="{{ name }}" class="mb-1 block font-medium">{{ _(label) }}{% if required %} <span aria-hidden="true">*</span>{% endif %}</label>
-  <input id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value }}"
-         class="block w-full rounded border px-3 py-2 {% if error %}border-red-700{% else %}border-slate-400{% endif %}"
+<div class="field">
+  <label for="{{ name }}" class="field-label">{{ _(label) }}{% if required %} <span class="field-required" aria-hidden="true">*</span>{% endif %}</label>
+  <input id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value }}" class="input"
          {% if required %}required{% endif %}
          {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
          {% if described_by %}aria-describedby="{{ described_by|join(' ') }}"{% endif %}
          {% if error %}aria-invalid="true"{% endif %}>
-  {% if help %}<p id="{{ name }}-help" class="mt-1 text-sm text-slate-700">{{ _(help) }}</p>{% endif %}
-  {% if error %}<p id="{{ name }}-error" class="mt-1 text-sm text-red-800">{{ error }}</p>{% endif %}
+  {% if help %}<p id="{{ name }}-help" class="field-help">{{ _(help) }}</p>{% endif %}
+  {% if error %}<p id="{{ name }}-error" class="field-error">{{ error }}</p>{% endif %}
 </div>
 {% endmacro %}
 
