@@ -7,9 +7,9 @@ requires-python = ">=3.12"
 # Approved runtime libraries only (docs/architecture.md). Pinned exactly so
 # every developer, CI and the servers run the same code. Add a library only
 # with tech lead approval, and update docs/architecture.md in the same PR.
-# The ALTCHA server library is added once P0-SEC-01 confirms it.
 dependencies = [
     "alembic==1.20.1",
+    "altcha==2.5.0",
     "argon2-cffi==25.1.0",
     "boto3==1.44.12",
     "celery[redis]==5.7.0",

@@ -215,6 +215,7 @@ networks:
   storage:
 
 volumes:
-  # Safe to lose: virus signatures download again, and Redis holds only queues and counters.
+  # Safe to lose: virus signatures download again, and Redis holds only queues, counters and
+  # 10-minute CAPTCHA replay records.
   clamav:
   redis:
