@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-27 | Raghvendra Singh | Approved and merged #9. Still Blocked on ITPED's answers. |
 | 2026-11-27 | Raghvendra Singh | Wrote the [ITPED confirmation request](https://claude.ai/artifact/7mUgeXiPMsLjTYpBkAwRtC): D-01 to D-14 in plain words, each with what a change would affect and an Answer dropdown (Awaiting answer, Confirmed, Changed). It also lists the other overdue ITPED answers (Q-03, Q-04, Q-05, Q-09, Q-11) with their defaults. Next: the tech lead shares it with the ITPED Technical Lead. When answers come back, record each one in `docs/decisions.md` and update the affected specs. |
 | 2026-11-27 | Raghvendra Singh | Started the task: preparing the confirmation pack for the ITPED Technical Lead. |
 
