@@ -3,13 +3,16 @@
 Run locally with: uvicorn app.main:app --reload
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from redis import Redis
 
 from app.accounts.router import router as accounts_router
 from app.audit.router import router as audit_router
 from app.content.router import router as content_router
 from app.core.config import load_config
 from app.core.db import make_session_factory
+from app.core.health import database_answers, redis_answers
 from app.core.log_setup import configure_logging
 from app.experts.router import router as experts_router
 from app.gallery.router import router as gallery_router
@@ -39,13 +42,19 @@ def create_app() -> FastAPI:
     configure_logging()
     application = FastAPI(title="AIDA Digital Resource Repository", docs_url=None, redoc_url=None)
     application.state.session_factory = make_session_factory(config.database_url)
+    # Short timeouts, so a stuck Redis fails the health check instead of hanging it.
+    application.state.redis = Redis.from_url(config.redis_url, socket_timeout=2, socket_connect_timeout=2)
     for router in ROUTERS:
         application.include_router(router)
 
     @application.get("/healthz", include_in_schema=False)
-    def healthz() -> dict[str, str]:
-        """Report liveness only, with no version or dependency detail (P6-OPS-02)."""
-        return {"status": "ok"}
+    def healthz(request: Request) -> JSONResponse:
+        """Return 200 when the database and Redis answer, else 503, with no detail (P6-OPS-02)."""
+        state = request.app.state
+        healthy = database_answers(state.session_factory) and redis_answers(state.redis)
+        if healthy:
+            return JSONResponse({"status": "ok"})
+        return JSONResponse({"status": "fail"}, status_code=503)
 
     return application
 
