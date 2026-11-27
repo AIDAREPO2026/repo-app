@@ -5,6 +5,9 @@ from pathlib import Path
 
 import pytest
 
+from app.core.navigation import Crumb, breadcrumbs
+from app.core.templates import templates
+
 APP_DIR = Path(__file__).resolve().parents[2] / "app"
 TEMPLATES = sorted((APP_DIR / "templates").rglob("*.html"))
 COMPONENTS_CSS = (APP_DIR / "static" / "css" / "components.css").read_text()
@@ -31,3 +34,23 @@ def test_p1_ui_02_components_animate_only_transform_and_opacity() -> None:
     for declaration in re.findall(r"transition:\s*([^;]+);", COMPONENTS_CSS):
         properties = {part.split()[0] for part in declaration.split(",")}
         assert properties <= allowed, declaration
+
+
+def test_p1_ui_02_breadcrumbs_start_at_the_dashboard_and_end_unlinked() -> None:
+    trail = breadcrumbs("admin", Crumb("Accounts", "/admin/accounts"), Crumb("Asha Rao", "/ignored"))
+
+    assert trail == [
+        Crumb("Dashboard", "/dashboard/admin"),
+        Crumb("Accounts", "/admin/accounts"),
+        Crumb("Asha Rao"),
+    ]
+
+
+def test_p1_ui_02_breadcrumbs_markup_marks_the_current_page() -> None:
+    macro = templates.env.get_template("macros/ui.html").module.breadcrumbs  # type: ignore[attr-defined]
+
+    html = str(macro(breadcrumbs("reviewer", Crumb("Style guide"))))
+
+    assert '<nav aria-label="Breadcrumb">' in html
+    assert '<a href="/dashboard/reviewer" class="crumb-link">Dashboard</a>' in html
+    assert '<span class="crumb-current" aria-current="page">Style guide</span>' in html
