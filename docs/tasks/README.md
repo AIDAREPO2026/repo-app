@@ -7,7 +7,7 @@ Each code links to its full spec. Status and owner come from each task's file in
 | Phase | Tasks | Dev points | QA points | Total | Done |
 | --- | --- | --- | --- | --- | --- |
 | 0 Mobilise | 12 | 20 | 6 | 26 | 8 |
-| 1 Platform and access | 17 | 31 | 8 | 39 | 0 |
+| 1 Platform and access | 17 | 31 | 8 | 39 | 2 |
 | 2 Content and governance | 23 | 42 | 11 | 53 | 0 |
 | 3 Discovery and directories | 16 | 28 | 9 | 37 | 0 |
 | 4 Hardening and release | 19 | 37 | 12 | 49 | 0 |
@@ -30,14 +30,14 @@ Each code links to its full spec. Status and owner come from each task's file in
 | [`P0-ARC-02`](phase-0-mobilise.md#p0-arc-02--write-c4-documentation-and-decision-records) | Write C4 documentation and decision records | Dev | 1 | Not started |  | `P0-ARC-01` |
 | [`P0-SEC-01`](phase-0-mobilise.md#p0-sec-01--confirm-the-self-hosted-captcha-approach) | Confirm the self-hosted CAPTCHA approach | Dev | 1 | Done | Raghvendra Singh | None |
 | [`P0-QA-01`](phase-0-mobilise.md#p0-qa-01--write-the-test-plan-and-test-naming-conventions) | Write the test plan and test naming conventions | QA | 3 | Not started |  | None |
-| [`P0-QA-02`](phase-0-mobilise.md#p0-qa-02--set-up-test-data-and-playwright) | Set up test data and Playwright | QA | 3 | Not started |  | `P0-OPS-02` |
+| [`P0-QA-02`](phase-0-mobilise.md#p0-qa-02--set-up-test-data-and-playwright) | Set up test data and Playwright | QA | 3 | In review | Raghvendra Singh | `P0-OPS-02` |
 
 ## Phase 1: Platform and access
 
 | Code | Task | Role | Points | Status | Owner | Depends on |
 | --- | --- | --- | --- | --- | --- | --- |
 | [`P1-AUD-01`](phase-1-platform-access.md#p1-aud-01--build-the-append-only-audit-table-and-record-function) | Build the append-only audit table and record function | Dev | 2 | Not started |  | `P0-SET-02`, `P0-ARC-01` |
-| [`P1-UI-01`](phase-1-platform-access.md#p1-ui-01--build-the-accessible-base-layout-and-role-dashboard-shells) | Build the accessible base layout and role dashboard shells | Dev | 2 | Blocked | Raghvendra Singh | `P0-SET-01` |
+| [`P1-UI-01`](phase-1-platform-access.md#p1-ui-01--build-the-accessible-base-layout-and-role-dashboard-shells) | Build the accessible base layout and role dashboard shells | Dev | 2 | Done | Raghvendra Singh | `P0-SET-01` |
 | [`P1-UI-02`](phase-1-platform-access.md#p1-ui-02--build-the-design-system-tokens-components-and-motion-rules) | Build the design system: tokens, components and motion rules | Dev | 3 | Not started |  | `P1-UI-01`, `P1-ACC-08` |
 | [`P1-ACC-08`](phase-1-platform-access.md#p1-acc-08--add-the-four-login-types-and-role-guards) | Add the four login types and role guards | Dev | 2 | Not started |  | `P0-ARC-01`, `P1-AUD-01` |
 | [`P1-ACC-04`](phase-1-platform-access.md#p1-acc-04--add-password-policy-lockout-and-failed-attempt-logging) | Add password policy, lockout and failed-attempt logging | Dev | 3 | Not started |  | `P1-ACC-08` |

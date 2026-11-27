@@ -25,7 +25,7 @@ The system is a layered modular monolith: one FastAPI application, one PostgreSQ
 
 **CSS build:** Node.js and npm, for development and the Docker build only. `package.json` and `package-lock.json` pin `tailwindcss` and `@tailwindcss/cli`. The Dockerfile compiles `app/static/css/app.css` in a throwaway Node stage, so servers never run Node. Tailwind replaced Bootstrap 5 in `P1-UI-01`, approved by the tech lead.
 
-**Development and test:** pytest, playwright, locust, ruff, mypy, pip-audit.
+**Development and test:** pytest, playwright and pytest-playwright, locust, ruff, mypy, pip-audit, and axe-core (npm, for the accessibility checks in `tests/e2e/axe.py`).
 
 **Python tooling:** uv manages the Python version (`.python-version`), the virtual environment and dependencies. `uv.lock` pins every package, including indirect ones, so laptops, CI and servers install identical versions.
 
