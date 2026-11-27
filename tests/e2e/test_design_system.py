@@ -19,13 +19,18 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def open_styleguide(page: Page) -> None:
-    """Sign in as the e2e Admin and open the style guide."""
-    page.goto("/login?next=/_styleguide")
+def sign_in_to(page: Page, path: str) -> None:
+    """Sign in as the e2e Admin and open a page."""
+    page.goto(f"/login?next={path}")
     page.get_by_label("User ID").fill(ADMIN_USER_ID)
     page.get_by_label("Password").fill(ADMIN_PASSWORD)
     page.get_by_role("button", name="Sign in").click()
-    page.wait_for_url("**/_styleguide")
+    page.wait_for_url(f"**{path}")
+
+
+def open_styleguide(page: Page) -> None:
+    """Sign in as the e2e Admin and open the style guide."""
+    sign_in_to(page, "/_styleguide")
 
 
 @pytest.mark.parametrize("scheme", ["light", "dark"])
@@ -56,3 +61,26 @@ def test_p1_ui_02_reduced_motion(page: Page) -> None:
 def token(page: Page, name: str) -> str:
     """Return a design token's value as the page resolves it."""
     return page.evaluate(f"getComputedStyle(document.documentElement).getPropertyValue('{name}').trim()")
+
+
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+def test_p1_ui_02_app_shell_passes_axe(page: Page, scheme: str) -> None:
+    page.emulate_media(color_scheme=scheme)
+    sign_in_to(page, "/dashboard/admin")
+
+    assert page.get_by_role("navigation", name="Main").is_visible()
+    assert blocking_violations(page) == []
+
+
+def test_p1_ui_02_small_screen_menu_drawer(page: Page) -> None:
+    page.set_viewport_size({"width": 375, "height": 812})
+    sign_in_to(page, "/dashboard/admin")
+
+    page.get_by_role("button", name="Open menu").click()
+    menu = page.get_by_role("navigation", name="Menu")
+    menu.wait_for(state="visible")
+
+    assert menu.get_by_role("link", name="Dashboard").get_attribute("aria-current") == "page"
+    assert blocking_violations(page) == []
+    page.keyboard.press("Escape")
+    menu.wait_for(state="hidden")
