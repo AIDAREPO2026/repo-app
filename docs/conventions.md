@@ -92,7 +92,9 @@ Before writing a helper, search the codebase. These shared functions must be use
 | Need | Use | Created in |
 | --- | --- | --- |
 | Write an audit event | `app.audit.service.record()` | `P1-AUD-01` |
+| Get a database session in a route | `app.core.db.DbSession` (commits before the response is sent) | `P0-SET-02` |
 | Read a configurable setting | `app.core.settings_store.get_setting()` | `P0-SET-02` |
+| Get the current time or show it in IST | `app.core.time.utc_now()` and `to_ist()` | `P0-SET-02` |
 | Check who may see or open an item | `app.content.visibility` functions | `P2-CON-06` |
 | Change a workflow state | `app.workflow.service.apply_action()` | `P2-WF-01` |
 | Require a login type on a route | `app.accounts.guards.require_login_type()` | `P1-ACC-08` |

@@ -65,7 +65,15 @@ uv run uvicorn app.main:app --reload
 
 Then open http://127.0.0.1:8000/healthz.
 
-`uv sync` installs the Python version in `.python-version` (3.12) if needed, creates `.venv/` and installs exactly what `uv.lock` lists. PostgreSQL, Redis and the full Docker stack arrive in `P0-SET-02` and `P0-OPS-02`.
+`uv sync` installs the Python version in `.python-version` (3.12) if needed, creates `.venv/` and installs exactly what `uv.lock` lists. The app refuses to start until every variable in `.env.example` is set. The full Docker stack arrives in `P0-OPS-02`.
+
+Until then, run PostgreSQL 19 in Docker. Tests use their own database, `aida_test` on port 5434, because they drop and recreate its tables:
+
+```bash
+docker run -d --name aida-postgres -e POSTGRES_USER=aida -e POSTGRES_PASSWORD=aida -e POSTGRES_DB=aida_test -p 5434:5432 postgres:19.0-trixie
+```
+
+Set `TEST_DATABASE_URL` to use a different test database.
 
 ## Dependencies
 
@@ -95,10 +103,10 @@ uv run pip-audit
 
 ## Create a migration
 
-Alembic is set up in `P0-SET-02`. After that:
+Number each migration with the next `--rev-id` (see [migrations/README.md](migrations/README.md)):
 
 ```bash
-uv run alembic revision --autogenerate -m "short description"
+uv run alembic revision --autogenerate --rev-id 0003 -m "short description"
 ```
 
 ## Contributing

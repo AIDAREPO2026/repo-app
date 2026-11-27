@@ -8,6 +8,9 @@ from fastapi import FastAPI
 from app.accounts.router import router as accounts_router
 from app.audit.router import router as audit_router
 from app.content.router import router as content_router
+from app.core.config import load_config
+from app.core.db import make_session_factory
+from app.core.log_setup import configure_logging
 from app.experts.router import router as experts_router
 from app.gallery.router import router as gallery_router
 from app.kpi.router import router as kpi_router
@@ -31,7 +34,11 @@ ROUTERS = [
 
 def create_app() -> FastAPI:
     """Build the application with all routers included."""
+    # Loading config first makes a missing environment variable stop startup with a clear message.
+    config = load_config()
+    configure_logging()
     application = FastAPI(title="AIDA Digital Resource Repository", docs_url=None, redoc_url=None)
+    application.state.session_factory = make_session_factory(config.database_url)
     for router in ROUTERS:
         application.include_router(router)
 
