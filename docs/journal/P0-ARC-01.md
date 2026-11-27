@@ -2,12 +2,12 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In review |
+| Status | Done |
 | Owner | Raghvendra Singh |
 | Branch | `docs/p0-arc-01-data-model` |
-| Pull request | Not opened |
+| Pull request | #10 |
 | Started | 2026-11-27 |
-| Finished | Not finished |
+| Finished | 2026-11-27 |
 
 Spec: [docs/tasks/phase-0-mobilise.md](../tasks/phase-0-mobilise.md#p0-arc-01--design-the-database-schema)
 
@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-27 | Raghvendra Singh | Reviewed and approved by the tech lead, merged. Tracker row set to Done. |
 | 2026-11-27 | Raghvendra Singh | Wrote `docs/data-model.md`, linked it from `architecture.md` and the docs index. Opened the pull request and set the tracker row to In review. Next: a second developer reviews it. |
 | 2026-11-27 | Raghvendra Singh | Started the task, before `P0-GOV-01` is Done. |
 
