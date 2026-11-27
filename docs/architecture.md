@@ -11,7 +11,7 @@ The system is a layered modular monolith: one FastAPI application, one PostgreSQ
 | Application | FastAPI, Pydantic v2, Uvicorn, plain `def` routes | Routing and input validation |
 | Business rules | `service.py` in each module | Workflow, permissions, consent and limits |
 | Data | PostgreSQL 19 (official Docker image `postgres:19`), SQLAlchemy 2, Alembic, psycopg 3 | Records, full-text search and the append-only audit table |
-| Files | S3-compatible object storage in India, tusd, Uppy | Stored files and resumable uploads |
+| Files | S3-compatible object storage in India: self-hosted SeaweedFS (D-14), tusd, Uppy | Stored files and resumable uploads |
 | Background work | Celery, Redis | Scanning, previews, notifications and scheduled jobs |
 | Scanning and previews | ClamAV (clamd), LibreOffice headless, PDF.js, FFmpeg (`ffprobe`) | Malware checks, Office previews and media metadata |
 | Sessions and MFA | Database session table, argon2-cffi, pyotp | 5-device limit, idle timeout and privileged MFA |
@@ -71,6 +71,8 @@ Each module contains `router.py`, `service.py`, `models.py` and `schemas.py` (se
 | `clamav` | clamd with daily signature updates (`freshclam`) |
 | `postgres` | Database, official image pinned to a minor tag such as `postgres:19.0-trixie` so every environment runs the same build. Production can use a managed PostgreSQL 19 in India instead |
 | `redis` | Celery broker and rate-limit counters |
+| `mailpit` | Local development only: catches outgoing email |
+| `seaweedfs` | S3-compatible object storage, open-source edition (Apache-2.0), on the server's encrypted data disk (D-14). Production can switch to a managed S3 in India by changing the endpoint and keys |
 
 ## Key flows
 
@@ -95,6 +97,16 @@ The storage URL is never sent to the browser.
 
 **Workflow action:** the route calls `workflow.service.apply_action(db, subject, action, actor, comment)`. It checks the transition table and guard conditions, updates the state, and writes a `workflow_event` and an audit event in one transaction. It then creates notifications.
 
+## File storage
+
+Files are stored in one private bucket on SeaweedFS, an open-source S3-compatible server that runs as a container on our own server in India (D-14). The bucket has the prefixes `incoming/` (tusd uploads), `files/` (clean files), `previews/` and `quarantine/`. The app, tusd and Nginx talk to it only through the S3 API, so moving to a managed S3 in India later changes the endpoint and keys, not the code.
+
+The database and SeaweedFS's data live in host folders under `DATA_DIR` on the encrypted data disk, not in Docker volumes, so removing containers never deletes them. SeaweedFS sits on its own `storage` network, reachable only from `app`, `worker`, `tusd` and `nginx`.
+
+The data disk has a fixed size, such as 100 GB, shared by the files and the database. Before an upload starts, the tusd pre-create hook reads the disk's real free space from SeaweedFS and refuses the upload if it would leave less than the reserve: `storage_reserve_percent` of the disk (default 10%), and never less than 5 GB (`P2-UPL-02`). No byte is stored for a refused upload. A bigger disk is used as soon as it is mounted, with no setting to change.
+
+Admins see used and free space, a 30-day trend and an estimate of days until full on the Storage page. A scheduled check every 15 minutes alerts every Admin, in the portal and by email, when the disk passes 75% (warning) and 85% (critical) full (`P2-UPL-04`). The operations monitoring in `P6-OPS-02` alerts the on-call team as well.
+
 ## Data model overview
 
 `P0-ARC-01` produces the full schema in `docs/data-model.md`. The main tables are:
@@ -112,6 +124,7 @@ The storage URL is never sent to the browser.
 | `content_version` | title, module, subcategory, functional_group, access_tier, jurisdiction, source fields, year, summary, external_url, rights declaration, public_teaser, search vector | `P2-CON-02` |
 | `content_file` | version_id, storage_key, original_filename, mime_type, size_bytes, sha256, scan_status, preview_storage_key, media metadata | `P2-CON-02` |
 | `workflow_event` | subject_type, subject_id, from_state, to_state, action, actor_login_id, comment, at | `P2-WF-01` |
+| `storage_check` | checked_at, total_bytes, used_bytes, level | `P2-UPL-04` |
 | `notification` | recipient_login_id, event_type, subject reference, channel, status, created_at, read_at | `P2-WF-05` |
 | `view_event`, `download_event`, `search_log` | subject, actor_kind, login_id, session_id, ip_hash, query, results, at | `P3-LIST-02`, `P3-SRCH-01` |
 | `expert_profile` | Appendix B fields, consent per field, state | `P3-EXP-01` |
@@ -130,6 +143,7 @@ These values are configurable by Admin through `app_setting` and read with `get_
 | `anon_downloads_per_hour` | 50 | Yes | FR-13.7 |
 | `newly_added_count` | 2 | Yes | FR-6.1, Q-05 |
 | `newly_added_days` | 15 | Yes | FR-6.1 |
+| `storage_reserve_percent` | 10 | Yes (5 to 50; never under 5 GB) | D-14 |
 | `digest_frequency` | `daily` | Yes (`daily` or `weekly`, Phase 5) | FR-6.5 |
 
 | Constant | Value | Source |
@@ -143,6 +157,9 @@ These values are configurable by Admin through `app_setting` and read with `get_
 | `AUDIT_ONLINE_DAYS` | 180 | FR-12.1 |
 | `EXPERT_DELETION_WORKING_DAYS` | 2 | FR-8.3 |
 | `IMAGE_LIMIT_MAX_MB` | 20 | D-01 |
+| `STORAGE_RESERVE_MIN_GB` | 5 | D-14 |
+| `STORAGE_WARNING_PERCENT` | 75 | D-14 |
+| `STORAGE_CRITICAL_PERCENT` | 85 | D-14 |
 
 ## Environments
 
@@ -159,7 +176,7 @@ Staging and production are hosted in India, with backups also in India (SRS 2.4,
 - HTTPS only, with HSTS. HTTP redirects to HTTPS.
 - Cookies are `HttpOnly`, `Secure` and `SameSite=Lax`.
 - Content Security Policy uses self-hosted scripts only, with no inline scripts.
-- Restricted and internal files are encrypted at rest, using storage server-side encryption plus disk encryption.
+- Restricted and internal files are encrypted at rest, using disk encryption on the storage data disk (D-14).
 - Restricted responses carry `Cache-Control: private, no-store`.
 - Logs never contain passwords, tokens, one-time codes or full file contents.
 - IP addresses in activity logs are stored as a salted hash. Audit events keep the raw IP to support CERT-In reporting.

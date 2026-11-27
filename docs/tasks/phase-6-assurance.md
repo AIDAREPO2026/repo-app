@@ -165,7 +165,7 @@ These dates depend on when the independent reviewer is available. Book the revie
 **Scope**
 
 - An external uptime check on `/healthz` and the home page every minute, from outside the hosting provider, with alerts by email and SMS to the on-call contacts.
-- Alerts for disk over 80%, a failed nightly backup, a ClamAV signature update older than 48 hours and Celery queue backlog.
+- Alerts to the on-call team for the data disk over 75% (matching the Admin alerts in `P2-UPL-04`), a failed nightly backup, a ClamAV signature update older than 48 hours and Celery queue backlog.
 - A monthly availability figure for the KPI dashboard.
 
 **Security**

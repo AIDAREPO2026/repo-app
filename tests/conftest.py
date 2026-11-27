@@ -15,11 +15,13 @@ TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL", "postgresql+psycopg://aida:aida@localhost:5434/aida_test"
 )
 
+TEST_REDIS_URL = os.environ.get("TEST_REDIS_URL", "redis://localhost:6390/15")
+
 # Safe placeholder values so the app can be created in tests. Set before app imports.
 TEST_ENV = {
     "APP_ENV": "test",
     "DATABASE_URL": TEST_DATABASE_URL,
-    "REDIS_URL": "redis://localhost:6379/15",
+    "REDIS_URL": TEST_REDIS_URL,
     "SECRET_KEY": "test-secret",
     "FERNET_KEY": "test-fernet",
     "IP_HASH_SALT": "test-salt",

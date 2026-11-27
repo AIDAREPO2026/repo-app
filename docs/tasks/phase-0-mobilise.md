@@ -8,7 +8,7 @@
 
 - [ ] `docker compose up` starts every container locally, and `/healthz` returns 200
 - [ ] A merge to `main` deploys to staging automatically through CI
-- [ ] ITPED has confirmed or changed decisions D-01 to D-13
+- [ ] ITPED has confirmed or changed decisions D-01 to D-14
 - [ ] The data model and the test plan are reviewed and merged
 
 ---
@@ -33,7 +33,7 @@
 
 **Acceptance criteria**
 
-- [ ] Every decision D-01 to D-13 has a Status other than "Awaiting confirmation"
+- [ ] Every decision D-01 to D-14 has a Status other than "Awaiting confirmation"
 - [ ] Every changed decision is reflected in the affected task specs in the same pull request
 - [ ] Q-01 is closed in the planning tracker
 
@@ -81,7 +81,7 @@
 **Scope**
 
 - Provision a Linux virtual machine in India with the provider ITPED selects. A MeitY-empanelled cloud or a Tier III data centre is preferred (SRS 2.4).
-- Create a private S3-compatible bucket in an Indian region with server-side encryption on. Add the prefixes `incoming/`, `files/`, `previews/` and `quarantine/`.
+- Attach a separate encrypted data disk, sized to the agreed file limit such as 100 GB plus room for the database, and mount it at `/srv/aida`. Set `DATA_DIR=/srv/aida` in the server's `.env`: the database lives in `/srv/aida/postgres` and SeaweedFS (D-14) in `/srv/aida/seaweedfs`, in a private bucket with the prefixes `incoming/`, `files/`, `previews/` and `quarantine/`.
 - Enable disk encryption on the virtual machine.
 - Create a staging subdomain under ITPED-controlled DNS, and issue a TLS certificate with automatic renewal.
 - Create an SMTP account for outbound email (registration, MFA codes, notifications).
@@ -99,8 +99,8 @@
 
 - [ ] The staging URL serves a placeholder page over HTTPS with a valid certificate
 - [ ] An anonymous request to the bucket is refused
-- [ ] The bucket and the virtual machine are in an Indian region, recorded in `environments.md`
-- [ ] Disk encryption and bucket encryption are confirmed on
+- [ ] The virtual machine and its disks are in an Indian region, recorded in `environments.md`
+- [ ] Encryption is confirmed on for the system disk and the storage data disk
 - [ ] A test email sent through the SMTP account arrives
 
 **Tests:** a manual checklist recorded in the pull request.
@@ -117,8 +117,8 @@
 
 **Scope**
 
-- `deploy/docker-compose.yml` with the containers `nginx`, `app`, `worker`, `beat`, `tusd`, `clamav`, `postgres` and `redis`. The `postgres` service uses the official image pinned to a PostgreSQL 19 minor tag, such as `postgres:19.0-trixie`.
-- `deploy/docker-compose.dev.yml` for local development, adding a local S3-compatible container and a mail catcher. The tech lead picks both and records them in `architecture.md`.
+- `deploy/docker-compose.yml` with the containers `nginx`, `app`, `worker`, `beat`, `tusd`, `clamav`, `postgres`, `redis` and `seaweedfs` (D-14). The `postgres` service uses the official image pinned to a PostgreSQL 19 minor tag, such as `postgres:19.0-trixie`.
+- `deploy/docker-compose.dev.yml` for local development, adding the Mailpit mail catcher.
 - `Dockerfile` for `app`, and `Dockerfile.worker` adding LibreOffice, FFmpeg and libmagic.
 - `deploy/nginx/default.conf` with:
     - HTTP to HTTPS redirect and the headers in [security.md](../security.md)
@@ -161,7 +161,7 @@
     - `ruff check`, with rules `E`, `F`, `I`, `B`, `S`, `D` and `C901` (max complexity 10)
     - `ruff format --check`
     - `mypy app`
-    - `pytest`, with a PostgreSQL service container on the same image as `deploy/docker-compose.yml`
+    - `pytest`, with PostgreSQL and Redis service containers on the same images as `deploy/docker-compose.yml`
     - `pip-audit`
     - a secret scan of the diff, using a tool the tech lead approves
     - `uv run python scripts/build_task_index.py --check`

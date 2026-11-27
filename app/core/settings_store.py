@@ -45,6 +45,8 @@ SETTING_RULES: dict[str, SettingRule] = {
     "anon_downloads_per_hour": SettingRule(default=50, minimum=1),  # FR-13.7
     "newly_added_count": SettingRule(default=2, minimum=1),  # FR-6.1, Q-05
     "newly_added_days": SettingRule(default=15, minimum=1),  # FR-6.1
+    # D-14: share of the data disk kept free. Uploads are refused when they would eat into it.
+    "storage_reserve_percent": SettingRule(default=10, minimum=5, maximum=50),
     "digest_frequency": SettingRule(default="daily", choices=("daily", "weekly")),  # FR-6.5
 }
 

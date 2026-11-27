@@ -88,7 +88,7 @@ Restricted pages and files also send `Cache-Control: private, no-store`.
 ### Data protection
 
 - Use TLS 1.2 or later only.
-- Encrypt Restricted and internal files at rest with storage server-side encryption, and encrypt database and backup disks.
+- Encrypt Restricted and internal files at rest with disk encryption on the storage data disk (D-14), and encrypt database and backup disks.
 - Keep all data, including backups, in India (SRS 5.3).
 - Store IP addresses in activity logs as a salted SHA-256 hash. Audit events keep the raw IP for incident reporting.
 - Show a privacy notice wherever personal data is collected: registration, the expert entry form and notification email settings.

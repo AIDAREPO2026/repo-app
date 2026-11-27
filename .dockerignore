@@ -1,0 +1,10 @@
+# Only what the image needs; never secrets or local state.
+*
+!pyproject.toml
+!uv.lock
+!.python-version
+!alembic.ini
+!app/
+!migrations/
+!workers/
+**/__pycache__

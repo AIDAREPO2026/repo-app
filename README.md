@@ -63,17 +63,21 @@ cp .env.example .env
 uv run uvicorn app.main:app --reload
 ```
 
-Then open http://127.0.0.1:8000/healthz.
+Then open http://127.0.0.1:8000/healthz. Running the app outside Docker, point `DATABASE_URL` and `REDIS_URL` in `.env` at `localhost` instead of the Compose service names.
 
-`uv sync` installs the Python version in `.python-version` (3.12) if needed, creates `.venv/` and installs exactly what `uv.lock` lists. The app refuses to start until every variable in `.env.example` is set. The full Docker stack arrives in `P0-OPS-02`.
+`uv sync` installs the Python version in `.python-version` (3.12) if needed, creates `.venv/` and installs exactly what `uv.lock` lists. The app refuses to start until every variable in `.env.example` is set. To run the whole system in Docker instead, see [deploy/README.md](deploy/README.md).
 
-Until then, run PostgreSQL 19 in Docker. Tests use their own database, `aida_test` on port 5434, because they drop and recreate its tables:
+Tests use their own PostgreSQL database, `aida_test` on port 5434, because they drop and recreate its tables, and their own Redis on port 6390:
 
 ```bash
 docker run -d --name aida-postgres -e POSTGRES_USER=aida -e POSTGRES_PASSWORD=aida -e POSTGRES_DB=aida_test -p 5434:5432 postgres:19.0-trixie
 ```
 
-Set `TEST_DATABASE_URL` to use a different test database.
+```bash
+docker run -d --name aida-redis-test -p 6390:6379 redis:8.8.4-trixie
+```
+
+Set `TEST_DATABASE_URL` or `TEST_REDIS_URL` to use different ones.
 
 ## Dependencies
 

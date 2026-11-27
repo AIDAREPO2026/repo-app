@@ -11,3 +11,9 @@ EXPERT_DELETION_WORKING_DAYS = 2  # FR-8.3
 
 # D-01: images must never exceed 20 MB, whatever Admin sets.
 IMAGE_LIMIT_MAX_MB = 20
+
+# D-14: the free-space reserve is never smaller than this, however small the percentage.
+STORAGE_RESERVE_MIN_GB = 5
+# D-14: Admins are warned when the data disk passes these shares of its size.
+STORAGE_WARNING_PERCENT = 75
+STORAGE_CRITICAL_PERCENT = 85
