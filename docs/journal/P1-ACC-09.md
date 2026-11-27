@@ -5,7 +5,7 @@
 | Status | In progress |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p1-acc-09-privileged-accounts` |
-| Pull request | Not opened |
+| Pull request | #15 |
 | Started | 2026-11-28 |
 | Finished | Not finished |
 
@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Opened #15 with the `security` label, and set the tracker row to In review. |
 | 2026-11-28 | Raghvendra Singh | Built `login_token` and the account rules (migration 0007), `app/accounts/tokens.py`, `app/core/email.py`, the Accounts screen (create, deactivate, reassign, primary or alternate Reviewer, send a new link), the set-password page and `python -m app.accounts.cli create-admin`. Moved shared sign-in and CSRF test helpers into `tests/accounts/conftest.py`. 13 new tests; 166 unit tests pass, and Ruff, mypy, `alembic check` and `pip-audit` are clean. Checked by hand in the browser against a local SMTP catcher: create an Approver, a second Approver refused, the email and link, weak password refused, link refused on reuse, and deactivation. |
 | 2026-11-28 | Raghvendra Singh | Started the task. |
 
