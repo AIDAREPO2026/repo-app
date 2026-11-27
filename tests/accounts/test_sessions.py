@@ -1,12 +1,10 @@
 """P1-ACC-06: sign-in, server-side sessions, CSRF protection and the 30-minute idle timeout."""
 
 import hashlib
-import re
 from datetime import timedelta
 
 import pytest
 from fastapi.testclient import TestClient
-from httpx import Response
 from sqlalchemy import select, update
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
@@ -18,10 +16,9 @@ from app.audit.models import AuditEvent
 from app.core.sessions import CSRF_HEADER, SESSION_COOKIE
 from app.core.time import utc_now
 from app.main import create_app
-from tests.accounts.conftest import build_login
+from tests.accounts.conftest import build_login, csrf_from, submit_sign_in
 
 PASSWORD = "Grid-Meter-2026"  # noqa: S105 - a test value, not a real password
-CSRF_INPUT = re.compile(r'name="csrf_token" value="([^"]+)"')
 
 
 @pytest.fixture(scope="module")
@@ -44,18 +41,6 @@ def login(engine: Engine, password_hash: str) -> Login:
 def client() -> TestClient:
     # HTTPS, because the session cookie is Secure and is not sent over plain HTTP.
     return TestClient(create_app(), base_url="https://testserver", client=("10.0.0.9", 50000))
-
-
-def csrf_from(response: Response) -> str:
-    match = CSRF_INPUT.search(response.text)
-    assert match, "the page has no CSRF field"
-    return match.group(1)
-
-
-def submit_sign_in(client: TestClient, user_id: str, password: str, next_path: str = "") -> Response:
-    token = csrf_from(client.get("/login"))
-    form = {"user_id": user_id, "password": password, "next": next_path, "csrf_token": token}
-    return client.post("/login", data=form, follow_redirects=False)
 
 
 def sessions_of(engine: Engine, login: Login) -> list[UserSession]:
