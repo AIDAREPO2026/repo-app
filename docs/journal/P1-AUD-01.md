@@ -2,12 +2,12 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In review |
+| Status | Done |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p1-aud-01-audit-trail` |
 | Pull request | #11 |
 | Started | 2026-11-27 |
-| Finished | Not finished |
+| Finished | 2026-11-28 |
 
 Spec: [docs/tasks/phase-1-platform-access.md](../tasks/phase-1-platform-access.md#p1-aud-01--build-the-append-only-audit-table-and-record-function)
 
@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Approved by the tech lead and merged. Tracker row set to Done. |
 | 2026-11-28 | Raghvendra Singh | Built `audit_event` (migration 0003) with checks, indexes, the append-only trigger and the `aida_app` grant. Added `app.audit.service.record()` and `Actor`, and wired `set_setting`. 10 new tests; full suite, Ruff, mypy and `alembic check` pass. Opened #11 with the `security` label (created, it did not exist yet) and set the tracker row to In review. |
 | 2026-11-27 | Raghvendra Singh | Started the task. |
 
