@@ -15,7 +15,7 @@ PUBLIC_NAV: list[NavLink] = []
 
 NAV_BY_LOGIN_TYPE: dict[str, list[NavLink]] = {
     "member": [NavLink("Dashboard", "/dashboard/member")],
-    "admin": [NavLink("Dashboard", "/dashboard/admin")],
+    "admin": [NavLink("Dashboard", "/dashboard/admin"), NavLink("Accounts", "/admin/accounts")],
     "reviewer": [NavLink("Dashboard", "/dashboard/reviewer")],
     "approver": [NavLink("Dashboard", "/dashboard/approver")],
 }

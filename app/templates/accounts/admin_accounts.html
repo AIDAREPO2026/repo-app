@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% from "macros/forms.html" import field, csrf_field with context %}
+{% set button = "rounded border border-slate-400 px-3 py-1 text-sm hover:bg-slate-100 active:bg-slate-200" %}
+{% set role_names = {"admin": "Admin", "reviewer": "Reviewer", "approver": "Approver"} %}
+{% block content %}
+<h1 class="mb-6 text-3xl font-semibold">{{ _("Accounts") }}</h1>
+
+<section aria-labelledby="current-heading" class="mb-10">
+  <h2 id="current-heading" class="mb-4 text-xl font-semibold">{{ _("Admin, Reviewer and Approver accounts") }}</h2>
+  <table class="w-full border-collapse text-left">
+    <thead>
+      <tr class="border-b border-slate-300">
+        <th scope="col" class="py-2 pr-4">{{ _("Name") }}</th>
+        <th scope="col" class="py-2 pr-4">{{ _("User ID and email") }}</th>
+        <th scope="col" class="py-2 pr-4">{{ _("Role") }}</th>
+        <th scope="col" class="py-2 pr-4">{{ _("Status") }}</th>
+        <th scope="col" class="py-2">{{ _("Actions") }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for account in accounts %}
+      <tr class="border-b border-slate-200 align-top">
+        <td class="py-3 pr-4">{{ account.full_name }}</td>
+        <td class="py-3 pr-4">{{ account.user_id }}<br><span class="text-sm text-slate-700">{{ account.email }}</span></td>
+        <td class="py-3 pr-4">
+          {{ _(role_names[account.login_type]) }}
+          {% if account.login_type == "reviewer" %}({{ _("alternate") if account.is_alternate else _("primary") }}){% endif %}
+        </td>
+        <td class="py-3 pr-4">
+          {% if account.status != "active" %}{{ _("Deactivated") }}
+          {% elif account.password_hash is none %}{{ _("Waiting for password") }}
+          {% else %}{{ _("Active") }}{% endif %}
+        </td>
+        <td class="py-3">
+          {% if account.status == "active" and account.id != admin_id %}
+          <div class="flex flex-wrap gap-2">
+            <form method="post" action="/admin/accounts/{{ account.id }}/deactivate">
+              {{ csrf_field() }}
+              <button type="submit" class="{{ button }}">{{ _("Deactivate") }}</button>
+            </form>
+            {% if account.login_type == "reviewer" %}
+            <form method="post" action="/admin/accounts/{{ account.id }}/reviewer-role">
+              {{ csrf_field() }}
+              <input type="hidden" name="is_alternate" value="{{ 'false' if account.is_alternate else 'true' }}">
+              <button type="submit" class="{{ button }}">{{ _("Make primary") if account.is_alternate else _("Make alternate") }}</button>
+            </form>
+            {% endif %}
+            {% if account.password_hash is none %}
+            <form method="post" action="/admin/accounts/{{ account.id }}/set-password-link">
+              {{ csrf_field() }}
+              <button type="submit" class="{{ button }}">{{ _("Send a new link") }}</button>
+            </form>
+            {% endif %}
+          </div>
+          <details class="mt-2">
+            <summary class="cursor-pointer text-sm underline">{{ _("Reassign to someone else") }}</summary>
+            <form method="post" action="/admin/accounts/{{ account.id }}/reassign" class="mt-2 max-w-sm">
+              {{ csrf_field() }}
+              {# Field IDs carry the account ID, so labels stay unique when several forms are open. #}
+              {% set prefix = "reassign-" ~ account.id ~ "-" %}
+              <label for="{{ prefix }}full_name" class="mb-1 block font-medium">{{ _("Full name") }}</label>
+              <input id="{{ prefix }}full_name" name="full_name" required maxlength="200" autocomplete="off" class="mb-3 block w-full rounded border border-slate-400 px-3 py-2">
+              <label for="{{ prefix }}email" class="mb-1 block font-medium">{{ _("Email") }}</label>
+              <input id="{{ prefix }}email" name="email" type="email" required maxlength="254" autocomplete="off" class="mb-3 block w-full rounded border border-slate-400 px-3 py-2">
+              <label for="{{ prefix }}user_id" class="mb-1 block font-medium">{{ _("User ID") }}</label>
+              <input id="{{ prefix }}user_id" name="user_id" required pattern="[a-z0-9._\-]{4,50}" autocomplete="off" class="mb-3 block w-full rounded border border-slate-400 px-3 py-2">
+              <button type="submit" class="{{ button }}">{{ _("Deactivate and replace") }}</button>
+            </form>
+          </details>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section aria-labelledby="add-heading" class="max-w-md">
+  <h2 id="add-heading" class="mb-4 text-xl font-semibold">{{ _("Add an account") }}</h2>
+  <p class="mb-4 text-slate-700">{{ _("Each account belongs to one named person with their own email. They get a link to set their password, valid once for 60 minutes.") }}</p>
+  <form method="post" action="/admin/accounts">
+    {{ csrf_field() }}
+    <div class="mb-4">
+      <label for="login_type" class="mb-1 block font-medium">{{ _("Role") }} <span aria-hidden="true">*</span></label>
+      <select id="login_type" name="login_type" required class="block w-full rounded border border-slate-400 px-3 py-2">
+        <option value="admin">{{ _("Admin") }}</option>
+        <option value="reviewer">{{ _("Reviewer") }}</option>
+        <option value="approver">{{ _("Approver") }}</option>
+      </select>
+    </div>
+    <div class="mb-4 flex items-center gap-2">
+      <input id="is_alternate" name="is_alternate" type="checkbox" value="true">
+      <label for="is_alternate">{{ _("Alternate Reviewer (Reviewers only)") }}</label>
+    </div>
+    {{ field("full_name", "Full name", required=true, autocomplete="off") }}
+    {{ field("email", "Email", type="email", required=true, autocomplete="off") }}
+    {{ field("user_id", "User ID", required=true, autocomplete="off", help="4 to 50 lowercase letters, numbers, dots, dashes or underscores.") }}
+    <button type="submit" class="rounded bg-slate-900 px-4 py-2 font-medium text-white hover:bg-slate-700 active:bg-slate-800">{{ _("Add account") }}</button>
+  </form>
+</section>
+{% endblock %}
