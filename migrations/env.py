@@ -20,7 +20,8 @@ from app.core.config import load_config
 from app.core.db import Base
 
 if context.config.config_file_name is not None:
-    fileConfig(context.config.config_file_name)
+    # Keep the app's loggers working when migrations run inside the same process, as in tests.
+    fileConfig(context.config.config_file_name, disable_existing_loggers=False)
 
 
 def database_url() -> str:

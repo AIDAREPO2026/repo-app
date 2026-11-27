@@ -17,3 +17,6 @@ STORAGE_RESERVE_MIN_GB = 5
 # D-14: Admins are warned when the data disk passes these shares of its size.
 STORAGE_WARNING_PERCENT = 75
 STORAGE_CRITICAL_PERCENT = 85
+
+# FR-2.1: exactly four login types. Visitors are anonymous and have no login.
+LOGIN_TYPES = ("member", "admin", "reviewer", "approver")
