@@ -15,12 +15,13 @@ from sqlalchemy import (
     Identity,
     Index,
     Integer,
+    SmallInteger,
     String,
     Text,
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import BYTEA, INET, UUID
+from sqlalchemy.dialects.postgresql import BYTEA, INET, UUID, ExcludeConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.constants import LOGIN_TYPES
@@ -29,6 +30,7 @@ from app.core.db import Base, one_of
 LOGIN_STATUSES = ("pending", "active", "declined", "deactivated")
 SESSION_END_REASONS = ("logout", "idle", "replaced", "admin", "password_reset")
 ATTEMPT_REASONS = ("ok", "unknown_user", "bad_password", "locked", "inactive", "mfa_failed")
+TOKEN_PURPOSES = ("set_password", "reset_password", "mfa_email_code", "confirm_extra_email")
 
 
 class Login(Base):
@@ -56,6 +58,30 @@ class Login(Base):
             postgresql_where=text("login_type = 'member' AND status IN ('pending', 'active')"),
         ),
         Index("ix_login_type_status", "login_type", "status"),
+        # FR-2.7: one active Approver, the Centre Director.
+        Index(
+            "uq_login_one_active_approver",
+            "login_type",
+            unique=True,
+            postgresql_where=text("login_type = 'approver' AND status = 'active'"),
+        ),
+        # FR-2.7: no shared privileged accounts. P1-ACC-05 also relies on it to find a login by email.
+        Index(
+            "uq_login_current_email",
+            text("lower(email)"),
+            unique=True,
+            postgresql_where=text("status IN ('pending', 'active')"),
+        ),
+        # FR-2.7: one active primary and one active alternate Reviewer. An exclusion
+        # constraint rather than a unique index, because only a constraint can be deferred,
+        # and swapping primary and alternate passes through a moment with two of one kind.
+        ExcludeConstraint(
+            ("is_alternate", "="),
+            name="xc_login_one_reviewer_per_role",
+            where=text("login_type = 'reviewer' AND status = 'active'"),
+            deferrable=True,
+            initially="DEFERRED",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
@@ -119,3 +145,23 @@ class UserSession(Base):
     end_reason: Mapped[str | None] = mapped_column(Text)
     ip: Mapped[str] = mapped_column(INET)
     user_agent: Mapped[str] = mapped_column(String(500), server_default="")
+
+
+class LoginToken(Base):
+    """A single-use secret sent by email, such as a set-password link. Only its SHA-256 hash is stored."""
+
+    __tablename__ = "login_token"
+    __table_args__ = (
+        CheckConstraint(one_of("purpose", TOKEN_PURPOSES), name="purpose"),
+        Index("ix_login_token_unused", "login_id", "purpose", postgresql_where=text("used_at IS NULL")),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    login_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("login.id"))
+    purpose: Mapped[str] = mapped_column(Text)
+    token_hash: Mapped[bytes] = mapped_column(BYTEA, unique=True)
+    # Wrong tries, for email codes (P1-ACC-10). Links do not use it.
+    attempts: Mapped[int] = mapped_column(SmallInteger, server_default="0")
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

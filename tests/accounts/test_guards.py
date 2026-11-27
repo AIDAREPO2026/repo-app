@@ -1,7 +1,5 @@
 """Every route declares who may use it, and the guards refuse everyone else (FR-2.1)."""
 
-import hashlib
-import hmac
 import re
 
 import pytest
@@ -16,14 +14,10 @@ from sqlalchemy.orm import Session
 from app.accounts.guards import LoginTypeGuard, public_route, require_login_type
 from app.audit.models import AuditEvent
 from app.core.constants import LOGIN_TYPES
-from app.core.sessions import CSRF_HEADER, VISITOR_CSRF_COOKIE
 from app.main import create_app
-from tests.accounts.conftest import SignIn
-from tests.conftest import TEST_ENV
+from tests.accounts.conftest import CLIENT, SignIn, csrf_client
 
 APP = create_app()
-# A real address, because audit_event stores IPs as inet and TestClient's default is "testclient".
-CLIENT = ("10.0.0.9", 50000)
 
 
 def dependency_calls(dependant: Dependant) -> list[object]:
@@ -94,15 +88,6 @@ GUARDED_PAGES = [
 ]
 
 
-def client_with_csrf() -> TestClient:
-    """A client that sends a valid visitor CSRF token, so POST routes reach their guard."""
-    client = TestClient(APP, client=CLIENT)
-    client.cookies.set(VISITOR_CSRF_COOKIE, "cookie-value")
-    token = hmac.new(TEST_ENV["SECRET_KEY"].encode(), b"cookie-value", hashlib.sha256).hexdigest()
-    client.headers[CSRF_HEADER] = token
-    return client
-
-
 def test_p1_acc_08_every_route_is_guarded() -> None:
     assert len(GUARDED) >= 4
     assert unguarded_routes(APP) == []
@@ -134,7 +119,7 @@ def test_p1_acc_08_guard_refuses_unknown_login_type() -> None:
 
 @pytest.mark.parametrize(("method", "path"), EVERY_GUARDED)
 def test_p1_acc_08_visitor_is_sent_to_sign_in(method: str, path: str) -> None:
-    response = client_with_csrf().request(method, path, follow_redirects=False)
+    response = csrf_client(APP).request(method, path, follow_redirects=False)
 
     assert response.status_code == 303
     assert response.headers["location"] == f"/login?next={path}"
@@ -146,12 +131,12 @@ def test_p1_acc_08_wrong_login_type_refused_and_audited(
 ) -> None:
     login = sign_in(APP, login_type)
 
-    response = client_with_csrf().request(method, path)
+    response = csrf_client(APP).request(method, path)
 
     assert response.status_code == 403
     with Session(engine) as session:
         refusal = session.scalars(select(AuditEvent).where(AuditEvent.actor_login_id == login.id)).one()
-    assert (refusal.action, refusal.result, refusal.target_id) == ("accounts.access", "denied", path)
+    assert (refusal.action, refusal.result, refusal.target_id) == ("accounts.access", "denied", path[:64])
     assert refusal.session_id is not None
 
 

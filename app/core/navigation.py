@@ -22,7 +22,11 @@ STYLE_GUIDE = NavLink("Style guide", "/_styleguide", "swatch")
 
 NAV_BY_LOGIN_TYPE: dict[str, list[NavLink]] = {
     "member": [NavLink("Dashboard", "/dashboard/member")],
-    "admin": [NavLink("Dashboard", "/dashboard/admin"), STYLE_GUIDE],
+    "admin": [
+        NavLink("Dashboard", "/dashboard/admin"),
+        NavLink("Accounts", "/admin/accounts", "users"),
+        STYLE_GUIDE,
+    ],
     "reviewer": [NavLink("Dashboard", "/dashboard/reviewer"), STYLE_GUIDE],
     "approver": [NavLink("Dashboard", "/dashboard/approver"), STYLE_GUIDE],
 }
