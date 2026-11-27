@@ -3,52 +3,57 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>{% block title %}{{ _(title) }}{% endblock %} | {{ _("AIDA Digital Resource Repository") }}</title>
   <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}">
 </head>
-<body class="flex min-h-screen flex-col bg-white text-slate-900">
-  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:rounded focus:bg-white focus:px-4 focus:py-2">{{ _("Skip to main content") }}</a>
+{% from "macros/ui.html" import flash_messages, button with context %}
+{% set login = request.state.login %}
+{% set role_names = {"member": "Member", "admin": "Admin", "reviewer": "Reviewer", "approver": "Approver"} %}
+<body class="flex min-h-screen flex-col">
+  <a href="#main" class="btn btn-primary sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50">{{ _("Skip to main content") }}</a>
 
-  <header class="border-b border-slate-200">
-    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-3">
-      <a href="/" class="text-lg font-semibold">{{ _("AIDA Digital Resource Repository") }}</a>
+  <header class="topbar">
+    <div class="page topbar-inner flex-wrap">
+      <a href="/" class="brand">
+        <span class="brand-mark" aria-hidden="true">A</span>
+        <span>AIDA <span class="brand-sub">Digital Resource Repository</span></span>
+      </a>
       {% if nav %}
       <nav aria-label="{{ _('Main') }}">
-        <ul class="flex flex-wrap gap-2">
+        <ul class="nav-list">
           {% for link in nav %}
           <li>
-            <a href="{{ link.path }}"
-               class="block rounded px-3 py-2 hover:bg-slate-100{% if request.url.path == link.path %} font-semibold underline{% endif %}"
+            <a href="{{ link.path }}" class="nav-link"
                {% if request.url.path == link.path %}aria-current="page"{% endif %}>{{ _(link.label) }}</a>
           </li>
           {% endfor %}
         </ul>
       </nav>
       {% endif %}
-      {% if request.state.login %}
+      {% if login %}
       {% from "macros/forms.html" import csrf_field with context %}
-      <form method="post" action="/logout">
-        {{ csrf_field() }}
-        <button type="submit" class="rounded px-3 py-2 hover:bg-slate-100 active:bg-slate-200">{{ _("Sign out") }}</button>
-      </form>
+      <div class="account-chip">
+        <p class="account-name">{{ login.full_name or login.user_id }}<span class="account-role">{{ _(role_names[login.login_type]) }}</span></p>
+        <form method="post" action="/logout">
+          {{ csrf_field() }}
+          {{ button("Sign out", "secondary", size="sm") }}
+        </form>
+      </div>
       {% endif %}
     </div>
   </header>
 
-  {# Flash messages: later tasks pass a list of (category, text) pairs as `messages`. #}
-  <div class="mx-auto w-full max-w-6xl px-4" role="status" aria-live="polite">
-    {% for category, text in messages|default([]) %}
-    <p class="mt-4 rounded border px-4 py-3{% if category == 'error' %} border-red-700 text-red-800{% else %} border-slate-300{% endif %}">{{ text }}</p>
-    {% endfor %}
-  </div>
+  {# Flash messages: pages pass a list of (category, text) pairs as `messages`. #}
+  {{ flash_messages(messages|default([])) }}
 
-  <main id="main" tabindex="-1" class="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+  <main id="main" tabindex="-1" class="page flex-1 py-8 focus:outline-none">
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="border-t border-slate-200">
-    <div class="mx-auto max-w-6xl px-4 py-4 text-sm text-slate-700">
-      {{ _("Digital Resource Repository for DISCOMs, maintained by ITPED.") }}
+  <footer class="footer">
+    <div class="page flex flex-wrap justify-between gap-2 py-5">
+      <p>{{ _("Digital Resource Repository for DISCOMs, maintained by ITPED.") }}</p>
     </div>
   </footer>
 </body>
