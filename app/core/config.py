@@ -15,6 +15,13 @@ class Config(BaseSettings):
     secret_key: str
     fernet_key: str
     ip_hash_salt: str
+    # Outgoing email. The defaults suit the local Mailpit catcher; servers set real values.
+    smtp_host: str = "mailpit"
+    smtp_port: int = 1025
+    # When set, the connection is upgraded with STARTTLS before signing in.
+    smtp_username: str = ""
+    smtp_password: str = ""
+    mail_from: str = "aida-portal@localhost"
 
 
 class MissingConfigError(RuntimeError):
