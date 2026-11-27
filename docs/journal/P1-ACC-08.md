@@ -2,12 +2,12 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In review |
+| Status | Done |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p1-acc-08-login-types-guards` |
 | Pull request | #12 |
 | Started | 2026-11-28 |
-| Finished | Not finished |
+| Finished | 2026-11-28 |
 
 Spec: [docs/tasks/phase-1-platform-access.md](../tasks/phase-1-platform-access.md#p1-acc-08--add-the-four-login-types-and-role-guards)
 
@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Approved by the tech lead and merged. Tracker row set to Done. |
 | 2026-11-28 | Raghvendra Singh | Built the `login` table (migration 0004), with its checks and the one-Member-login-per-Discom index. Added foreign keys from `audit_event` and `app_setting`, and `app/accounts/guards.py` (`require_login_type`, `public_route`, `current_login`, `actor_for`). The dashboards are now four guarded routes, and OpenAPI is off. Added the route registry and refusal tests. 92 unit and 5 e2e tests pass (4 e2e skipped), and Ruff, mypy and `alembic check` are clean. Opened #12 with the `security` label, and set the tracker row to In review. |
 | 2026-11-28 | Raghvendra Singh | Started the task. |
 
