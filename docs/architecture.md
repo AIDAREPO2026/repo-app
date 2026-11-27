@@ -25,6 +25,8 @@ The system is a layered modular monolith: one FastAPI application, one PostgreSQ
 
 **Development and test:** pytest, playwright, locust, ruff, mypy, pip-audit.
 
+**Python tooling:** uv manages the Python version (`.python-version`), the virtual environment and dependencies. `uv.lock` pins every package, including indirect ones, so laptops, CI and servers install identical versions.
+
 Add a library only with tech lead approval, and update this list in the same pull request.
 
 ## Folder layout

@@ -31,8 +31,10 @@ dependencies = [
     "uvicorn==0.54.0",
 ]
 
-[project.optional-dependencies]
-# Playwright and Locust join this list with the first e2e and load tests.
+[dependency-groups]
+# Installed by `uv sync` on developer machines and CI, never on servers
+# (`uv sync --no-dev`). Playwright and Locust join with the first e2e and
+# load tests.
 dev = [
     "mypy==2.4.1",
     "pip-audit==2.10.1",
@@ -40,12 +42,10 @@ dev = [
     "ruff==0.17.6",
 ]
 
-[build-system]
-requires = ["setuptools>=69"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.packages.find]
-include = ["app*", "workers*"]
+[tool.uv]
+# The app is deployed from source, never published as a package, so uv
+# skips building it.
+package = false
 
 [tool.ruff]
 line-length = 110
@@ -69,4 +69,6 @@ packages = ["app"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Lets tests import `app` without installing the project as a package.
+pythonpath = ["."]
 addopts = "-ra"

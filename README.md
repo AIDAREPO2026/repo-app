@@ -41,14 +41,16 @@ Every feature module has the same four files:
 
 ## Run locally
 
-Needs Python 3.12 or later. PostgreSQL, Redis and the full Docker stack arrive in `P0-SET-02` and `P0-OPS-02`.
+The project uses [uv](https://docs.astral.sh/uv/) for Python, dependencies and the virtual environment. Install it once:
 
 ```bash
-python3 -m venv .venv
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
+Then, from the repository root:
+
 ```bash
-.venv/bin/pip install -e ".[dev]"
+uv sync
 ```
 
 ```bash
@@ -56,29 +58,37 @@ cp .env.example .env
 ```
 
 ```bash
-.venv/bin/uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload
 ```
 
 Then open http://127.0.0.1:8000/healthz.
+
+`uv sync` installs the Python version in `.python-version` (3.12) if needed, creates `.venv/` and installs exactly what `uv.lock` lists. PostgreSQL, Redis and the full Docker stack arrive in `P0-SET-02` and `P0-OPS-02`.
+
+## Dependencies
+
+- Add a library with `uv add <name>==<version>`, or a dev tool with `uv add --dev <name>==<version>`. Only approved libraries (see [docs/architecture.md](docs/architecture.md)).
+- Commit `pyproject.toml` and `uv.lock` together. Never edit `uv.lock` by hand.
+- Servers install without dev tools: `uv sync --frozen --no-dev`.
 
 ## Checks
 
 Run these before every pull request. CI runs the same ones (`P0-OPS-03`).
 
 ```bash
-.venv/bin/ruff check .
+uv run ruff check .
 ```
 
 ```bash
-.venv/bin/mypy
+uv run mypy
 ```
 
 ```bash
-.venv/bin/pytest
+uv run pytest
 ```
 
 ```bash
-.venv/bin/pip-audit
+uv run pip-audit
 ```
 
 ## Create a migration
@@ -86,7 +96,7 @@ Run these before every pull request. CI runs the same ones (`P0-OPS-03`).
 Alembic is set up in `P0-SET-02`. After that:
 
 ```bash
-.venv/bin/alembic revision --autogenerate -m "short description"
+uv run alembic revision --autogenerate -m "short description"
 ```
 
 ## Contributing

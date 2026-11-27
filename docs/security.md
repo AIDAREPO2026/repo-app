@@ -36,7 +36,7 @@ Security is a release gate, not a later phase. Every task spec has a **Security*
 | Download abuse by bots | 50 downloads per IP per hour, then a CAPTCHA | `P4-PUB-01` |
 | Denial of service | Nginx rate limits, upload size checks before upload, worker timeouts | `P0-OPS-02`, `P2-UPL-02` |
 | Tampering with the audit trail | Database trigger blocks update and delete, and the app's database role has no UPDATE or DELETE on the table | `P1-AUD-01` |
-| Vulnerable dependencies | `pip-audit` in CI, pinned versions, monthly update review | `P0-OPS-03` |
+| Vulnerable dependencies | `pip-audit` in CI, every package locked in `uv.lock`, monthly update review | `P0-OPS-03` |
 | Secret leakage | Secrets only in environment variables, secret scanning in CI, nothing sensitive in logs | `P0-OPS-03` |
 | Insider misuse | Least privilege, full audit of administrative actions, named accounts | `P1-AUD-01`, `P1-ACC-09` |
 | Data loss | Daily encrypted backups for 30 days, restore rehearsal, India-only storage | `P4-OPS-01`, `P6-OPS-01` |

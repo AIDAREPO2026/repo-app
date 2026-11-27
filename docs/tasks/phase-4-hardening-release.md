@@ -124,7 +124,7 @@ Features are frozen. Only `P4-PUB-01`, `P4-PUB-02` and `P4-KPI-01` add behaviour
 
 - Run an authenticated OWASP ZAP scan on staging, once as a Member and once as Admin, using a ZAP context that logs in, handles MFA with a test TOTP secret, and keeps the CSRF token.
 - Run an unauthenticated scan as a visitor.
-- Run `pip-audit` on the locked requirements and `trivy image` on the built images.
+- Run `uv run pip-audit` against the `uv.lock` environment and `trivy image` on the built images.
 - Fix every high finding. Record medium and low ones as `DEF-###` with a planned phase.
 - Save the reports in `security/reports/2026-12/`.
 
