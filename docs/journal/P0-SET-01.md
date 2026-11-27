@@ -2,10 +2,10 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Blocked |
+| Status | In review |
 | Owner | Raghvendra Singh |
 | Branch | `chore/p0-set-01-project-structure` |
-| Pull request | Not opened |
+| Pull request | [AIDAREPO2026/repo-app#1](https://github.com/AIDAREPO2026/repo-app/pull/1) |
 | Started | 2026-11-27 |
 | Finished | Not finished |
 
@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-27 | Raghvendra Singh | Pushed `main` and the task branch, opened [the pull request](https://github.com/AIDAREPO2026/repo-app/pull/1), set status to In review. Next: review and approval. |
 | 2026-11-27 | Raghvendra Singh | Added the rule that any later change to a task updates its journal, and a CI journal check to `P0-OPS-03`. |
 | 2026-11-27 | Raghvendra Singh | Added the task journal (this folder), the `P1-UI-02` design-system task and open question Q-11, and updated the shared tracker to match. Waiting for `main` on GitHub to open the pull request. |
 | 2026-11-27 | Raghvendra Singh | Switched to uv with `uv.lock`, added the shared `apple-design` skill, the UI and motion rules, and the task index generator. |
@@ -35,6 +36,4 @@ Newest first. One line per working session: what was done, what is next.
 
 ## Blockers
 
-| Since | Blocker | Who can unblock it |
-| --- | --- | --- |
-| 2026-11-27 | The GitHub repository has no `main` branch, so no pull request can target it | A repository maintainer runs `git push -u origin main` from the local checkout |
+None. The missing `main` branch on GitHub was resolved on 2026-11-27.
