@@ -1,0 +1,16 @@
+# Local development only. Adds the Mailpit mail catcher, so emails are captured
+# instead of sent. Its inbox is published on this machine only: http://127.0.0.1:8025
+
+services:
+  mailpit:
+    image: axllent/mailpit:v1.34.0
+    restart: unless-stopped
+    # Mail is kept in memory, so it needs no writable folder and no root.
+    user: "1000:1000"
+    ports:
+      - "127.0.0.1:8025:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3

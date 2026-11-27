@@ -32,3 +32,6 @@ test-results/
 
 # Claude Code: personal settings stay local; shared skills are committed
 .claude/settings.local.json
+
+# Local TLS certificates and keys
+deploy/nginx/certs/

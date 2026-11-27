@@ -12,7 +12,7 @@ dependencies = [
     "alembic==1.20.1",
     "argon2-cffi==25.1.0",
     "boto3==1.44.12",
-    "celery==5.7.0",
+    "celery[redis]==5.7.0",
     "cryptography==50.0.2",
     "fastapi==0.165.0",
     "httpx==0.29.0",
