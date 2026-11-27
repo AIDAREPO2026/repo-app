@@ -2,12 +2,12 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In review |
+| Status | Done |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p0-ops-02-docker-compose` |
 | Pull request | [AIDAREPO2026/repo-app#4](https://github.com/AIDAREPO2026/repo-app/pull/4) |
 | Started | 2026-11-27 |
-| Finished | Not finished |
+| Finished | 2026-11-27 |
 
 Spec: [docs/tasks/phase-0-mobilise.md](../tasks/phase-0-mobilise.md)
 
@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-27 | Raghvendra Singh | Pull request approved; set status to Done and squash-merged. CI and the staging check arrive with `P0-OPS-03` and `P0-OPS-01`. |
 | 2026-11-27 | Raghvendra Singh | At the tech lead's request, replaced the fixed `storage_limit_gb` with a free-space reserve read from SeaweedFS, and added task `P2-UPL-04`: an Admin Storage page, a 15-minute check, and portal and email alerts at 75% and 85% full. Phase 2 is now 23 tasks and 53 points; the MVP uses 83% of capacity. |
 | 2026-11-27 | Raghvendra Singh | Moved the database and SeaweedFS data to host folders under `DATA_DIR`, and put SeaweedFS on its own `storage` network, at the tech lead's request. Proved a row and a stored file survive `docker compose down -v`, and that postgres, redis, clamav and beat cannot reach SeaweedFS. |
 | 2026-11-27 | Raghvendra Singh | Published the SeaweedFS file browser on `127.0.0.1:8888` in development, at the tech lead's request; checked it lists the `aida` bucket and that the S3 port stays closed to the host. |
