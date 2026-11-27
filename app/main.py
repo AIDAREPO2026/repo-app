@@ -5,11 +5,12 @@ Run locally with: uvicorn app.main:app --reload
 
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from redis import Redis
 
+from app.accounts.guards import public_route
 from app.accounts.router import router as accounts_router
 from app.audit.router import router as audit_router
 from app.content.router import router as content_router
@@ -47,8 +48,13 @@ def create_app() -> FastAPI:
     config = load_config()
     configure_logging()
     # debug stays False everywhere: in debug mode Starlette shows stack traces instead of our 500 page.
+    # No OpenAPI schema: it would publish every route to anyone, outside the route guards.
     application = FastAPI(
-        title="AIDA Digital Resource Repository", debug=False, docs_url=None, redoc_url=None
+        title="AIDA Digital Resource Repository",
+        debug=False,
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
     )
     application.state.session_factory = make_session_factory(config.database_url)
     # Short timeouts, so a stuck Redis fails the health check instead of hanging it.
@@ -59,7 +65,7 @@ def create_app() -> FastAPI:
     application.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     add_error_pages(application)
 
-    @application.get("/healthz", include_in_schema=False)
+    @application.get("/healthz", include_in_schema=False, dependencies=[Depends(public_route)])
     def healthz(request: Request) -> JSONResponse:
         """Return 200 when the database and Redis answer, else 503, with no detail (P6-OPS-02)."""
         state = request.app.state

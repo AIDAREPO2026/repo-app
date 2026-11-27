@@ -17,6 +17,12 @@ NAMING_CONVENTION = {
 }
 
 
+def one_of(column: str, values: tuple[str, ...]) -> str:
+    """Return a CHECK expression limiting a text column to fixed values (data-model.md conventions)."""
+    quoted = ", ".join(f"'{value}'" for value in values)
+    return f"{column} IN ({quoted})"
+
+
 class Base(DeclarativeBase):
     """Base class for every table."""
 
