@@ -81,7 +81,7 @@
 **Scope**
 
 - Provision a Linux virtual machine in India with the provider ITPED selects. A MeitY-empanelled cloud or a Tier III data centre is preferred (SRS 2.4).
-- Create a private S3-compatible bucket in an Indian region with server-side encryption on. Add the prefixes `incoming/`, `files/`, `previews/` and `quarantine/`.
+- Attach a separate encrypted data disk for SeaweedFS (D-14), sized to the agreed limit such as 100 GB. The `seaweedfs` container from `P0-OPS-02` stores its data there, in a private bucket with the prefixes `incoming/`, `files/`, `previews/` and `quarantine/`.
 - Enable disk encryption on the virtual machine.
 - Create a staging subdomain under ITPED-controlled DNS, and issue a TLS certificate with automatic renewal.
 - Create an SMTP account for outbound email (registration, MFA codes, notifications).
@@ -99,8 +99,8 @@
 
 - [ ] The staging URL serves a placeholder page over HTTPS with a valid certificate
 - [ ] An anonymous request to the bucket is refused
-- [ ] The bucket and the virtual machine are in an Indian region, recorded in `environments.md`
-- [ ] Disk encryption and bucket encryption are confirmed on
+- [ ] The virtual machine and its disks are in an Indian region, recorded in `environments.md`
+- [ ] Encryption is confirmed on for the system disk and the storage data disk
 - [ ] A test email sent through the SMTP account arrives
 
 **Tests:** a manual checklist recorded in the pull request.
@@ -117,8 +117,8 @@
 
 **Scope**
 
-- `deploy/docker-compose.yml` with the containers `nginx`, `app`, `worker`, `beat`, `tusd`, `clamav`, `postgres` and `redis`. The `postgres` service uses the official image pinned to a PostgreSQL 19 minor tag, such as `postgres:19.0-trixie`.
-- `deploy/docker-compose.dev.yml` for local development, adding a local S3-compatible container and a mail catcher. The tech lead picks both and records them in `architecture.md`.
+- `deploy/docker-compose.yml` with the containers `nginx`, `app`, `worker`, `beat`, `tusd`, `clamav`, `postgres`, `redis` and `seaweedfs` (D-14). The `postgres` service uses the official image pinned to a PostgreSQL 19 minor tag, such as `postgres:19.0-trixie`.
+- `deploy/docker-compose.dev.yml` for local development, adding the Mailpit mail catcher.
 - `Dockerfile` for `app`, and `Dockerfile.worker` adding LibreOffice, FFmpeg and libmagic.
 - `deploy/nginx/default.conf` with:
     - HTTP to HTTPS redirect and the headers in [security.md](../security.md)

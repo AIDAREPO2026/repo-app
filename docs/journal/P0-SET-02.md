@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-27 | Raghvendra Singh | Added the `storage_limit_gb` setting (default 100) for D-14, as part of `P0-OPS-02`. |
 | 2026-11-27 | Raghvendra Singh | Pull request merged; set status to Done in this follow-up, because it was merged while the journal still said In review. CI and the staging check arrive with `P0-OPS-03` and `P0-OPS-02`. |
 | 2026-11-27 | Raghvendra Singh | Opened [the pull request](https://github.com/AIDAREPO2026/repo-app/pull/2) and set status to In review. Next: review and approval. |
 | 2026-11-27 | Raghvendra Singh | Built config, database session, constants, time helpers, the settings store and JSON logging, with Alembic migrations `0001` (empty baseline) and `0002` (`app_setting`). All acceptance criteria pass against PostgreSQL 19.0. Next: review. |

@@ -176,13 +176,14 @@ Format and size rules are added in `P2-UPL-02`.
 | --- | --- | --- | --- |
 | 2 | Dev | `P2-UPL-01`, `P0-SET-02` | FR-3.5, FR-3.12, D-01, [decisions.md](../decisions.md) file formats |
 
-**Goal:** a file that is the wrong type or too large is refused before upload begins, with a message stating the limit.
+**Goal:** a file that is the wrong type or too large, or that would fill the file storage, is refused before upload begins, with a message stating the limit.
 
 **Scope**
 
 - `app/content/formats.py`: one table of format groups, extensions, MIME types and setting keys, used by both the client and the server.
 - Uppy restrictions built from that table, so the browser refuses before upload with a message such as "Images must be 20 MB or smaller. This file is 21.3 MB."
 - The same check in the tusd pre-create hook, using `Upload-Length` and the file extension. The server check is the one that counts.
+- A storage check in the same pre-create hook (D-14). It refuses the upload when the stored files plus `Upload-Length` would pass `storage_limit_gb`, with "The repository is full. Ask the Admin to free space or add storage." Each refusal is logged.
 - SCORM ZIP files are refused until Phase 5, with "SCORM packages will be supported later."
 - Help text on the form lists every limit, including the 20 MB image limit (D-01).
 
@@ -197,8 +198,9 @@ Format and size rules are added in `P2-UPL-02`.
 - [ ] A 26 MB PDF and a file over 1 GB are refused the same way
 - [ ] An unsupported extension is refused
 - [ ] Bypassing the browser and calling tusd directly with an oversized `Upload-Length` is refused
+- [ ] An upload that would pass `storage_limit_gb` is refused before any byte is stored
 
-**Tests:** `test_fr_3_5_image_over_20mb_refused`, `test_fr_3_5_document_over_25mb_refused`, `test_fr_3_5_media_over_1gb_refused`, `test_fr_3_12_server_refuses_without_client_check`, `test_d01_error_message_states_limit`.
+**Tests:** `test_fr_3_5_image_over_20mb_refused`, `test_fr_3_5_document_over_25mb_refused`, `test_fr_3_5_media_over_1gb_refused`, `test_fr_3_12_server_refuses_without_client_check`, `test_d01_error_message_states_limit`, `test_d14_upload_refused_when_storage_full`.
 
 ---
 

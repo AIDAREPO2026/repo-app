@@ -247,7 +247,7 @@ The full manual audit is `P6-A11Y-01`.
 **Scope**
 
 - A nightly `pg_dump -Fc` from a backup container, encrypted, written to a separate storage bucket in India, kept for 30 days.
-- Object storage versioning on, or a nightly copy of the `files/` prefix to the backup bucket.
+- A nightly copy of the `files/` prefix from SeaweedFS to the backup bucket (D-14).
 - A restore script `deploy/restore.sh` that restores a named dump into a fresh database.
 - Rehearse: restore last night's backup to a scratch environment, start the app against it, log in and open an item. Record the time taken.
 

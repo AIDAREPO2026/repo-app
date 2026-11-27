@@ -20,6 +20,7 @@ All of them need ITPED confirmation, because the SRS is ITPED's document. `P0-GO
 | D-10 | FR-2.3 gives no default for the sixth-session policy | The default is `block`. Admin can switch to `end_oldest` | `P1-ACC-07` | Awaiting confirmation |
 | D-11 | FR-1.3 does not say how the System knows which Discom a registrant belongs to | The registrant picks their Discom from the master list, and the email domain must match that Discom's recorded domain | `P1-ACC-02`, `P1-ACC-03` | Awaiting confirmation |
 | D-12 | The SRS does not say which state bulk-imported content enters | Imported items enter Submitted as ITPED-sourced items, so they still pass Reviewer and Approver | `P2-CON-07` | Awaiting confirmation |
+| D-14 | The SRS does not say where files are stored, and no managed object storage is available yet | Files are stored in self-hosted SeaweedFS (open-source edition, Apache-2.0, no licence fee), an S3-compatible server running on our own server in India, on an encrypted disk of fixed size such as 100 GB. An upload is refused before it starts when it would pass `storage_limit_gb`. A managed S3 in India can replace it later by changing the endpoint and keys | `P0-OPS-01`, `P0-OPS-02`, `P2-UPL-02`, `P4-OPS-01` | Awaiting confirmation |
 | D-13 | The SRS does not say whose views count | View and download counts include Members and visitors only. Views and downloads by Admin, Reviewer and Approver are not counted | `P3-LIST-02` | Awaiting confirmation |
 
 ## Open items from the SRS

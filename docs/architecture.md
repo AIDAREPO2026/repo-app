@@ -11,7 +11,7 @@ The system is a layered modular monolith: one FastAPI application, one PostgreSQ
 | Application | FastAPI, Pydantic v2, Uvicorn, plain `def` routes | Routing and input validation |
 | Business rules | `service.py` in each module | Workflow, permissions, consent and limits |
 | Data | PostgreSQL 19 (official Docker image `postgres:19`), SQLAlchemy 2, Alembic, psycopg 3 | Records, full-text search and the append-only audit table |
-| Files | S3-compatible object storage in India, tusd, Uppy | Stored files and resumable uploads |
+| Files | S3-compatible object storage in India: self-hosted SeaweedFS (D-14), tusd, Uppy | Stored files and resumable uploads |
 | Background work | Celery, Redis | Scanning, previews, notifications and scheduled jobs |
 | Scanning and previews | ClamAV (clamd), LibreOffice headless, PDF.js, FFmpeg (`ffprobe`) | Malware checks, Office previews and media metadata |
 | Sessions and MFA | Database session table, argon2-cffi, pyotp | 5-device limit, idle timeout and privileged MFA |
@@ -71,6 +71,8 @@ Each module contains `router.py`, `service.py`, `models.py` and `schemas.py` (se
 | `clamav` | clamd with daily signature updates (`freshclam`) |
 | `postgres` | Database, official image pinned to a minor tag such as `postgres:19.0-trixie` so every environment runs the same build. Production can use a managed PostgreSQL 19 in India instead |
 | `redis` | Celery broker and rate-limit counters |
+| `mailpit` | Local development only: catches outgoing email |
+| `seaweedfs` | S3-compatible object storage, open-source edition (Apache-2.0), on the server's encrypted data disk (D-14). Production can switch to a managed S3 in India by changing the endpoint and keys |
 
 ## Key flows
 
@@ -94,6 +96,12 @@ Each module contains `router.py`, `service.py`, `models.py` and `schemas.py` (se
 The storage URL is never sent to the browser.
 
 **Workflow action:** the route calls `workflow.service.apply_action(db, subject, action, actor, comment)`. It checks the transition table and guard conditions, updates the state, and writes a `workflow_event` and an audit event in one transaction. It then creates notifications.
+
+## File storage
+
+Files are stored in one private bucket on SeaweedFS, an open-source S3-compatible server that runs as a container on our own server in India (D-14). The bucket has the prefixes `incoming/` (tusd uploads), `files/` (clean files), `previews/` and `quarantine/`. The app, tusd and Nginx talk to it only through the S3 API, so moving to a managed S3 in India later changes the endpoint and keys, not the code.
+
+The storage disk has a fixed size, such as 100 GB. Before an upload starts, the tusd pre-create hook refuses it when the stored files plus the new file would pass `storage_limit_gb` (`P2-UPL-02`). No byte is stored for a refused upload.
 
 ## Data model overview
 
@@ -130,6 +138,7 @@ These values are configurable by Admin through `app_setting` and read with `get_
 | `anon_downloads_per_hour` | 50 | Yes | FR-13.7 |
 | `newly_added_count` | 2 | Yes | FR-6.1, Q-05 |
 | `newly_added_days` | 15 | Yes | FR-6.1 |
+| `storage_limit_gb` | 100 | Yes (match the storage disk size) | D-14 |
 | `digest_frequency` | `daily` | Yes (`daily` or `weekly`, Phase 5) | FR-6.5 |
 
 | Constant | Value | Source |
@@ -159,7 +168,7 @@ Staging and production are hosted in India, with backups also in India (SRS 2.4,
 - HTTPS only, with HSTS. HTTP redirects to HTTPS.
 - Cookies are `HttpOnly`, `Secure` and `SameSite=Lax`.
 - Content Security Policy uses self-hosted scripts only, with no inline scripts.
-- Restricted and internal files are encrypted at rest, using storage server-side encryption plus disk encryption.
+- Restricted and internal files are encrypted at rest, using disk encryption on the storage data disk (D-14).
 - Restricted responses carry `Cache-Control: private, no-store`.
 - Logs never contain passwords, tokens, one-time codes or full file contents.
 - IP addresses in activity logs are stored as a salted hash. Audit events keep the raw IP to support CERT-In reporting.
