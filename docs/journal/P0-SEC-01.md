@@ -2,12 +2,12 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In review |
+| Status | Done |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p0-sec-01-captcha-approach` |
 | Pull request | [#7](https://github.com/AIDAREPO2026/repo-app/pull/7) |
 | Started | 2026-11-27 |
-| Finished | Not finished |
+| Finished | 2026-11-27 |
 
 Spec: [docs/tasks/phase-0-mobilise.md](../tasks/phase-0-mobilise.md)
 
@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-27 | Raghvendra Singh | Approved and merged #7. |
 | 2026-11-27 | Raghvendra Singh | Evaluated ALTCHA (maintenance, Python library, accessibility, data location, CSP) and accepted it in decision record 0006. Built the spike as `app/core/captcha.py` (`new_challenge()` and `verify()`) with Redis replay protection, and 8 tests in `tests/core/test_captcha.py`. Added `altcha==2.5.0`. |
 | 2026-11-27 | Raghvendra Singh | Started the task. |
 
