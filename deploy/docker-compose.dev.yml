@@ -1,5 +1,6 @@
 # Local development only. Adds the Mailpit mail catcher, so emails are captured
-# instead of sent. Its inbox is published on this machine only: http://127.0.0.1:8025
+# instead of sent, and opens the SeaweedFS file browser. Both are published on this
+# machine only: the inbox at http://127.0.0.1:8025, the files at http://127.0.0.1:8888
 
 services:
   mailpit:
@@ -14,3 +15,9 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
+
+  # SeaweedFS's web file browser, to see what is stored while developing. It has no
+  # login, so it is published on this machine only and never on staging or production.
+  seaweedfs:
+    ports:
+      - "127.0.0.1:8888:8888"

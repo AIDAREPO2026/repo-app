@@ -5,7 +5,7 @@ Docker Compose files, the Dockerfile and the Nginx configuration (`P0-OPS-02`), 
 | File | What it holds |
 | --- | --- |
 | `docker-compose.yml` | Every container: `nginx`, `app`, `worker`, `beat`, `tusd`, `seaweedfs`, `clamav`, `postgres`, `redis`. Only `nginx` publishes ports. |
-| `docker-compose.dev.yml` | Local development only: the Mailpit mail catcher, with its inbox at http://127.0.0.1:8025 |
+| `docker-compose.dev.yml` | Local development only: the Mailpit inbox at http://127.0.0.1:8025, and the SeaweedFS file browser at http://127.0.0.1:8888 to see stored files. Both are reachable from this machine only and have no login. |
 | `Dockerfile` | One image with two targets: `app` (FastAPI) and `worker` (adds LibreOffice, FFmpeg and libmagic, used by `worker` and `beat`) |
 | `nginx/default.conf` | HTTPS, the security headers, rate limits, the proxy to `app` and to `tusd` at `/files/`, and the internal protected-file location |
 | `nginx/make-dev-cert.sh` | Creates a self-signed certificate for `https://localhost` in `nginx/certs/` (not committed) |
