@@ -71,6 +71,21 @@ Before writing a helper, search the codebase. These shared functions must be use
 - Wrap user-facing text in `_()` so Hindi can be added later (SRS 5.5).
 - Never render an admin-only field in a Member or public template. Pass view schemas that do not contain those fields (`P2-CON-02`).
 
+**UI and motion rules**
+
+The `apple-design` skill in [`.claude/skills/`](.claude/skills/apple-design/SKILL.md) is the reference for look and feel. These rules decide what applies here, and win over the skill in any conflict.
+
+- Build every page from the design-system tokens (CSS variables) and component macros. No one-off colours, sizes, shadows or animations.
+- Give feedback immediately: style `:active` and `:focus-visible` states, and show an HTMX loading indicator for any request that may take longer than about 300 ms.
+- Animate only `transform` and `opacity`, for 150 to 300 ms. Motion must never delay content: the page renders first and motion adds polish.
+- Use CSS transitions and the View Transitions API (`hx-swap="... transition:true"` for HTMX swaps). Spring or animation libraries need tech lead approval and are only for real gesture features.
+- Do not add drag, flick or rubber-band physics, sound or haptics to the web portal.
+- Open and close modals, drawers and menus along the same path, and from the control that opened them.
+- Use translucent glass (`backdrop-filter`) only for the top bar and modal scrims. Text on it must pass WCAG AA contrast, with a solid fallback.
+- Respect `prefers-reduced-motion` (switch to a short cross-fade or no motion), `prefers-reduced-transparency` (solid surfaces) and `prefers-contrast: more` (solid surfaces, stronger borders). Nothing may flash more than three times a second.
+- Use the `system-ui` font stack, with size in `rem`, tighter letter-spacing on large headings and none on body text. Do not use Apple's SF Pro font files on the web, and do not copy Apple's own designs, icons or assets.
+- Keep the tone calm and professional: no confetti, bouncing or attention-seeking motion on a governed knowledge portal.
+
 **New libraries**
 
 Only the libraries listed in [architecture.md](docs/architecture.md) are approved. To add another, get tech lead approval and add it to that list in the same pull request.
