@@ -42,3 +42,6 @@ deploy/nginx/certs/
 # Front-end build
 node_modules/
 app/static/css/app.css
+
+# Test files built on demand by scripts/make_test_files.py
+tests/files/generated/
