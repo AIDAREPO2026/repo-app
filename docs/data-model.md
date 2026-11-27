@@ -165,7 +165,7 @@ Admin-editable settings (see [architecture.md](architecture.md#settings)). Creat
 | --- | --- | --- | --- | --- |
 | `key` | varchar(64) | No | | Primary key. Must be a key in `SETTING_RULES` |
 | `value` | jsonb | No | | |
-| `updated_by` | uuid | Yes | | FK `login`. Today an untyped integer; `P1-ACC-08` changes it to `uuid` and adds the key |
+| `updated_by` | uuid | Yes | | FK `login`, added by `P1-ACC-08` with the `login` table. Changed from integer to `uuid` in `P1-AUD-01` |
 | `updated_at` | timestamptz | No | | |
 
 The configurable AIDA Endorsed criteria and disclaimer (`P5-END-01`) and the Gallery entry conditions (`P5-GAL-01`) are settings too, stored as JSON values, with no tables of their own.
@@ -178,7 +178,7 @@ The append-only audit trail (FR-12.1, SRS 2.3). Created in `P1-AUD-01`.
 | --- | --- | --- | --- | --- |
 | `id` | bigint identity | No | | Primary key |
 | `occurred_at` | timestamptz | No | `now()` | |
-| `actor_login_id` | uuid | Yes | | FK `login`. Null for anonymous and system actions |
+| `actor_login_id` | uuid | Yes | | FK `login`, added by `P1-ACC-08`. Null for anonymous and system actions |
 | `actor_kind` | text | No | | `member`, `admin`, `reviewer`, `approver`, `anonymous` or `system` |
 | `session_id` | uuid | Yes | | The `user_session.id`. No foreign key, so the audit insert never depends on session state |
 | `ip` | inet | Yes | | Raw IP, kept for incident reporting (CERT-In) |
@@ -583,7 +583,7 @@ Expert fields not in `public_fields` are hidden from Members and visitors like a
 
 ## Database roles and grants
 
-Two roles, as [security.md](security.md#secrets-and-infrastructure) requires. Their passwords come from the environment files. The operations tasks create the roles on each server; locally and in CI the single development user plays both.
+Two roles, as [security.md](security.md#secrets-and-infrastructure) requires. Their passwords come from the environment files. The operations tasks create the roles on each server. Locally the single development user plays both. The test setup creates `aida_app` without login rights, so migrations run their grants and tests can check them. A migration grants to `aida_app` only when the role exists.
 
 | Role | Used by | Rights |
 | --- | --- | --- |

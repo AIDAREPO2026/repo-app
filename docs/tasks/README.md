@@ -36,7 +36,7 @@ Each code links to its full spec. Status and owner come from each task's file in
 
 | Code | Task | Role | Points | Status | Owner | Depends on |
 | --- | --- | --- | --- | --- | --- | --- |
-| [`P1-AUD-01`](phase-1-platform-access.md#p1-aud-01--build-the-append-only-audit-table-and-record-function) | Build the append-only audit table and record function | Dev | 2 | Not started |  | `P0-SET-02`, `P0-ARC-01` |
+| [`P1-AUD-01`](phase-1-platform-access.md#p1-aud-01--build-the-append-only-audit-table-and-record-function) | Build the append-only audit table and record function | Dev | 2 | In review | Raghvendra Singh | `P0-SET-02`, `P0-ARC-01` |
 | [`P1-UI-01`](phase-1-platform-access.md#p1-ui-01--build-the-accessible-base-layout-and-role-dashboard-shells) | Build the accessible base layout and role dashboard shells | Dev | 2 | Done | Raghvendra Singh | `P0-SET-01` |
 | [`P1-UI-02`](phase-1-platform-access.md#p1-ui-02--build-the-design-system-tokens-components-and-motion-rules) | Build the design system: tokens, components and motion rules | Dev | 3 | Not started |  | `P1-UI-01`, `P1-ACC-08` |
 | [`P1-ACC-08`](phase-1-platform-access.md#p1-acc-08--add-the-four-login-types-and-role-guards) | Add the four login types and role guards | Dev | 2 | Not started |  | `P0-ARC-01`, `P1-AUD-01` |
