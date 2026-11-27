@@ -1,5 +1,8 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import page_header, card, empty_state with context %}
 {% block content %}
-<h1 class="mb-4 text-3xl font-semibold">{{ _(title) }}</h1>
-<p>{{ _("Nothing to show yet.") }}</p>
+{{ page_header(title) }}
+{% call card() %}
+  {{ empty_state("Nothing to show yet", "Your work will appear here as the portal's features arrive.") }}
+{% endcall %}
 {% endblock %}

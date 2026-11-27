@@ -3,53 +3,64 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>{% block title %}{{ _(title) }}{% endblock %} | {{ _("AIDA Digital Resource Repository") }}</title>
   <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}">
 </head>
-<body class="flex min-h-screen flex-col bg-white text-slate-900">
-  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:rounded focus:bg-white focus:px-4 focus:py-2">{{ _("Skip to main content") }}</a>
+{% from "macros/ui.html" import flash_messages, breadcrumbs as breadcrumb_trail with context %}
+{% from "macros/layout.html" import brand, nav_menu, top_nav, account_panel, site_footer with context %}
+{% from "macros/icons.html" import icon %}
+{% set login = request.state.login %}
+<body>
+  <a href="#main" class="btn btn-primary sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50">{{ _("Skip to main content") }}</a>
 
-  <header class="border-b border-slate-200">
-    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-3">
-      <a href="/" class="text-lg font-semibold">{{ _("AIDA Digital Resource Repository") }}</a>
-      {% if nav %}
-      <nav aria-label="{{ _('Main') }}">
-        <ul class="flex flex-wrap gap-2">
-          {% for link in nav %}
-          <li>
-            <a href="{{ link.path }}"
-               class="block rounded px-3 py-2 hover:bg-slate-100{% if request.url.path == link.path %} font-semibold underline{% endif %}"
-               {% if request.url.path == link.path %}aria-current="page"{% endif %}>{{ _(link.label) }}</a>
-          </li>
-          {% endfor %}
-        </ul>
-      </nav>
+  {% if login %}
+  {# Signed in: an app shell with the menu in a sidebar, or in a drawer on small screens. #}
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="{{ _('Sidebar') }}">
+      <div class="sidebar-brand">{{ brand() }}</div>
+      <div class="sidebar-nav">{{ nav_menu(nav) }}</div>
+      {{ account_panel(login) }}
+    </aside>
+
+    <header class="topbar mobile-bar">
+      <div class="topbar-inner page">
+        <button type="button" class="icon-button" commandfor="menu-drawer" command="show-modal" aria-label="{{ _('Open menu') }}">{{ icon("menu") }}</button>
+        {{ brand() }}
+      </div>
+    </header>
+    <dialog id="menu-drawer" class="drawer drawer-left" aria-label="{{ _('Menu') }}" closedby="any">
+      <div class="dialog-header">
+        {{ brand() }}
+        <button type="button" class="btn btn-secondary btn-sm" commandfor="menu-drawer" command="close">{{ _("Close") }}</button>
+      </div>
+      <div class="flex-1">{{ nav_menu(nav, "Menu") }}</div>
+      {{ account_panel(login) }}
+    </dialog>
+
+    <div class="app-main">
+      {% if breadcrumbs is defined %}
+      <div class="page-bar"><div class="page page-bar-inner">{{ breadcrumb_trail(breadcrumbs) }}</div></div>
       {% endif %}
-      {% if request.state.login %}
-      {% from "macros/forms.html" import csrf_field with context %}
-      <form method="post" action="/logout">
-        {{ csrf_field() }}
-        <button type="submit" class="rounded px-3 py-2 hover:bg-slate-100 active:bg-slate-200">{{ _("Sign out") }}</button>
-      </form>
-      {% endif %}
+      {{ flash_messages(messages|default([])) }}
+      <main id="main" tabindex="-1" class="page flex-1 py-8 focus:outline-none">
+        {% block content %}{% endblock %}
+      </main>
+      {{ site_footer() }}
     </div>
-  </header>
-
-  {# Flash messages: later tasks pass a list of (category, text) pairs as `messages`. #}
-  <div class="mx-auto w-full max-w-6xl px-4" role="status" aria-live="polite">
-    {% for category, text in messages|default([]) %}
-    <p class="mt-4 rounded border px-4 py-3{% if category == 'error' %} border-red-700 text-red-800{% else %} border-slate-300{% endif %}">{{ text }}</p>
-    {% endfor %}
   </div>
-
-  <main id="main" tabindex="-1" class="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-    {% block content %}{% endblock %}
-  </main>
-
-  <footer class="border-t border-slate-200">
-    <div class="mx-auto max-w-6xl px-4 py-4 text-sm text-slate-700">
-      {{ _("Digital Resource Repository for DISCOMs, maintained by ITPED.") }}
-    </div>
-  </footer>
+  {% else %}
+  {# Visitors: a simple top bar. #}
+  <div class="flex min-h-screen flex-col">
+    <header class="topbar">
+      <div class="page topbar-inner">{{ brand() }}{{ top_nav(nav) }}</div>
+    </header>
+    {{ flash_messages(messages|default([])) }}
+    <main id="main" tabindex="-1" class="page flex-1 py-8 focus:outline-none">
+      {% block visitor_content %}{{ self.content() }}{% endblock %}
+    </main>
+    {{ site_footer() }}
+  </div>
+  {% endif %}
 </body>
 </html>
