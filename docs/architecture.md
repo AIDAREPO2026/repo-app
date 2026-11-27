@@ -19,9 +19,9 @@ The system is a layered modular monolith: one FastAPI application, one PostgreSQ
 
 ## Approved libraries
 
-**Runtime:** fastapi, uvicorn, pydantic, pydantic-settings, sqlalchemy, alembic, psycopg, jinja2, python-multipart, argon2-cffi, pyotp, qrcode, cryptography, celery, redis, boto3, python-magic, openpyxl, pypdf, httpx, and the ALTCHA server library (confirmed in `P0-SEC-01`).
+**Runtime:** fastapi, uvicorn, pydantic, pydantic-settings, sqlalchemy, alembic, psycopg, jinja2, python-multipart, argon2-cffi, pyotp, qrcode, cryptography, celery, redis, boto3, python-magic, openpyxl, pypdf, httpx, altcha (the ALTCHA CAPTCHA server library, [decision record 0006](adr/0006-self-hosted-captcha.md)).
 
-**Front end, served locally:** Tailwind CSS, HTMX, Uppy, PDF.js.
+**Front end, served locally:** Tailwind CSS, HTMX, Uppy, PDF.js, the ALTCHA widget (its `dist/external` build, for the strict CSP).
 
 **CSS build:** Node.js and npm, for development and the Docker build only. `package.json` and `package-lock.json` pin `tailwindcss` and `@tailwindcss/cli`. The Dockerfile compiles `app/static/css/app.css` in a throwaway Node stage, so servers never run Node. Tailwind replaced Bootstrap 5 in `P1-UI-01`, approved by the tech lead.
 
