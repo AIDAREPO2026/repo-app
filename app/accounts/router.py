@@ -5,7 +5,7 @@ HTTP routes only. Each route parses input, calls one service function and render
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from app.accounts.guards import LOGIN_PATH, current_login, public_route, require_login_type
@@ -119,3 +119,16 @@ def approver_dashboard(
 ) -> HTMLResponse:
     """Render the Approver dashboard shell."""
     return render_dashboard(request, login)
+
+
+@router.get("/_styleguide", response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def styleguide(request: Request, login: Annotated[Login | None, Depends(current_login)]) -> HTMLResponse:
+    """Show every design token and component, in light and dark, for design review (P1-UI-02).
+
+    Open to the route registry as public, because Members and visitors must get 404, not
+    the sign-in redirect or 403 the login type guard gives: the page is not advertised.
+    """
+    if login is None or login.login_type == "member":
+        raise HTTPException(status_code=404)
+    context = {"title": "Style guide", "nav": nav_for(login.login_type)}
+    return templates.TemplateResponse(request, "styleguide.html", context)
