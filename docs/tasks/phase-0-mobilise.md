@@ -161,8 +161,9 @@
     - `ruff check`, with rules `E`, `F`, `I`, `B`, `S`, `D` and `C901` (max complexity 10)
     - `ruff format --check`
     - `mypy app`
+    - `npm ci` and `npm run build:css`, before the tests (`P1-UI-01`)
     - `pytest`, with PostgreSQL and Redis service containers on the same images as `deploy/docker-compose.yml`
-    - `pip-audit`
+    - `pip-audit` and `npm audit`
     - a secret scan of the diff, using a tool the tech lead approves
     - `uv run python scripts/build_task_index.py --check`
     - a journal check: for the task code in the branch name and at the start of each commit subject, the pull request must change `docs/journal/<CODE>.md`

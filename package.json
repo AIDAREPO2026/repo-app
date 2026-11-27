@@ -1,0 +1,13 @@
+{
+  "name": "aida-repo-app-css",
+  "private": true,
+  "description": "Builds the portal CSS with Tailwind. Development and Docker build only; servers never run Node.",
+  "scripts": {
+    "build:css": "tailwindcss --input app/static/css/app.src.css --output app/static/css/app.css --minify",
+    "watch:css": "tailwindcss --input app/static/css/app.src.css --output app/static/css/app.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.5",
+    "tailwindcss": "4.3.5"
+  }
+}

@@ -7,4 +7,8 @@
 !app/
 !migrations/
 !workers/
+!package.json
+!package-lock.json
 **/__pycache__
+# Built inside the image instead.
+app/static/css/app.css
