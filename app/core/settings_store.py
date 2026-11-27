@@ -1,12 +1,14 @@
 """Admin-editable settings: the app_setting table, their rules, and get/set functions."""
 
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from sqlalchemy import DateTime, Integer, String
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import DateTime, String
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
+from app.audit.service import Actor, record
 from app.core.constants import IMAGE_LIMIT_MAX_MB
 from app.core.db import Base
 from app.core.time import utc_now
@@ -22,7 +24,7 @@ class AppSetting(Base):
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[SettingValue] = mapped_column(JSONB)
     # Becomes a foreign key to login once that table exists (P1-ACC-08).
-    updated_by: Mapped[int | None] = mapped_column(Integer)
+    updated_by: Mapped[uuid.UUID | None] = mapped_column(UUID)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
@@ -64,18 +66,19 @@ def get_setting(db: Session, key: str) -> SettingValue:
     return stored.value
 
 
-def set_setting(db: Session, key: str, value: SettingValue, actor: int | None) -> None:
-    """Validate and store a setting value. `actor` is the login id of the Admin making the change."""
+def set_setting(db: Session, key: str, value: SettingValue, actor: Actor) -> None:
+    """Validate and store a setting value, and audit the change with its old and new values."""
     _validate(key, value)
+    old_value = get_setting(db, key)
     stored = db.get(AppSetting, key)
     if stored is None:
         stored = AppSetting(key=key)
         db.add(stored)
     stored.value = value
-    stored.updated_by = actor
+    stored.updated_by = actor.login_id
     stored.updated_at = utc_now()
     db.flush()
-    # ponytail: no audit event yet; P1-AUD-01 adds app.audit.service.record() here.
+    record(db, actor, "settings.update", "setting", key, "success", {"old": old_value, "new": value})
 
 
 def _rule_for(key: str) -> SettingRule:
