@@ -22,3 +22,11 @@
   {% if error %}<p id="{{ name }}-error" class="mt-1 text-sm text-red-800">{{ error }}</p>{% endif %}
 </div>
 {% endmacro %}
+
+{#
+  The CSRF token every POST form must carry (P1-ACC-06). Import it with context, so it
+  can read the request:  {% from "macros/forms.html" import csrf_field with context %}
+#}
+{% macro csrf_field() %}
+<input type="hidden" name="csrf_token" value="{{ request.state.csrf_token or '' }}">
+{% endmacro %}

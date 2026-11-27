@@ -12,6 +12,7 @@ from fastapi import Depends, HTTPException, Request
 from app.accounts.models import Login
 from app.audit.service import Actor, record
 from app.core.constants import LOGIN_TYPES
+from app.core.sessions import client_ip, user_agent
 
 LOGIN_PATH = "/login"
 
@@ -19,8 +20,8 @@ LOGIN_PATH = "/login"
 def current_login(request: Request) -> Login | None:
     """Return the signed-in login, or None for a visitor.
 
-    The session middleware (P1-ACC-06) puts the login and session ID on request.state.
-    Until it exists nobody is signed in, so every protected route sends visitors to sign in.
+    `app.core.sessions.load_session` puts the login and session ID on request.state
+    before every route runs.
     """
     return getattr(request.state, "login", None)
 
@@ -31,8 +32,8 @@ def actor_for(request: Request, login: Login) -> Actor:
         kind=login.login_type,
         login_id=login.id,
         session_id=getattr(request.state, "session_id", None),
-        ip=request.client.host if request.client else None,
-        user_agent=request.headers.get("user-agent", "")[:500],
+        ip=client_ip(request),
+        user_agent=user_agent(request),
     )
 
 

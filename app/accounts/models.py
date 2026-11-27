@@ -20,13 +20,14 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import INET, UUID
+from sqlalchemy.dialects.postgresql import BYTEA, INET, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.constants import LOGIN_TYPES
 from app.core.db import Base, one_of
 
 LOGIN_STATUSES = ("pending", "active", "declined", "deactivated")
+SESSION_END_REASONS = ("logout", "idle", "replaced", "admin", "password_reset")
 ATTEMPT_REASONS = ("ok", "unknown_user", "bad_password", "locked", "inactive", "mfa_failed")
 
 
@@ -94,3 +95,27 @@ class LoginAttempt(Base):
     success: Mapped[bool] = mapped_column(Boolean)
     reason: Mapped[str] = mapped_column(Text)
     at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class UserSession(Base):
+    """One signed-in browser. The cookie holds the token; only its SHA-256 hash is stored."""
+
+    __tablename__ = "user_session"
+    __table_args__ = (
+        CheckConstraint(one_of("end_reason", SESSION_END_REASONS), name="end_reason"),
+        CheckConstraint("(ended_at IS NULL) = (end_reason IS NULL)", name="ended_with_reason"),
+        # FR-2.3: active sessions are counted per login (P1-ACC-07).
+        Index("ix_user_session_active", "login_id", postgresql_where=text("ended_at IS NULL")),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    token_hash: Mapped[bytes] = mapped_column(BYTEA, unique=True)
+    login_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("login.id"))
+    csrf_token: Mapped[str] = mapped_column(String(64))
+    mfa_pending: Mapped[bool] = mapped_column(Boolean, server_default="false")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    end_reason: Mapped[str | None] = mapped_column(Text)
+    ip: Mapped[str] = mapped_column(INET)
+    user_agent: Mapped[str] = mapped_column(String(500), server_default="")
