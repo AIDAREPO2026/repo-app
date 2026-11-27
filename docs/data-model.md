@@ -73,7 +73,7 @@ Every person or shared Discom account that can sign in. Exactly four login types
 | `email` | text(254) | No | | |
 | `password_hash` | text | Yes | | argon2id. Null until a new privileged account sets its password |
 | `login_type` | text | No | | `member`, `admin`, `reviewer` or `approver` |
-| `organisation_id` | uuid | Yes | | FK `organisation`. `CHECK (login_type <> 'member' OR organisation_id IS NOT NULL)`. Optional for a Reviewer from a Discom (FR-2.9) |
+| `organisation_id` | uuid | Yes | | FK `organisation`, added by `P1-ACC-01` with that table. `CHECK (login_type <> 'member' OR organisation_id IS NOT NULL)`. Optional for a Reviewer from a Discom (FR-2.9) |
 | `full_name` | text(200) | Yes | | `CHECK (login_type = 'member' OR full_name IS NOT NULL)`: privileged accounts are named people (FR-2.7) |
 | `is_alternate` | boolean | No | `false` | `CHECK (NOT is_alternate OR login_type = 'reviewer')` |
 | `status` | text | No | `'pending'` | `pending`, `active`, `declined` or `deactivated` |
