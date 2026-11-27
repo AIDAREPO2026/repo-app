@@ -28,6 +28,7 @@ migrations/             Alembic database migrations
 tests/                  mirrors app/, plus e2e/ and load/
 deploy/                 Docker Compose, Dockerfiles, Nginx, release scripts
 docs/                   architecture, decisions, security and every task spec
+.claude/skills/         shared Claude Code skills, loaded by every developer
 ```
 
 Every feature module has the same four files:
