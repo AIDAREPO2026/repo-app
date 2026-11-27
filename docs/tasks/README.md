@@ -6,7 +6,7 @@ Each code links to its full spec. Status and owner come from each task's file in
 
 | Phase | Tasks | Dev points | QA points | Total | Done |
 | --- | --- | --- | --- | --- | --- |
-| 0 Mobilise | 12 | 20 | 6 | 26 | 2 |
+| 0 Mobilise | 12 | 20 | 6 | 26 | 4 |
 | 1 Platform and access | 17 | 31 | 8 | 39 | 0 |
 | 2 Content and governance | 22 | 40 | 11 | 51 | 0 |
 | 3 Discovery and directories | 16 | 28 | 9 | 37 | 0 |
@@ -25,7 +25,7 @@ Each code links to its full spec. Status and owner come from each task's file in
 | [`P0-OPS-02`](phase-0-mobilise.md#p0-ops-02--build-the-docker-compose-stack) | Build the Docker Compose stack | Dev | 3 | Not started |  | `P0-SET-01` |
 | [`P0-OPS-03`](phase-0-mobilise.md#p0-ops-03--set-up-ci) | Set up CI | Dev | 3 | Not started |  | `P0-SET-01`, `P0-OPS-01`, `P0-OPS-02` |
 | [`P0-SET-01`](phase-0-mobilise.md#p0-set-01--create-repository-module-structure-and-agentsmd) | Create repository, module structure and AGENTS.md | Dev (tech lead) | 2 | Done | Raghvendra Singh | None |
-| [`P0-SET-02`](phase-0-mobilise.md#p0-set-02--add-configuration-database-connection-and-alembic-baseline) | Add configuration, database connection and Alembic baseline | Dev | 2 | In review | Raghvendra Singh | `P0-SET-01` |
+| [`P0-SET-02`](phase-0-mobilise.md#p0-set-02--add-configuration-database-connection-and-alembic-baseline) | Add configuration, database connection and Alembic baseline | Dev | 2 | Done | Raghvendra Singh | `P0-SET-01` |
 | [`P0-ARC-01`](phase-0-mobilise.md#p0-arc-01--design-the-database-schema) | Design the database schema | Dev (tech lead) | 3 | Not started |  | `P0-GOV-01`, `P0-SET-02` |
 | [`P0-ARC-02`](phase-0-mobilise.md#p0-arc-02--write-c4-documentation-and-decision-records) | Write C4 documentation and decision records | Dev | 1 | Not started |  | `P0-ARC-01` |
 | [`P0-SEC-01`](phase-0-mobilise.md#p0-sec-01--confirm-the-self-hosted-captcha-approach) | Confirm the self-hosted CAPTCHA approach | Dev | 1 | Not started |  | None |
