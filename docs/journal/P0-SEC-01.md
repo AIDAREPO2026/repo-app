@@ -5,7 +5,7 @@
 | Status | In review |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p0-sec-01-captcha-approach` |
-| Pull request | Not opened |
+| Pull request | [#7](https://github.com/AIDAREPO2026/repo-app/pull/7) |
 | Started | 2026-11-27 |
 | Finished | Not finished |
 
