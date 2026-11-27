@@ -7,54 +7,57 @@
   <title>{% block title %}{{ _(title) }}{% endblock %} | {{ _("AIDA Digital Resource Repository") }}</title>
   <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}">
 </head>
-{% from "macros/ui.html" import flash_messages, button with context %}
+{% from "macros/ui.html" import flash_messages with context %}
+{% from "macros/layout.html" import brand, nav_menu, top_nav, account_panel, site_footer with context %}
+{% from "macros/icons.html" import icon %}
 {% set login = request.state.login %}
-{% set role_names = {"member": "Member", "admin": "Admin", "reviewer": "Reviewer", "approver": "Approver"} %}
-<body class="flex min-h-screen flex-col">
+<body>
   <a href="#main" class="btn btn-primary sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50">{{ _("Skip to main content") }}</a>
 
-  <header class="topbar">
-    <div class="page topbar-inner flex-wrap">
-      <a href="/" class="brand">
-        <span class="brand-mark" aria-hidden="true">A</span>
-        <span>AIDA <span class="brand-sub">Digital Resource Repository</span></span>
-      </a>
-      {% if nav %}
-      <nav aria-label="{{ _('Main') }}">
-        <ul class="nav-list">
-          {% for link in nav %}
-          <li>
-            <a href="{{ link.path }}" class="nav-link"
-               {% if request.url.path == link.path %}aria-current="page"{% endif %}>{{ _(link.label) }}</a>
-          </li>
-          {% endfor %}
-        </ul>
-      </nav>
-      {% endif %}
-      {% if login %}
-      {% from "macros/forms.html" import csrf_field with context %}
-      <div class="account-chip">
-        <p class="account-name">{{ login.full_name or login.user_id }}<span class="account-role">{{ _(role_names[login.login_type]) }}</span></p>
-        <form method="post" action="/logout">
-          {{ csrf_field() }}
-          {{ button("Sign out", "secondary", size="sm") }}
-        </form>
+  {% if login %}
+  {# Signed in: an app shell with the menu in a sidebar, or in a drawer on small screens. #}
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="{{ _('Sidebar') }}">
+      <div class="sidebar-brand">{{ brand() }}</div>
+      <div class="sidebar-nav">{{ nav_menu(nav) }}</div>
+      {{ account_panel(login) }}
+    </aside>
+
+    <header class="topbar mobile-bar">
+      <div class="topbar-inner page">
+        <button type="button" class="icon-button" commandfor="menu-drawer" command="show-modal" aria-label="{{ _('Open menu') }}">{{ icon("menu") }}</button>
+        {{ brand() }}
       </div>
-      {% endif %}
+    </header>
+    <dialog id="menu-drawer" class="drawer drawer-left" aria-label="{{ _('Menu') }}" closedby="any">
+      <div class="dialog-header">
+        {{ brand() }}
+        <button type="button" class="btn btn-secondary btn-sm" commandfor="menu-drawer" command="close">{{ _("Close") }}</button>
+      </div>
+      <div class="flex-1">{{ nav_menu(nav, "Menu") }}</div>
+      {{ account_panel(login) }}
+    </dialog>
+
+    <div class="app-main">
+      {{ flash_messages(messages|default([])) }}
+      <main id="main" tabindex="-1" class="page flex-1 py-8 focus:outline-none">
+        {% block content %}{% endblock %}
+      </main>
+      {{ site_footer() }}
     </div>
-  </header>
-
-  {# Flash messages: pages pass a list of (category, text) pairs as `messages`. #}
-  {{ flash_messages(messages|default([])) }}
-
-  <main id="main" tabindex="-1" class="page flex-1 py-8 focus:outline-none">
-    {% block content %}{% endblock %}
-  </main>
-
-  <footer class="footer">
-    <div class="page flex flex-wrap justify-between gap-2 py-5">
-      <p>{{ _("Digital Resource Repository for DISCOMs, maintained by ITPED.") }}</p>
-    </div>
-  </footer>
+  </div>
+  {% else %}
+  {# Visitors: a simple top bar. #}
+  <div class="flex min-h-screen flex-col">
+    <header class="topbar">
+      <div class="page topbar-inner">{{ brand() }}{{ top_nav(nav) }}</div>
+    </header>
+    {{ flash_messages(messages|default([])) }}
+    <main id="main" tabindex="-1" class="page flex-1 py-8 focus:outline-none">
+      {% block visitor_content %}{{ self.content() }}{% endblock %}
+    </main>
+    {{ site_footer() }}
+  </div>
+  {% endif %}
 </body>
 </html>

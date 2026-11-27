@@ -4,20 +4,27 @@ from typing import NamedTuple
 
 
 class NavLink(NamedTuple):
-    """One menu entry. The label is an English message id, translated by the template."""
+    """One menu entry. The label is an English message id, translated by the template.
+
+    The icon names one of the drawings in templates/macros/icons.html.
+    """
 
     label: str
     path: str
+    icon: str = "grid"
 
 
 # Visitors and error pages see the public menu. Later tasks add entries here, not in templates.
 PUBLIC_NAV: list[NavLink] = []
 
+# P1-UI-02: privileged logins review the design system; Members never see it.
+STYLE_GUIDE = NavLink("Style guide", "/_styleguide", "swatch")
+
 NAV_BY_LOGIN_TYPE: dict[str, list[NavLink]] = {
     "member": [NavLink("Dashboard", "/dashboard/member")],
-    "admin": [NavLink("Dashboard", "/dashboard/admin")],
-    "reviewer": [NavLink("Dashboard", "/dashboard/reviewer")],
-    "approver": [NavLink("Dashboard", "/dashboard/approver")],
+    "admin": [NavLink("Dashboard", "/dashboard/admin"), STYLE_GUIDE],
+    "reviewer": [NavLink("Dashboard", "/dashboard/reviewer"), STYLE_GUIDE],
+    "approver": [NavLink("Dashboard", "/dashboard/approver"), STYLE_GUIDE],
 }
 
 
