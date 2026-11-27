@@ -5,7 +5,7 @@
 | Status | Blocked |
 | Owner | Raghvendra Singh |
 | Branch | `docs/p0-gov-01-itped-decision-pack` |
-| Pull request | Not opened |
+| Pull request | [#9](https://github.com/AIDAREPO2026/repo-app/pull/9) |
 | Started | 2026-11-27 |
 | Finished | Not finished |
 
