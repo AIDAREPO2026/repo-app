@@ -23,6 +23,7 @@ New to the project? Read in this order:
 | --- | --- |
 | [conventions.md](conventions.md) | How to code, branch, commit, review and close a task |
 | [architecture.md](architecture.md) | Technical design every task builds on |
+| [data-model.md](data-model.md) | Database tables, keys, indexes, admin-only columns and grants |
 | [security.md](security.md) | Threats, mandatory controls, secure process and release gates |
 | [decisions.md](decisions.md) | Decisions D-01 to D-14 and the taxonomy baseline |
 | [workflow.md](workflow.md) | States, transitions, permissions and side effects |
