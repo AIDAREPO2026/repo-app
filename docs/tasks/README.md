@@ -30,7 +30,7 @@ Each code links to its full spec. Status and owner come from each task's file in
 | [`P0-ARC-02`](phase-0-mobilise.md#p0-arc-02--write-c4-documentation-and-decision-records) | Write C4 documentation and decision records | Dev | 1 | Not started |  | `P0-ARC-01` |
 | [`P0-SEC-01`](phase-0-mobilise.md#p0-sec-01--confirm-the-self-hosted-captcha-approach) | Confirm the self-hosted CAPTCHA approach | Dev | 1 | Done | Raghvendra Singh | None |
 | [`P0-QA-01`](phase-0-mobilise.md#p0-qa-01--write-the-test-plan-and-test-naming-conventions) | Write the test plan and test naming conventions | QA | 3 | Not started |  | None |
-| [`P0-QA-02`](phase-0-mobilise.md#p0-qa-02--set-up-test-data-and-playwright) | Set up test data and Playwright | QA | 3 | In review | Raghvendra Singh | `P0-OPS-02` |
+| [`P0-QA-02`](phase-0-mobilise.md#p0-qa-02--set-up-test-data-and-playwright) | Set up test data and Playwright | QA | 3 | Blocked | Raghvendra Singh | `P0-OPS-02` |
 
 ## Phase 1: Platform and access
 
