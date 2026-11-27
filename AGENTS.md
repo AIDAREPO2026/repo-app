@@ -48,6 +48,8 @@ Before writing a helper, search the codebase. These shared functions must be use
 | Require a login type on a route | `app.accounts.guards.require_login_type()` | `P1-ACC-08` |
 | Mark a route open to visitors | `dependencies=[Depends(app.accounts.guards.public_route)]` | `P1-ACC-08` |
 | Describe the signed-in login for an audit event | `app.accounts.guards.actor_for()` | `P1-ACC-08` |
+| Hash, check or validate a password | `app.accounts.passwords` (`hash_password`, `verify_password`, `check_password_policy`) | `P1-ACC-04` |
+| Check a sign-in, with lockout and attempt logging | `app.accounts.service.authenticate()` | `P1-ACC-04` |
 | Issue and verify a CAPTCHA | `app.core.captcha.new_challenge()` and `verify()` | `P0-SEC-01` |
 | Send an email | `app.core.email.send_email()` | `P1-ACC-03` |
 | Create a notification | `app.workflow.notifications.notify()` | `P2-WF-05` |
