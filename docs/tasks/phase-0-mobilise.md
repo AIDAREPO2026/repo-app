@@ -81,7 +81,7 @@
 **Scope**
 
 - Provision a Linux virtual machine in India with the provider ITPED selects. A MeitY-empanelled cloud or a Tier III data centre is preferred (SRS 2.4).
-- Attach a separate encrypted data disk for SeaweedFS (D-14), sized to the agreed limit such as 100 GB. The `seaweedfs` container from `P0-OPS-02` stores its data there, in a private bucket with the prefixes `incoming/`, `files/`, `previews/` and `quarantine/`.
+- Attach a separate encrypted data disk, sized to the agreed file limit such as 100 GB plus room for the database, and mount it at `/srv/aida`. Set `DATA_DIR=/srv/aida` in the server's `.env`: the database lives in `/srv/aida/postgres` and SeaweedFS (D-14) in `/srv/aida/seaweedfs`, in a private bucket with the prefixes `incoming/`, `files/`, `previews/` and `quarantine/`.
 - Enable disk encryption on the virtual machine.
 - Create a staging subdomain under ITPED-controlled DNS, and issue a TLS certificate with automatic renewal.
 - Create an SMTP account for outbound email (registration, MFA codes, notifications).

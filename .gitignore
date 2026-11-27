@@ -35,3 +35,6 @@ test-results/
 
 # Local TLS certificates and keys
 deploy/nginx/certs/
+
+# Local database and file storage (DATA_DIR)
+/data/

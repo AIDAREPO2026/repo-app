@@ -30,6 +30,31 @@ Open https://localhost/healthz and accept the self-signed certificate. If ports 
 
 The first start takes several minutes: the worker image installs LibreOffice, and ClamAV downloads its virus signatures.
 
+## Where the data lives
+
+The database and stored files are **not** kept in Docker volumes. They live in host folders under `DATA_DIR`:
+
+| Folder | What it holds |
+| --- | --- |
+| `$DATA_DIR/postgres` | The PostgreSQL database |
+| `$DATA_DIR/seaweedfs` | Every stored file (SeaweedFS) |
+
+Removing containers, rebuilding images or running `docker compose down -v` never deletes them. Locally `DATA_DIR` defaults to the git-ignored `data/` folder. On a server it is a folder on the encrypted data disk, such as `/srv/aida` (`P0-OPS-01`), and Compose runs from the repository root with the root `.env`:
+
+```bash
+docker compose --env-file .env -f deploy/docker-compose.yml up -d
+```
+
+**Never run `down -v` on a server.** It no longer deletes the data, but it still wipes the Redis queues and ClamAV signatures, and there is no reason to use it there. Releases and rollbacks use only `deploy/release.sh` and `deploy/rollback.sh` (`P4-OPS-02`). The nightly backups in `P4-OPS-01` copy both folders off the server.
+
+Redis and ClamAV keep Docker volumes, because losing them loses only short-lived queues, counters and virus signatures, which download again.
+
+To start completely fresh on a laptop, stop the stack and delete `data/`.
+
+## Who can reach the file storage
+
+SeaweedFS sits only on the `storage` network, which only `app`, `worker`, `tusd` and `nginx` join. PostgreSQL, Redis, ClamAV and `beat` cannot reach it at all. Its S3 port accepts only requests signed with the keys in `.env`, and none of its ports is published on a server. To look at stored files on a server, use an SSH tunnel or `weed shell` over SSH, never an open port.
+
 ## Check the security headers
 
 ```bash

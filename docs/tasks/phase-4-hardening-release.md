@@ -247,7 +247,7 @@ The full manual audit is `P6-A11Y-01`.
 **Scope**
 
 - A nightly `pg_dump -Fc` from a backup container, encrypted, written to a separate storage bucket in India, kept for 30 days.
-- A nightly copy of the `files/` prefix from SeaweedFS to the backup bucket (D-14).
+- A nightly copy of `$DATA_DIR/seaweedfs`, or of the bucket through S3, to the backup storage (D-14).
 - A restore script `deploy/restore.sh` that restores a named dump into a fresh database.
 - Rehearse: restore last night's backup to a scratch environment, start the app against it, log in and open an item. Record the time taken.
 
@@ -280,7 +280,7 @@ The full manual audit is `P6-A11Y-01`.
     1. Takes a database backup.
     2. Pulls the tagged images.
     3. Runs `alembic upgrade head`.
-    4. Restarts the services.
+    4. Restarts the services with `docker compose --env-file .env ... up -d`. It never uses `down -v`.
     5. Runs a smoke check on `/healthz` and the home page.
 - A `deploy/rollback.sh` script that redeploys the previous image tag. If a migration cannot be reversed, it restores the pre-release backup.
 - Try both scripts on staging.
@@ -289,6 +289,7 @@ The full manual audit is `P6-A11Y-01`.
 
 - Production secrets are never in the repository or in the images.
 - Only the tech lead and one named deputy can run the release.
+- The scripts refuse to run when `DATA_DIR` is not set, so a server never falls back to keeping data inside the repository folder.
 
 **Acceptance criteria**
 

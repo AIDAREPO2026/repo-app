@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-27 | Raghvendra Singh | Moved the database and SeaweedFS data to host folders under `DATA_DIR`, and put SeaweedFS on its own `storage` network, at the tech lead's request. Proved a row and a stored file survive `docker compose down -v`, and that postgres, redis, clamav and beat cannot reach SeaweedFS. |
 | 2026-11-27 | Raghvendra Singh | Published the SeaweedFS file browser on `127.0.0.1:8888` in development, at the tech lead's request; checked it lists the `aida` bucket and that the S3 port stays closed to the host. |
 | 2026-11-27 | Raghvendra Singh | Opened [the pull request](https://github.com/AIDAREPO2026/repo-app/pull/4) and set status to In review. Next: review and approval. |
 | 2026-11-27 | Raghvendra Singh | Built the Dockerfile, Compose stack, Nginx config and header check script, and made `/healthz` check the database and Redis. From empty volumes, every container reports healthy, `https://localhost/healthz` returns 200, all security headers are present, and the internal paths return 404 (checked on ports 8080 and 8443 because this machine already uses 80 and 443). Next: review. |
@@ -29,6 +30,9 @@ Anything decided while building that the spec does not say, and any change from 
 
 | Date | Decision or deviation | Reason | Agreed by |
 | --- | --- | --- | --- |
+| 2026-11-27 | The database and SeaweedFS data live in host folders under `DATA_DIR` (default `data/`, `/srv/aida` on servers), not Docker volumes | `docker compose down -v` deletes named volumes, which would wipe every file and the database. Host folders are never removed by Compose | Raghvendra Singh |
+| 2026-11-27 | SeaweedFS is on a separate `storage` network joined only by `app`, `worker`, `tusd` and `nginx` | Its file browser and internal ports have no login inside Docker, so other containers must not reach it | Raghvendra Singh |
+| 2026-11-27 | SeaweedFS's own JWT signing for its internal ports is not set up yet | The storage network already limits who can reach it; signing can be added in `P4-SEC-01` hardening if review wants a second layer | Raghvendra Singh |
 | 2026-11-27 | In the development file only, Mailpit's inbox is published on `127.0.0.1:8025` and the SeaweedFS file browser on `127.0.0.1:8888` | Developers need to read captured mail and see stored files. Neither has a login, so both are bound to the local machine and never published on staging or production | Raghvendra Singh |
 | 2026-11-27 | Root is used only by the one-shot `seaweedfs-init` (it hands a new disk to the SeaweedFS user) and by ClamAV's supervisor process; `clamd` and `freshclam` run as uid 1000, and the official PostgreSQL and Redis images switch to their own users | Every service process is non-root; these are the images' own start-up steps | Raghvendra Singh |
 | 2026-11-27 | `celery` is installed with its `redis` extra, which adds `packaging` to the lock | Celery's Redis transport fails to import without it; no new library is added by hand | Raghvendra Singh |

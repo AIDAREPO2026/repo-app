@@ -101,6 +101,8 @@ The storage URL is never sent to the browser.
 
 Files are stored in one private bucket on SeaweedFS, an open-source S3-compatible server that runs as a container on our own server in India (D-14). The bucket has the prefixes `incoming/` (tusd uploads), `files/` (clean files), `previews/` and `quarantine/`. The app, tusd and Nginx talk to it only through the S3 API, so moving to a managed S3 in India later changes the endpoint and keys, not the code.
 
+The database and SeaweedFS's data live in host folders under `DATA_DIR` on the encrypted data disk, not in Docker volumes, so removing containers never deletes them. SeaweedFS sits on its own `storage` network, reachable only from `app`, `worker`, `tusd` and `nginx`.
+
 The storage disk has a fixed size, such as 100 GB. Before an upload starts, the tusd pre-create hook refuses it when the stored files plus the new file would pass `storage_limit_gb` (`P2-UPL-02`). No byte is stored for a refused upload.
 
 ## Data model overview
