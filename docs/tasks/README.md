@@ -19,7 +19,7 @@ Each code links to its full spec. Status and owner come from each task's file in
 
 | Code | Task | Role | Points | Status | Owner | Depends on |
 | --- | --- | --- | --- | --- | --- | --- |
-| [`P0-GOV-01`](phase-0-mobilise.md#p0-gov-01--record-itped-confirmation-of-decisions) | Record ITPED confirmation of decisions | Dev (tech lead) | 1 | Not started |  | None |
+| [`P0-GOV-01`](phase-0-mobilise.md#p0-gov-01--record-itped-confirmation-of-decisions) | Record ITPED confirmation of decisions | Dev (tech lead) | 1 | Blocked | Raghvendra Singh | None |
 | [`P0-GOV-02`](phase-0-mobilise.md#p0-gov-02--confirm-taxonomy-baseline-and-newly-added-limit) | Confirm taxonomy baseline and Newly Added limit | Dev (tech lead) | 1 | Not started |  | None |
 | [`P0-OPS-01`](phase-0-mobilise.md#p0-ops-01--provision-india-staging-environment-and-object-storage) | Provision India staging environment and object storage | Dev | 3 | Not started |  | Q-03 answered |
 | [`P0-OPS-02`](phase-0-mobilise.md#p0-ops-02--build-the-docker-compose-stack) | Build the Docker Compose stack | Dev | 3 | Done | Raghvendra Singh | `P0-SET-01` |
