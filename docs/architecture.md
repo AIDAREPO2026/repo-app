@@ -35,7 +35,8 @@ Add a library only with tech lead approval, and update this list in the same pul
 app/
   main.py               creates the FastAPI app and includes every router
   core/                 config, db, sessions, csrf, captcha, email, storage,
-                        settings_store, constants, clamav, time helpers
+                        settings_store, constants, clamav, time helpers,
+                        log_setup (JSON logs)
   accounts/             organisations, logins, passwords, lockout, MFA, guards
   audit/                append-only audit log and its search screen
   content/              modules, taxonomy, items, versions, files, uploads,
@@ -129,7 +130,7 @@ These values are configurable by Admin through `app_setting` and read with `get_
 | `anon_downloads_per_hour` | 50 | Yes | FR-13.7 |
 | `newly_added_count` | 2 | Yes | FR-6.1, Q-05 |
 | `newly_added_days` | 15 | Yes | FR-6.1 |
-| `digest_frequency` | `daily` | Yes (Phase 5) | FR-6.5 |
+| `digest_frequency` | `daily` | Yes (`daily` or `weekly`, Phase 5) | FR-6.5 |
 
 | Constant | Value | Source |
 | --- | --- | --- |
@@ -141,6 +142,7 @@ These values are configurable by Admin through `app_setting` and read with `get_
 | `RESUMABLE_CHUNK_MB` | 50 | FR-3.12 |
 | `AUDIT_ONLINE_DAYS` | 180 | FR-12.1 |
 | `EXPERT_DELETION_WORKING_DAYS` | 2 | FR-8.3 |
+| `IMAGE_LIMIT_MAX_MB` | 20 | D-01 |
 
 ## Environments
 
