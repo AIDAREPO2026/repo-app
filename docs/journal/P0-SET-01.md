@@ -2,12 +2,12 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In review |
+| Status | Done |
 | Owner | Raghvendra Singh |
 | Branch | `chore/p0-set-01-project-structure` |
 | Pull request | [AIDAREPO2026/repo-app#1](https://github.com/AIDAREPO2026/repo-app/pull/1) |
 | Started | 2026-11-27 |
-| Finished | Not finished |
+| Finished | 2026-11-27 |
 
 Spec: [docs/tasks/phase-0-mobilise.md](../tasks/phase-0-mobilise.md)
 
@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-27 | Raghvendra Singh | Pull request approved; set status to Done and squash-merged. There is no staging server or CI yet, so the staging check and CI items of the Definition of Done arrive with `P0-OPS-02` and `P0-OPS-03`. |
 | 2026-11-27 | Raghvendra Singh | Moved the database target from PostgreSQL 16 to PostgreSQL 19, the latest release, in `docs/architecture.md` and `P0-OPS-02`. |
 | 2026-11-27 | Raghvendra Singh | Pushed `main` and the task branch, opened [the pull request](https://github.com/AIDAREPO2026/repo-app/pull/1), set status to In review. Next: review and approval. |
 | 2026-11-27 | Raghvendra Singh | Added the rule that any later change to a task updates its journal, and a CI journal check to `P0-OPS-03`. |
