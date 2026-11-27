@@ -28,7 +28,8 @@ New to the project? Read in this order:
 | [workflow.md](workflow.md) | States, transitions, permissions and side effects |
 | [plan.md](plan.md) | Schedule, capacity, risks and open decisions |
 | [acceptance.md](acceptance.md) | MVP and go-live acceptance criteria |
-| [tasks/README.md](tasks/README.md) | Index of all 124 tasks |
+| [tasks/README.md](tasks/README.md) | Index of all 124 tasks, with live status from the journal |
+| [journal/README.md](journal/README.md) | One file per started task: status, owner, log, decisions, blockers |
 | [tasks/phase-0-mobilise.md](tasks/phase-0-mobilise.md) | Phase 0 task specs |
 | [tasks/phase-1-platform-access.md](tasks/phase-1-platform-access.md) | Phase 1 task specs |
 | [tasks/phase-2-content-governance.md](tasks/phase-2-content-governance.md) | Phase 2 task specs |
@@ -42,7 +43,7 @@ New to the project? Read in this order:
 
 - **SRS:** Software Requirements Specification, Digital Resource Repository for DISCOMs. Requirement IDs such as `FR-3.5` and section numbers such as `5.3` in these docs refer to it.
 - **Inception Report:** referenced by the SRS for the RACI matrix and the risk register. It is not in this repository.
-- **Planning tracker:** the shared delivery tracker holds live task status. These docs hold the task detail. If they disagree, raise it with the tech lead and fix both.
+- **Task journal:** [journal/](journal/README.md) holds one file per started task and is the single home for task status. The shared planning tracker is a summary for ITPED, refreshed from it. If they disagree, the journal is right.
 
 ## Keeping these docs current
 

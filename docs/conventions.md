@@ -9,7 +9,7 @@ These rules apply to every task. `AGENTS.md` at the repository root (created in 
 | Code | `Phase-Area-Number`, for example `P2-WF-03` |
 | Points | 1, 2, 3, 5, 8 or 13. One point is about half a developer day with AI-assisted coding |
 | Role | `Dev`, `Dev A` or `Dev B` (Phase 3 work streams), `QA`, or `ITPED` |
-| Status | Not started, In progress, In review, Blocked, Done |
+| Status | Not started, In progress, In review, Blocked, Done. Kept only in the task's journal file, `docs/journal/<CODE>.md` |
 
 Split any task of 8 points or more into sub-tasks before starting it. Name them by suffix: `P5-VIEW-01a`, `P5-VIEW-01b`.
 
@@ -34,7 +34,18 @@ A task is Done when:
 - [ ] The change is deployed to staging and checked there
 - [ ] Any doc this task affects is updated in the same pull request
 - [ ] Every state change it adds writes an audit event
-- [ ] Status is set to Done in the planning tracker
+- [ ] The task's journal file (`docs/journal/<CODE>.md`) says Done, with its log and decisions complete
+
+## Task journal
+
+Every task that has started has its own file in [docs/journal/](journal/README.md), named after its code. It is the single home for the task's status, owner, branch, pull request, dated log, decisions and blockers. The planning tracker is a summary refreshed from it.
+
+- Create the file from `docs/journal/_template.md` as the first commit on the task branch.
+- Update it in the same pull request as the code: a log line per working session, every decision or deviation from the spec, and the status.
+- Set `In review` when the pull request opens, and `Done` in the pull request itself before it merges.
+- Coming back to a task later, even after it is Done: any change that belongs to it (review fix, bug fix, follow-up, refactor, a `DEF-###` against it) adds a log line, and any new decision, to that task's journal file in the same pull request. Set it back to `In progress` if the change reopens its acceptance criteria. A change touching several tasks updates each of their files.
+- CI refuses a pull request when the task code in its branch name, or at the start of any commit subject, has no change to that task's journal file (`P0-OPS-03`).
+- Run `uv run python scripts/build_task_index.py` after changing it, so the task index shows the new status.
 
 ## Git workflow
 

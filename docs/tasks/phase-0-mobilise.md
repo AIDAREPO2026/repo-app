@@ -164,6 +164,8 @@
     - `pytest`, with a PostgreSQL service container
     - `pip-audit`
     - a secret scan of the diff, using a tool the tech lead approves
+    - `uv run python scripts/build_task_index.py --check`
+    - a journal check: for the task code in the branch name and at the start of each commit subject, the pull request must change `docs/journal/<CODE>.md`
 - On merge to `main`:
     - build and push images tagged with the commit hash
     - deploy to staging over SSH: pull images, run `alembic upgrade head`, restart containers
@@ -179,6 +181,7 @@
 **Acceptance criteria**
 
 - [ ] A pull request with a lint error, a failing test, a vulnerable dependency or a committed fake secret fails CI
+- [ ] A pull request whose branch or commit-subject task code has no change to that task's journal file fails CI
 - [ ] A merge to `main` deploys to staging, and the smoke check passes
 - [ ] Direct pushes to `main` are refused
 - [ ] The pull request template appears on new pull requests

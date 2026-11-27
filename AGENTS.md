@@ -9,8 +9,10 @@ The sections below are copied from [docs/conventions.md](docs/conventions.md) an
 1. Find the task spec in [docs/tasks/](docs/tasks/README.md). Build only what its Scope says.
 2. Check its **Depends on** tasks are Done.
 3. Branch `type/<task-code>-short-description`, for example `feat/p1-acc-04-password-lockout`.
-4. Commit subjects start with the task code: `P1-ACC-04: Lock account after five failed sign-ins`.
-5. No AI attribution lines in commits, pull requests or code comments.
+4. Copy `docs/journal/_template.md` to `docs/journal/<CODE>.md`, set Status to `In progress`, and commit it first. Keep it updated in the same pull request as the code: log, decisions, deviations, status. See [docs/journal/README.md](docs/journal/README.md).
+    - Coming back to a task later, even after it is Done (review fix, bug fix, follow-up, refactor, a `DEF-###`), always add a log line and any new decision to that task's journal file in the same pull request, and set it back to `In progress` if the change reopens its acceptance criteria. Never change a task's code without updating its journal.
+5. Commit subjects start with the task code: `P1-ACC-04: Lock account after five failed sign-ins`.
+6. No AI attribution lines in commits, pull requests or code comments.
 
 
 ## Coding rules
@@ -188,4 +190,4 @@ A task is Done when:
 - [ ] The change is deployed to staging and checked there
 - [ ] Any doc this task affects is updated in the same pull request
 - [ ] Every state change it adds writes an audit event
-- [ ] Status is set to Done in the planning tracker
+- [ ] The task's journal file (`docs/journal/<CODE>.md`) says Done, with its log and decisions complete
