@@ -6,7 +6,7 @@ from collections.abc import Iterator
 import pytest
 from alembic import command
 from alembic.config import Config as AlembicConfig
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
@@ -36,11 +36,25 @@ def alembic_config() -> AlembicConfig:
     return config
 
 
+# Servers create the application role; the test database needs it so migrations run their grants.
+CREATE_APP_ROLE = """
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'aida_app') THEN
+        CREATE ROLE aida_app NOLOGIN;
+    END IF;
+END;
+$$;
+"""
+
+
 @pytest.fixture(scope="session")
 def engine() -> Iterator[Engine]:
-    """Migrate the test database to head and yield an engine for it."""
-    command.upgrade(alembic_config(), "head")
+    """Create the app role, migrate the test database to head and yield an engine for it."""
     test_engine = create_engine(TEST_DATABASE_URL)
+    with test_engine.begin() as connection:
+        connection.execute(text(CREATE_APP_ROLE))
+    command.upgrade(alembic_config(), "head")
     yield test_engine
     test_engine.dispose()
 
