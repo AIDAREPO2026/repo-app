@@ -28,7 +28,7 @@ New to the project? Read in this order:
 | [workflow.md](workflow.md) | States, transitions, permissions and side effects |
 | [plan.md](plan.md) | Schedule, capacity, risks and open decisions |
 | [acceptance.md](acceptance.md) | MVP and go-live acceptance criteria |
-| [tasks/README.md](tasks/README.md) | Index of all 123 tasks |
+| [tasks/README.md](tasks/README.md) | Index of all 124 tasks |
 | [tasks/phase-0-mobilise.md](tasks/phase-0-mobilise.md) | Phase 0 task specs |
 | [tasks/phase-1-platform-access.md](tasks/phase-1-platform-access.md) | Phase 1 task specs |
 | [tasks/phase-2-content-governance.md](tasks/phase-2-content-governance.md) | Phase 2 task specs |

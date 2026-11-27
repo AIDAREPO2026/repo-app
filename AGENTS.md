@@ -45,6 +45,7 @@ Before writing a helper, search the codebase. These shared functions must be use
 | Send an email | `app.core.email.send_email()` | `P1-ACC-03` |
 | Create a notification | `app.workflow.notifications.notify()` | `P2-WF-05` |
 | Serve a protected file | `app.content.delivery.protected_file_response()` | `P3-VIEW-03` |
+| Render a button, card, badge, modal or other UI element | `templates/macros/ui.html` and the tokens in `static/css/tokens.css` | `P1-UI-02` |
 
 **Avoid hidden behaviour**
 

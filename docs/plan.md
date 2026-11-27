@@ -1,22 +1,24 @@
 # Delivery plan
 
-The project started on 23 November 2026, and the MVP ships on 17 December 2026 after 19 weekdays. Feature freeze is at the end of 10 December. The MVP plan uses 81% of developer capacity.
+The project started on 23 November 2026, and the MVP ships on 17 December 2026 after 19 weekdays. Feature freeze is at the end of 10 December. The MVP plan uses 82% of developer capacity.
 
 ## Schedule
 
 | Phase | Dates | Weekdays | Tasks | Dev points / capacity | QA points / capacity |
 | --- | --- | --- | --- | --- | --- |
 | 0 Mobilise | 23 to 25 November 2026 | 3 | 12 | 20 / 30 | 6 / 12 |
-| 1 Platform and access | 26 to 30 November 2026 | 3 | 16 | 28 / 30 | 8 / 12 |
+| 1 Platform and access | 26 to 30 November 2026 | 3 | 17 | 31 / 30 | 8 / 12 |
 | 2 Content and governance | 1 to 7 December 2026 | 5 | 22 | 40 / 50 | 11 / 20 |
 | 3 Discovery and directories | 8 to 10 December 2026 | 3 | 16 | 28 / 30 | 9 / 12 |
 | 4 Hardening and release | 11 to 17 December 2026 | 5 | 19 | 37 / 50 | 12 / 20 |
-| **MVP total** | | **19** | **85** | **153 / 190** | **46 / 76** |
+| **MVP total** | | **19** | **86** | **156 / 190** | **46 / 76** |
 | 5 Complete the SRS features | 18 December 2026 to 22 January 2027 | 24 | 24 | 76 | 18 |
 | 6 Independent assurance | 25 January to 26 February 2027 | 25 | 7 | 41 | 8 |
 | 7 Pilot, handover and launch | 1 to 31 March 2027 | 23 | 7 | 30 | 8 |
 
 Capacity assumes 5 developers and 2 testers at 2 points per person per day. Public holidays are not deducted, so confirm the working calendar. Phases 5 to 7 are proposals, and Phase 6 depends on when the independent reviewer is available.
+
+Phase 1 is 1 point over capacity after adding `P1-UI-02` (design system). The tech lead absorbs it, or `P1-UI-02` finishes on the first morning of Phase 2, which has 10 spare points. No later date moves.
 
 Features freeze at the end of 10 December. After that, only the three Phase 4 tasks `P4-PUB-01`, `P4-PUB-02` and `P4-KPI-01` add behaviour, and they finish by 14 December.
 
@@ -53,3 +55,4 @@ A slip on any of these tasks moves the MVP date unless work is reassigned.
 | Q-08 | Approve the AIDA Endorsed disclaimer wording | AIDA | 4 December 2026 |
 | Q-09 | Supply the list of 70 Discoms with official email domains | ITPED | 30 November 2026 |
 | Q-10 | Supply About, terms of use, disclaimer, privacy and cookie notice text | ITPED | 8 December 2026 |
+| Q-11 | Provide a designer's mock-ups and brand assets (logo, colours), or accept the clean default theme | ITPED | 30 November 2026 |

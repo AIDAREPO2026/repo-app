@@ -1,10 +1,10 @@
 # Phase 1: Platform and access
 
-**Dates:** 26 to 30 November 2026 · **Tasks:** 16 · **Points:** 36 (Dev 28, QA 8)
+**Dates:** 26 to 30 November 2026 · **Tasks:** 17 · **Points:** 39 (Dev 31, QA 8)
 
 **Goal:** Discoms can register and be activated, all four login types work securely, and every action is audited.
 
-**Build order:** `P1-AUD-01` and `P1-UI-01` first. Then `P1-ACC-08` → `P1-ACC-04` → `P1-ACC-06`. Then the rest of the ACC tasks in parallel. `P1-SEC-01` comes last.
+**Build order:** `P1-AUD-01` and `P1-UI-01` first. Then `P1-ACC-08` → `P1-ACC-04` → `P1-ACC-06`, with `P1-UI-02` alongside once `P1-ACC-08` lands. Then the rest of the ACC tasks in parallel. `P1-SEC-01` comes last.
 
 **Exit criteria**
 
@@ -12,6 +12,7 @@
 - [ ] A sixth Member session follows the Admin policy
 - [ ] Every privileged login requires MFA
 - [ ] Every login and administrative action appears in the audit log
+- [ ] The design-system style guide is reviewed, and Phase 1 pages use only its components
 
 ---
 
@@ -80,6 +81,55 @@ The Admin audit search screen is built in `P3-UI-01`.
 - [ ] A 500 error shows the friendly page, and the trace appears only in server logs
 
 **Tests:** `test_p1_ui_01_error_pages_hide_details`, plus a Playwright axe check of the dashboards.
+
+---
+
+### P1-UI-02 — Build the design system: tokens, components and motion rules
+
+| Points | Role | Depends on | References |
+| --- | --- | --- | --- |
+| 3 | Dev | `P1-UI-01`, `P1-ACC-08` | SRS 5.5, Q-11, [conventions.md](../conventions.md) UI and motion rules, `.claude/skills/apple-design` |
+
+**Goal:** one set of visual building blocks that every page uses, so the portal looks and moves the same everywhere, however many developers and AI tools build it.
+
+**Scope**
+
+- `static/css/tokens.css`: every design value as a CSS variable, in light and dark variants:
+    - colour: surfaces, text, borders, brand accent, and status colours (success, warning, danger, info)
+    - spacing scale in `rem`, corner radii and two shadow depths
+    - type scale using the `system-ui` font stack, with line height and letter-spacing per size (tighter on large headings, none on body text)
+    - motion: three durations (150, 200 and 300 ms) and two easing curves, one for entering and one for leaving
+- Map the tokens onto Bootstrap's `--bs-*` variables, so Bootstrap components pick up the look without restyling each one.
+- `static/css/components.css` and `templates/macros/ui.html` with these components:
+    - button (primary, secondary, danger and link)
+    - card and item card
+    - badge, including the lock label "Available to member Discoms – log in"
+    - alert and flash message
+    - modal using the native `<dialog>`, and a side drawer
+    - empty state, skeleton loader and pagination
+- Instant press and focus feedback (`:active`, `:focus-visible`) on every interactive component.
+- Page transitions with the View Transitions API (`@view-transition { navigation: auto; }`), and HTMX swaps set to use transitions.
+- A translucent top bar with `backdrop-filter` and a solid fallback.
+- `prefers-reduced-motion`, `prefers-reduced-transparency` and `prefers-contrast: more` handled once, in the tokens, so no component needs its own check.
+- A style-guide page at `/_styleguide` showing every token and component, in light and dark, for review by ITPED and the designer.
+- If a designer supplies mock-ups (Q-11), take colours, radii and spacing from them. If not, build the clean default and record that in [decisions.md](../decisions.md).
+
+Later pages only reuse these components. A new component is added here, not inside a feature template.
+
+**Security**
+
+- No inline styles or scripts, and no CDN files, so the Content Security Policy stays strict (`style-src 'self'`, `script-src 'self'`).
+- The style guide is for privileged users only, and returns 404 to Members and visitors.
+
+**Acceptance criteria**
+
+- [ ] The style guide shows every token and component, in light and dark mode
+- [ ] axe reports no serious or critical issues on the style guide in either mode, and every text and background pair meets WCAG AA contrast
+- [ ] With reduced motion set, transitions become a short cross-fade or none
+- [ ] With reduced transparency set, the top bar and scrims become solid
+- [ ] `P1-UI-01` pages use the new components, with no one-off colours, sizes or animations left
+
+**Tests:** `test_p1_ui_02_styleguide_privileged_only`, plus Playwright checks `test_p1_ui_02_axe_light_and_dark` and `test_p1_ui_02_reduced_motion` (with `reducedMotion: "reduce"` emulated).
 
 ---
 
