@@ -1,0 +1,175 @@
+# AGENTS.md
+
+Rules for every developer and every AI coding tool working in this repository. Read this before writing code.
+
+The sections below are copied from [docs/conventions.md](docs/conventions.md) and [docs/security.md](docs/security.md), which are the source. If you change a rule, change it there and copy it here in the same pull request.
+
+## Before you start a task
+
+1. Find the task spec in [docs/tasks/](docs/tasks/README.md). Build only what its Scope says.
+2. Check its **Depends on** tasks are Done.
+3. Branch `type/<task-code>-short-description`, for example `feat/p1-acc-04-password-lockout`.
+4. Commit subjects start with the task code: `P1-ACC-04: Lock account after five failed sign-ins`.
+5. No AI attribution lines in commits, pull requests or code comments.
+
+
+## Coding rules
+
+**Structure**
+
+- Every module under `app/` has the same four files: `router.py` (HTTP only), `service.py` (business rules), `models.py` (tables) and `schemas.py` (Pydantic). Small helpers can live in extra files in the same module.
+- Routes stay thin: they parse input, call one service function and render a response.
+- Business rules live only in `service.py` functions, which take `db` and `actor` explicitly.
+- Use plain `def` routes and synchronous SQLAlchemy. Do not use `async def` unless a task says so.
+
+**Readability**
+
+- Prefer short functions that do one thing, descriptive names, early returns and simple control flow.
+- Avoid clever one-liners, dense comprehensions, nested ternaries and metaprogramming.
+- Ruff's complexity check (C901) fails the build for any function above 10.
+- Every public function has type hints and a one-line docstring.
+- Comments explain the reason, not the action, and cite the requirement, for example `# FR-13.3: teasers must never expose the file name`.
+
+**Reuse, never copy**
+
+Before writing a helper, search the codebase. These shared functions must be used instead of reimplemented:
+
+| Need | Use | Created in |
+| --- | --- | --- |
+| Write an audit event | `app.audit.service.record()` | `P1-AUD-01` |
+| Read a configurable setting | `app.core.settings_store.get_setting()` | `P0-SET-02` |
+| Check who may see or open an item | `app.content.visibility` functions | `P2-CON-06` |
+| Change a workflow state | `app.workflow.service.apply_action()` | `P2-WF-01` |
+| Require a login type on a route | `app.accounts.guards.require_login_type()` | `P1-ACC-08` |
+| Verify a CAPTCHA | `app.core.captcha.verify()` | `P1-ACC-02` |
+| Send an email | `app.core.email.send_email()` | `P1-ACC-03` |
+| Create a notification | `app.workflow.notifications.notify()` | `P2-WF-05` |
+| Serve a protected file | `app.content.delivery.protected_file_response()` | `P3-VIEW-03` |
+
+**Avoid hidden behaviour**
+
+- Do not use event listeners that change data behind the caller's back, such as SQLAlchemy events for business rules.
+- Do not use global mutable state.
+- Do not use magic dependency chains that hide what a route needs.
+
+**Configuration**
+
+- Values the SRS says Admin can change live in the `app_setting` table and are read through `get_setting()`. See the settings table in [architecture.md](docs/architecture.md).
+- Values the SRS fixes, such as the 12-character password minimum, are constants in `app/core/constants.py`, each with an FR reference.
+- Secrets come only from environment variables. Never commit `.env` files.
+
+**Data rules**
+
+- Store all timestamps in UTC as `timestamptz`, and display them in India Standard Time.
+- Never hard-delete content, expert or Gallery records. Use states or flags instead (SRS 6.3).
+- The only hard deletion is expert personal data after consent withdrawal (`FR-8.3`).
+- Every migration has a downgrade path, or a written reason in the pull request why it cannot have one.
+
+**Interface rules**
+
+- Pages meet WCAG 2.1 AA: labels on every input, visible focus, landmarks, a skip link, and errors linked to their fields.
+- Wrap user-facing text in `_()` so Hindi can be added later (SRS 5.5).
+- Never render an admin-only field in a Member or public template. Pass view schemas that do not contain those fields (`P2-CON-02`).
+
+**New libraries**
+
+Only the libraries listed in [architecture.md](docs/architecture.md) are approved. To add another, get tech lead approval and add it to that list in the same pull request.
+
+## Testing
+
+- **Unit and integration:** pytest with a real PostgreSQL test database. Do not mock the database.
+- **End to end:** Playwright against staging, using the role logins from the test data (`P0-QA-02`).
+- **Naming:** `test_fr_<n>_<m>_<behaviour>`, for example `test_fr_13_3_teaser_hides_file_name`. Tests without an FR use the task code, for example `test_p2_con_06_ambiguous_tier_defaults_to_restricted`.
+- **Refusals:** every permission rule needs a test proving the wrong role is refused.
+- **Location:** `tests/<module>/test_<topic>.py`.
+
+## Security-sensitive areas
+
+Changes in these areas need two reviewers, one of them the tech lead or the security reviewer. Apply the `security` label on the pull request.
+
+- Login, passwords, sessions, CSRF and MFA (`app/accounts`, `app/core/sessions.py`)
+- Item visibility and file delivery (`app/content/visibility.py`, `app/content/delivery.py`)
+- Uploads, scanning and the tusd hooks (`app/content/uploads.py`)
+- Audit (`app/audit`)
+- Public pages and anything that renders Restricted item data (`app/public`)
+
+## Mandatory security controls
+
+### Authentication and sessions
+
+- Hash passwords with argon2id through argon2-cffi, using the library's recommended parameters.
+- Enforce at least 12 characters with letters, numbers and symbols (FR-1.7).
+- Lock an account for 15 minutes after 5 consecutive failures (FR-1.7). Log every failure.
+- Show the same message for an unknown User ID, a wrong password and a locked account, so login never reveals which accounts exist.
+- Make session tokens 32 random bytes from `secrets.token_urlsafe`, and store only their SHA-256 hash.
+- Rotate the session token at login and after MFA.
+- Set cookies with `HttpOnly`, `Secure`, `SameSite=Lax` and `Path=/`, with no `Domain` attribute.
+- Require MFA for Admin, Reviewer and Approver (FR-2.8), with TOTP secrets encrypted using a key from the environment.
+- Make password reset and set-password tokens single-use, store them hashed, and expire them after 60 minutes.
+
+### Access control
+
+- Every route declares its allowed login types with `require_login_type()`. A route with no declaration fails a CI test that lists all routes.
+- Every query for items, files, experts or listings goes through the visibility functions. Never filter by hand in a route.
+- Return 404, not 403, when an anonymous visitor or Member asks for something they cannot see, so the response never confirms it exists.
+- Default to the most restrictive tier when classification is missing (SRS 5.3).
+
+### Input, output and files
+
+- Validate all input with Pydantic schemas, including length limits on every text field.
+- Keep Jinja autoescaping on. Never use `|safe` or `Markup()` on user-supplied text.
+- Check uploads by extension, sniffed type and size, then scan with ClamAV, before anyone else can open them.
+- Use generated storage keys, never user file names, and send user file names only in `Content-Disposition`.
+- Send `X-Content-Type-Options: nosniff` with every response.
+
+### Security headers
+
+Nginx sets these on every response:
+
+| Header | Value |
+| --- | --- |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` |
+| `Content-Security-Policy` | `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; worker-src 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'` |
+| `X-Content-Type-Options` | `nosniff` |
+| `X-Frame-Options` | `DENY` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` |
+
+Restricted pages and files also send `Cache-Control: private, no-store`.
+
+### Data protection
+
+- Use TLS 1.2 or later only.
+- Encrypt Restricted and internal files at rest with storage server-side encryption, and encrypt database and backup disks.
+- Keep all data, including backups, in India (SRS 5.3).
+- Store IP addresses in activity logs as a salted SHA-256 hash. Audit events keep the raw IP for incident reporting.
+- Show a privacy notice wherever personal data is collected: registration, the expert entry form and notification email settings.
+
+### Logging and monitoring
+
+- Log authentication events, access denials, administrative actions, workflow transitions, scan results, rate-limit hits and setting changes.
+- Never log passwords, tokens, one-time codes, TOTP secrets or file contents.
+- Keep audit events for at least 3 years, with the latest 180 days searchable online (FR-12.1).
+- Keep security logs in India for at least 180 days, to support CERT-In directions. Confirm the current directions with ITPED.
+- Alert on repeated lockouts, quarantined files, scanner errors and failed backups.
+
+### Secrets and infrastructure
+
+- Store secrets in environment files on the servers with `600` permissions, separate for each environment, and in the team password manager. Never commit them.
+- Rotate secrets when a team member with access leaves.
+- Use separate database roles: a migration role that owns the schema, and an application role without DELETE on content tables or UPDATE and DELETE on `audit_event`.
+- Expose only ports 443 and 80 to the internet. Port 80 only redirects. Restrict SSH to named keys and known addresses.
+- Make internal Nginx locations and the tusd hook endpoints unreachable from outside.
+
+## Definition of Done
+
+A task is Done when:
+
+- [ ] Every acceptance criterion in its spec passes
+- [ ] Tests named after the requirement exist and pass in CI (see Testing)
+- [ ] CI is green: Ruff, type check, pytest and `pip-audit`
+- [ ] The pull request is reviewed and merged, with two reviewers for security-sensitive areas
+- [ ] The change is deployed to staging and checked there
+- [ ] Any doc this task affects is updated in the same pull request
+- [ ] Every state change it adds writes an audit event
+- [ ] Status is set to Done in the planning tracker
