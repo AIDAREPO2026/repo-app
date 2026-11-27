@@ -25,6 +25,13 @@
         </ul>
       </nav>
       {% endif %}
+      {% if request.state.login %}
+      {% from "macros/forms.html" import csrf_field with context %}
+      <form method="post" action="/logout">
+        {{ csrf_field() }}
+        <button type="submit" class="rounded px-3 py-2 hover:bg-slate-100 active:bg-slate-200">{{ _("Sign out") }}</button>
+      </form>
+      {% endif %}
     </div>
   </header>
 

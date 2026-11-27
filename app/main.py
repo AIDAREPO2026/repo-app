@@ -19,6 +19,7 @@ from app.core.db import make_session_factory
 from app.core.errors import add_error_pages
 from app.core.health import database_answers, redis_answers
 from app.core.log_setup import configure_logging
+from app.core.sessions import check_csrf, load_session
 from app.experts.router import router as experts_router
 from app.gallery.router import router as gallery_router
 from app.kpi.router import router as kpi_router
@@ -55,8 +56,12 @@ def create_app() -> FastAPI:
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
+        # Every route loads the session and checks CSRF first (security.md sessions).
+        dependencies=[Depends(load_session), Depends(check_csrf)],
     )
     application.state.session_factory = make_session_factory(config.database_url)
+    # Signs visitor CSRF tokens (app.core.sessions).
+    application.state.secret_key = config.secret_key
     # Short timeouts, so a stuck Redis fails the health check instead of hanging it.
     application.state.redis = Redis.from_url(config.redis_url, socket_timeout=2, socket_connect_timeout=2)
     for router in ROUTERS:

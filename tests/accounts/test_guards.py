@@ -1,5 +1,7 @@
 """Every route declares who may use it, and the guards refuse everyone else (FR-2.1)."""
 
+import hashlib
+import hmac
 import re
 
 import pytest
@@ -14,8 +16,10 @@ from sqlalchemy.orm import Session
 from app.accounts.guards import LoginTypeGuard, public_route, require_login_type
 from app.audit.models import AuditEvent
 from app.core.constants import LOGIN_TYPES
+from app.core.sessions import CSRF_HEADER, VISITOR_CSRF_COOKIE
 from app.main import create_app
 from tests.accounts.conftest import SignIn
+from tests.conftest import TEST_ENV
 
 APP = create_app()
 # A real address, because audit_event stores IPs as inet and TestClient's default is "testclient".
@@ -69,14 +73,34 @@ def sample_path(path: str) -> str:
     return re.sub(r"\{[^}]+\}", "00000000-0000-4000-8000-000000000000", path)
 
 
+def method_of(route: RouteContext) -> str:
+    """Return the one HTTP method a route answers (GET for pages, POST for actions)."""
+    return sorted(route.methods or ["GET"])[0]
+
+
 GUARDED = [(route, guard) for route in api_routes(APP) if (guard := guard_of(route)) is not None]
 WRONG_TYPES = [
-    (sample_path(str(route.path)), login_type)
+    (method_of(route), sample_path(str(route.path)), login_type)
     for route, guard in GUARDED
     for login_type in LOGIN_TYPES
     if login_type not in guard.login_types
 ]
-RIGHT_TYPES = [(sample_path(str(route.path)), guard.login_types[0]) for route, guard in GUARDED]
+EVERY_GUARDED = [(method_of(route), sample_path(str(route.path))) for route, _ in GUARDED]
+# Pages only: actions such as sign-out need a real session, and are tested with sessions.
+GUARDED_PAGES = [
+    (sample_path(str(route.path)), guard.login_types[0])
+    for route, guard in GUARDED
+    if method_of(route) == "GET"
+]
+
+
+def client_with_csrf() -> TestClient:
+    """A client that sends a valid visitor CSRF token, so POST routes reach their guard."""
+    client = TestClient(APP, client=CLIENT)
+    client.cookies.set(VISITOR_CSRF_COOKIE, "cookie-value")
+    token = hmac.new(TEST_ENV["SECRET_KEY"].encode(), b"cookie-value", hashlib.sha256).hexdigest()
+    client.headers[CSRF_HEADER] = token
+    return client
 
 
 def test_p1_acc_08_every_route_is_guarded() -> None:
@@ -108,21 +132,21 @@ def test_p1_acc_08_guard_refuses_unknown_login_type() -> None:
         require_login_type("visitor")
 
 
-@pytest.mark.parametrize("path", [sample_path(str(route.path)) for route, _ in GUARDED])
-def test_p1_acc_08_visitor_is_sent_to_sign_in(path: str) -> None:
-    response = TestClient(APP).get(path, follow_redirects=False)
+@pytest.mark.parametrize(("method", "path"), EVERY_GUARDED)
+def test_p1_acc_08_visitor_is_sent_to_sign_in(method: str, path: str) -> None:
+    response = client_with_csrf().request(method, path, follow_redirects=False)
 
     assert response.status_code == 303
     assert response.headers["location"] == f"/login?next={path}"
 
 
-@pytest.mark.parametrize(("path", "login_type"), WRONG_TYPES)
+@pytest.mark.parametrize(("method", "path", "login_type"), WRONG_TYPES)
 def test_p1_acc_08_wrong_login_type_refused_and_audited(
-    path: str, login_type: str, sign_in: SignIn, engine: Engine
+    method: str, path: str, login_type: str, sign_in: SignIn, engine: Engine
 ) -> None:
     login = sign_in(APP, login_type)
 
-    response = TestClient(APP, client=CLIENT).get(path)
+    response = client_with_csrf().request(method, path)
 
     assert response.status_code == 403
     with Session(engine) as session:
@@ -131,7 +155,7 @@ def test_p1_acc_08_wrong_login_type_refused_and_audited(
     assert refusal.session_id is not None
 
 
-@pytest.mark.parametrize(("path", "login_type"), RIGHT_TYPES)
+@pytest.mark.parametrize(("path", "login_type"), GUARDED_PAGES)
 def test_p1_acc_08_allowed_login_type_gets_in(path: str, login_type: str, sign_in: SignIn) -> None:
     sign_in(APP, login_type)
 

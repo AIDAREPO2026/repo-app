@@ -5,18 +5,47 @@ Business rules. Functions take `db` and `actor` explicitly, so every caller can 
 
 from datetime import timedelta
 
+from fastapi import Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.accounts.models import Login, LoginAttempt
+from app.accounts.models import Login, LoginAttempt, UserSession
 from app.accounts.passwords import hash_password, verify_password
 from app.audit.service import Actor, record
 from app.core.constants import LOCKOUT_ATTEMPTS, LOCKOUT_MINUTES
+from app.core.sessions import clear_session_cookie, client_ip, end_session, start_session, user_agent
 from app.core.time import utc_now
 
 # Checked when the User ID is unknown, so an unknown ID takes as long as a wrong password
 # and response times do not reveal which accounts exist (security.md authentication).
 UNKNOWN_USER_HASH = hash_password("no account has this password")
+
+
+def sign_in(db: Session, user_id: str, password: str, request: Request, response: Response) -> Login | None:
+    """Check the User ID and password and, if they are right, start a new session on the response."""
+    login = authenticate(db, user_id, password, client_ip(request), user_agent(request))
+    if login is not None:
+        start_session(db, login, request, response)
+    return login
+
+
+def sign_out(db: Session, login: Login, request: Request, response: Response) -> None:
+    """End the current session at once and remove its cookie."""
+    user_session = db.get_one(UserSession, request.state.session_id)
+    end_session(db, user_session, login, "logout", client_ip(request))
+    clear_session_cookie(response)
+
+
+def after_sign_in_path(next_path: str, login: Login) -> str:
+    """Return where to send a login after sign-in: the page it asked for, or its dashboard.
+
+    Only a path on this site is followed, never a full or protocol-relative URL, so the
+    sign-in page cannot be used to send people to another site.
+    """
+    is_local_path = next_path.startswith("/") and not next_path.startswith(("//", "/\\"))
+    if is_local_path:
+        return next_path
+    return f"/dashboard/{login.login_type}"
 
 
 def authenticate(db: Session, user_id: str, password: str, ip: str, user_agent: str) -> Login | None:

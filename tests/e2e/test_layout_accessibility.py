@@ -7,7 +7,7 @@ from app.core.constants import LOGIN_TYPES
 from tests.e2e.axe import blocking_violations
 
 
-@pytest.mark.skip(reason="Dashboards need sign-in, which arrives in P1-ACC-06 with the e2e sign-in helpers")
+@pytest.mark.skip(reason="Dashboards need e2e logins seeded in the target database (P0-QA-02)")
 @pytest.mark.parametrize("login_type", LOGIN_TYPES)
 def test_p1_ui_01_dashboard_passes_axe(page: Page, login_type: str) -> None:
     page.goto(f"/dashboard/{login_type}")
@@ -17,6 +17,12 @@ def test_p1_ui_01_dashboard_passes_axe(page: Page, login_type: str) -> None:
 
 def test_p1_ui_01_error_page_passes_axe(page: Page) -> None:
     page.goto("/no-such-page")
+
+    assert blocking_violations(page) == []
+
+
+def test_p1_acc_06_sign_in_page_passes_axe(page: Page) -> None:
+    page.goto("/login")
 
     assert blocking_violations(page) == []
 
