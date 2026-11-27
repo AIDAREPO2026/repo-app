@@ -91,13 +91,13 @@ Every person or shared Discom account that can sign in. Exactly four login types
 Indexes:
 
 - `UNIQUE (organisation_id) WHERE login_type = 'member' AND status IN ('pending', 'active')`: one pending or active Member login per Discom (FR-1.6, FR-2.2). A declined or deactivated login frees the Discom to register again.
-- `UNIQUE (lower(email)) WHERE status IN ('pending', 'active')`: password reset accepts the registered email (`P1-ACC-05`).
+- `UNIQUE (lower(email)) WHERE status IN ('pending', 'active')`: each current login has its own email, so no privileged account is shared (FR-2.7, added in `P1-ACC-09`), and password reset can find the login by email (`P1-ACC-05`).
 - `(login_type, status)`, for the Admin account lists and queue defaults.
 
-The rules "one active Approver" and "one active primary and one active alternate Reviewer" (`P1-ACC-09`) are partial unique indexes too:
+The rules "one active Approver" and "one active primary and one active alternate Reviewer" (`P1-ACC-09`) are enforced by the database too:
 
 - `UNIQUE (login_type) WHERE login_type = 'approver' AND status = 'active'`
-- `UNIQUE (login_type, is_alternate) WHERE login_type = 'reviewer' AND status = 'active'`
+- `EXCLUDE USING btree (is_alternate WITH =) WHERE login_type = 'reviewer' AND status = 'active'`, `DEFERRABLE INITIALLY DEFERRED`. An exclusion constraint rather than a unique index, because only a constraint can be deferred, and swapping the primary and alternate Reviewer passes through a moment with two of one kind.
 
 ### `user_session`
 
@@ -140,7 +140,7 @@ Indexes: `(login_id, at)`, `(ip, at)` for lockout alerts.
 
 ### `login_token`
 
-Single-use secrets sent by email: set-password and reset links, email MFA codes and the extra-address confirmation. One table, so expiry, hashing and single use are written once. Created in `P1-ACC-05` (the first task that needs it), and reused by `P1-ACC-09`, `P1-ACC-10` and `P5-NOT-03`.
+Single-use secrets sent by email: set-password and reset links, email MFA codes and the extra-address confirmation. One table, so expiry, hashing and single use are written once. Created in `P1-ACC-09` (the first task that needs it, for set-password links), and reused by `P1-ACC-05`, `P1-ACC-10` and `P5-NOT-03` through `app.accounts.tokens`.
 
 | Column | Type | Null | Default | Notes |
 | --- | --- | --- | --- | --- |

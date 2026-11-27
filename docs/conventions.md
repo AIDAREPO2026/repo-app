@@ -107,7 +107,8 @@ Before writing a helper, search the codebase. These shared functions must be use
 | Start or end a session, with its cookie and audit | `app.core.sessions.start_session()` and `end_session()` | `P1-ACC-06` |
 | Put the CSRF token in a form | `csrf_field()` in `templates/macros/forms.html`, imported `with context` | `P1-ACC-06` |
 | Issue and verify a CAPTCHA | `app.core.captcha.new_challenge()` and `verify()` | `P0-SEC-01` |
-| Send an email | `app.core.email.send_email()` | `P1-ACC-03` |
+| Send an email | `app.core.email.send_email()` (`P1-ACC-03` moves sending to Celery with retries) | `P1-ACC-09` |
+| Issue or check a single-use emailed link | `app.accounts.tokens` (`issue_link_token`, `usable_token`, `mark_used`) | `P1-ACC-09` |
 | Create a notification | `app.workflow.notifications.notify()` | `P2-WF-05` |
 | Serve a protected file | `app.content.delivery.protected_file_response()` | `P3-VIEW-03` |
 | Render a page | `app.core.templates.templates`, with the page extending `templates/base.html` | `P1-UI-01` |
