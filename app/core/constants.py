@@ -20,3 +20,6 @@ STORAGE_CRITICAL_PERCENT = 85
 
 # FR-2.1: exactly four login types. Visitors are anonymous and have no login.
 LOGIN_TYPES = ("member", "admin", "reviewer", "approver")
+
+# Security.md: set-password and reset links are single-use and expire after 60 minutes.
+LINK_TOKEN_MINUTES = 60
