@@ -64,6 +64,9 @@ SAFE_ACTIONS = {
     "/account/security/mfa-on", "/admin/discoms/import/preview", "/admin/reserved-ids",
     "/admin/reserved-ids/restore",
 }  # fmt: skip
+CONFIRMING_FORM = re.compile(
+    r'<form method="post"(?:(?!</form>).)*?data-confirm=(?:(?!</form>).)*</form>', re.S
+)
 POST_FORM = re.compile(r'<form method="post" action="(.*?)"((?:[^>]|(?<=%)>)*)>', re.S)
 
 
@@ -75,3 +78,12 @@ def test_p1_ui_02_serious_actions_are_confirmed(template: Path) -> None:
             f"{action}: add data-confirm (see docs/conventions.md), "
             "or add it to SAFE_ACTIONS if it is not serious"
         )
+
+
+@pytest.mark.parametrize("template", TEMPLATES, ids=lambda path: path.name)
+def test_p1_ui_02_a_form_that_asks_cannot_be_sent_without_the_script(template: Path) -> None:
+    for form in CONFIRMING_FORM.findall(template.read_text()):
+        # button() and dialog_actions() are the two ways a form gets its submit button.
+        calls = re.findall(r"\{\{ (?:button|dialog_actions)\(.*?\) \}\}", form)
+        submits = [call for call in calls if 'type="button"' not in call]
+        assert submits and all("needs_script=true" in call for call in submits), submits

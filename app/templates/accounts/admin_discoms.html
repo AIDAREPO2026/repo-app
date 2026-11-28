@@ -47,7 +47,7 @@
         <form method="post" action="/admin/discoms/{{ discom.id }}/edit" data-confirm="{{ _('The email domain decides who can ask for this Discom\'s login.') }}" data-confirm-title="{{ _('Save these changes?') }}" data-confirm-action="{{ _('Save changes') }}">
           {{ csrf_field() }}
           {{ discom_fields("edit-" ~ discom.id ~ "-", discom) }}
-          {{ button("Save changes", icon_name="check") }}
+          {{ button("Save changes", icon_name="check", needs_script=true) }}
         </form>
 
         {% if active %}
@@ -59,7 +59,7 @@
         <p class="mb-4 text-sm text-muted">{{ _("The Discom can register again, and its Member login can sign in.") }}</p>
         <form method="post" action="/admin/discoms/{{ discom.id }}/reactivate" data-confirm="{{ _('It can register again, and its Member login can sign in.') }}" data-confirm-title="{{ _('Reactivate this Discom?') }}" data-confirm-action="{{ _('Reactivate') }}">
           {{ csrf_field() }}
-          {{ button("Reactivate Discom", "secondary", icon_name="refresh") }}
+          {{ button("Reactivate Discom", "secondary", icon_name="refresh", needs_script=true) }}
         </form>
         {% endif %}
         {% endcall %}

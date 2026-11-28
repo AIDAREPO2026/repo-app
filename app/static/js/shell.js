@@ -129,6 +129,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Hidden in the HTML, because without this script they would do nothing.
   for (const control of document.querySelectorAll(".theme-switcher, [data-needs-script]")) {
     control.hidden = false;
+    // Buttons that must not work without the script start disabled as well.
+    if (control.matches("button")) control.disabled = false;
   }
 });
 

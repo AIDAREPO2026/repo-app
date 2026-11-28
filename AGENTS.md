@@ -103,7 +103,7 @@ Before writing a helper, search the codebase. These shared functions must be use
 
 **Confirm before anything serious**
 
-Any action that removes, deactivates, resets, grants or changes who can do what asks first, everywhere in the system. Put `data-confirm`, `data-confirm-title` and `data-confirm-action` on its form; `static/js/shell.js` shows the shared dialog and sends nothing until the person agrees. Say what will happen and whether it can be undone. If another step already confirms it, mark the form `data-confirmed-by` (`dialog`, `checkbox` or `preview`). A form that is not serious is listed in `SAFE_ACTIONS` in `tests/core/test_ui_rules.py`, and that test fails for any other.
+Any action that removes, deactivates, resets, grants or changes who can do what asks first, everywhere in the system. Put `data-confirm`, `data-confirm-title` and `data-confirm-action` on its form; `static/js/shell.js` shows the shared dialog and sends nothing until the person agrees. Say what will happen and whether it can be undone. Give its submit button `needs_script=true`, so the form cannot be sent when the script that asks is not running. If another step already confirms it, mark the form `data-confirmed-by` (`dialog`, `checkbox` or `preview`). A form that is not serious is listed in `SAFE_ACTIONS` in `tests/core/test_ui_rules.py`, and that test fails for any other.
 
 **Checks every UI change must pass**
 

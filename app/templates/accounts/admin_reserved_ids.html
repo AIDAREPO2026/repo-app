@@ -47,7 +47,7 @@
           {{ csrf_field() }}
           <input type="hidden" name="word" value="{{ word }}">
           <input type="hidden" name="where" value="{{ where }}">
-          {{ button("Remove", "secondary", size="sm", icon_name="close", icon_only=true) }}
+          {{ button("Remove", "secondary", size="sm", icon_name="close", icon_only=true, needs_script=true) }}
         </form>
         {% endif %}
       </td>

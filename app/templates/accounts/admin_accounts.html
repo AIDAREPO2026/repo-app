@@ -68,14 +68,14 @@
           {% if account.password_hash is none %}
           <form method="post" action="/admin/accounts/{{ account.id }}/set-password-link" data-confirm="{{ _('The person gets a new link to set their password. Any earlier link stops mattering once this one is used.') }}" data-confirm-title="{{ _('Send a new link?') }}" data-confirm-action="{{ _('Send link') }}">
             {{ csrf_field() }}
-            {{ button("Send a new set-password link", "secondary", size="sm", icon_name="mail") }}
+            {{ button("Send a new set-password link", "secondary", size="sm", icon_name="mail", needs_script=true) }}
           </form>
           {% endif %}
           {% if account.login_type == "reviewer" %}
           <form method="post" action="/admin/accounts/{{ account.id }}/reviewer-role" data-confirm="{{ _('The primary and alternate Reviewer swap places.') }}" data-confirm-title="{{ _('Change the Reviewer role?') }}" data-confirm-action="{{ _('Change role') }}">
             {{ csrf_field() }}
             <input type="hidden" name="is_alternate" value="{{ 'false' if account.is_alternate else 'true' }}">
-            {{ button("Make primary" if account.is_alternate else "Make alternate", "secondary", size="sm", icon_name="swap") }}
+            {{ button("Make primary" if account.is_alternate else "Make alternate", "secondary", size="sm", icon_name="swap", needs_script=true) }}
           </form>
           {% endif %}
         </div>
@@ -86,7 +86,7 @@
         <p class="mb-4 text-sm text-muted">{{ _("Reset it if the person has lost their phone or cannot get codes. Their sessions end, and they set it up again at their next sign-in.") }}</p>
         <form method="post" action="/admin/accounts/{{ account.id }}/reset-mfa" data-confirm="{{ _('Their sessions end and they set it up again at their next sign-in.') }}" data-confirm-title="{{ _('Reset two-step sign-in?') }}" data-confirm-action="{{ _('Reset') }}">
           {{ csrf_field() }}
-          {{ button("Reset two-step sign-in", "secondary", icon_name="refresh") }}
+          {{ button("Reset two-step sign-in", "secondary", icon_name="refresh", needs_script=true) }}
         </form>
         {% endif %}
 
@@ -95,7 +95,7 @@
         <form method="post" action="/admin/accounts/{{ account.id }}/reassign" data-confirm="{{ _('The current person can no longer sign in, and the new person gets this role. This cannot be undone.') }}" data-confirm-title="{{ _('Deactivate and replace?') }}" data-confirm-action="{{ _('Deactivate and replace') }}">
           {{ csrf_field() }}
           {{ person_fields("reassign-" ~ account.id ~ "-") }}
-          {{ button("Deactivate and replace", "danger", icon_name="swap") }}
+          {{ button("Deactivate and replace", "danger", icon_name="swap", needs_script=true) }}
         </form>
 
         <h3 class="section-title mt-8">{{ _("Deactivate") }}</h3>
@@ -133,7 +133,7 @@
   </label>
   {{ person_fields("add-") }}
   <div class="dialog-actions">
-    {{ dialog_actions("add-account", "Add account", "plus") }}
+    {{ dialog_actions("add-account", "Add account", "plus", needs_script=true) }}
   </div>
 </form>
 {% endcall %}

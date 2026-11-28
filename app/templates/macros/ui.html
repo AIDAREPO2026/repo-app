@@ -15,14 +15,18 @@
   A button. variant: primary, secondary, danger or link. size: "" or "sm".
   Every button names its icon (macros/icons.html). icon_only keeps just the drawing, for
   actions repeated on each row and for closing; the label still names it.
+  needs_script is for the button of a form with data-confirm: it must not work when the
+  script that asks cannot run.
   To open or close a dialog, pass commandfor (the dialog id) and command
   ("show-modal" or "close"), so the dialog opens from, and returns to, this control.
 #}
-{% macro button(label, variant="primary", type="submit", size="", block=false, name="", value="", commandfor="", command="", icon_name="", icon_only=false) %}
+{% macro button(label, variant="primary", type="submit", size="", block=false, name="", value="", commandfor="", command="", icon_name="", icon_only=false, needs_script=false) %}
 <button type="{{ type }}" class="btn btn-{{ variant }}{% if size %} btn-{{ size }}{% endif %}{% if block %} btn-block{% endif %}{% if icon_only %} btn-icon{% endif %}"
   {%- if icon_only %} aria-label="{{ _(label) }}" title="{{ _(label) }}"{% endif %}
   {%- if name %} name="{{ name }}" value="{{ value }}"{% endif %}
-  {%- if commandfor %} commandfor="{{ commandfor }}" command="{{ command }}"{% endif %}>{{ button_content(label, icon_name, icon_only) }}</button>
+  {%- if commandfor %} commandfor="{{ commandfor }}" command="{{ command }}"{% endif %}
+  {#- Off until static/js/shell.js runs. Disabled too, so Enter cannot send the form. #}
+  {%- if needs_script %} disabled hidden data-needs-script{% endif %}>{{ button_content(label, icon_name, icon_only) }}</button>
 {% endmacro %}
 
 {# The icon and words inside a button. With icon_only the button's aria-label names it. #}
@@ -280,9 +284,9 @@
 {% endmacro %}
 
 {# The foot of a dialog: Cancel, which closes dialog id, and the button that submits. #}
-{% macro dialog_actions(id, label, icon_name, variant="primary") %}
+{% macro dialog_actions(id, label, icon_name, variant="primary", needs_script=false) %}
 {{ button("Cancel", "secondary", type="button", commandfor=id, command="close", icon_name="close") }}
-{{ button(label, variant, icon_name=icon_name) }}
+{{ button(label, variant, icon_name=icon_name, needs_script=needs_script) }}
 {% endmacro %}
 
 {# The one confirmation step for serious actions: a form with data-confirm opens it before it
