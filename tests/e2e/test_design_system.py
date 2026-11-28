@@ -99,11 +99,12 @@ def token(page: Page, name: str) -> str:
     return page.evaluate(f"getComputedStyle(document.documentElement).getPropertyValue('{name}').trim()")
 
 
+@pytest.mark.parametrize("path", ["/dashboard/admin", "/admin/accounts", "/admin/discoms"])
 @pytest.mark.parametrize("scheme", ["light", "dark"])
-def test_p1_ui_02_app_shell_passes_axe(admin_page: Page, scheme: str) -> None:
+def test_p1_ui_02_app_shell_passes_axe(admin_page: Page, scheme: str, path: str) -> None:
     page = admin_page
     page.emulate_media(color_scheme=scheme)
-    page.goto("/dashboard/admin")
+    page.goto(path)
 
     assert page.get_by_role("navigation", name="Main").is_visible()
     assert blocking_violations(page) == []
