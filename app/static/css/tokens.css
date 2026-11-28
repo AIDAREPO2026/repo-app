@@ -118,9 +118,9 @@
   --aida-space-8: 4rem;
 
   /* Corner radii. */
-  --aida-radius-sm: 0.375rem;
-  --aida-radius-md: 0.625rem;
-  --aida-radius-lg: 1rem;
+  --aida-radius-sm: 0.25rem;
+  --aida-radius-md: 0.375rem;
+  --aida-radius-lg: 0.5rem;
   --aida-radius-full: 999px;
 
   /* Shadow depths: resting cards, and things that float (menus, modals). By night

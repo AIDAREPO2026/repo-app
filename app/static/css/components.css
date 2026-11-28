@@ -351,7 +351,7 @@
     max-width: 100%;
     padding: var(--aida-space-1);
     border: 1px solid var(--aida-border);
-    border-radius: var(--aida-radius-full);
+    border-radius: var(--aida-radius-lg);
     background: var(--aida-surface);
     box-shadow: var(--aida-shadow-1);
   }
@@ -362,7 +362,7 @@
   }
 
   .page-actions .btn {
-    border-radius: var(--aida-radius-full);
+    border-radius: var(--aida-radius-md);
   }
 
   /* Only wide screens have a sidebar to hide. A rule separates it from the trail. */
@@ -388,7 +388,7 @@
       display: grid;
       margin-right: var(--aida-space-1);
       border-right: 1px solid var(--aida-border);
-      border-radius: var(--aida-radius-full) 0 0 var(--aida-radius-full);
+      border-radius: var(--aida-radius-md) 0 0 var(--aida-radius-md);
     }
   }
 
@@ -431,7 +431,7 @@
     gap: var(--aida-space-1);
     min-height: 2rem;
     padding: 0 var(--aida-space-2);
-    border-radius: var(--aida-radius-full);
+    border-radius: var(--aida-radius-md);
   }
 
   .crumb-link,
