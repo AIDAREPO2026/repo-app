@@ -1,7 +1,12 @@
+import uuid
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
+from app.accounts.models import Organisation
+from app.accounts.service import admin_overview
 from app.core.constants import LOGIN_TYPES
 from app.main import create_app
 from tests.accounts.conftest import SignIn
@@ -37,3 +42,13 @@ def test_p1_ui_01_stylesheet_is_served(app: FastAPI) -> None:
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/css")
+
+
+def test_p1_ui_02_admin_overview_counts_only_active_discoms(db: Session) -> None:
+    before = admin_overview(db)["active_discoms"]
+    suffix = uuid.uuid4().hex[:8]
+    db.add(Organisation(name=f"Active {suffix}", email_domain=f"active-{suffix}.in"))
+    db.add(Organisation(name=f"Inactive {suffix}", email_domain=f"inactive-{suffix}.in", status="inactive"))
+    db.flush()
+
+    assert admin_overview(db)["active_discoms"] == before + 1

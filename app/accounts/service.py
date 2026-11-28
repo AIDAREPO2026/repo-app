@@ -594,6 +594,20 @@ TEST_DISCOMS = (
 SEED_ENVIRONMENTS = ("local", "development", "test", "staging")
 
 
+def admin_overview(db: Session) -> dict[str, int]:
+    """Return the figures on the Admin dashboard: Discoms, waiting requests and ITPED accounts."""
+    count = select(func.count()).select_from(Login)
+    return {
+        "active_discoms": db.scalar(
+            select(func.count()).select_from(Organisation).where(Organisation.status == "active")
+        )
+        or 0,
+        "pending_requests": db.scalar(count.where(Login.login_type == "member", Login.status == "pending"))
+        or 0,
+        "itped_accounts": db.scalar(count.where(Login.login_type != "member", Login.status == "active")) or 0,
+    }
+
+
 def discoms(db: Session) -> list[Organisation]:
     """Return every Discom, active ones first, then by name."""
     query = select(Organisation).order_by(Organisation.status != "active", func.lower(Organisation.name))
