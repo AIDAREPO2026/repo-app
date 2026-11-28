@@ -1,5 +1,5 @@
 // The page shell's choices (P1-UI-02), kept in this browser: theme, and whether the sidebar
-// shows. Also the sidebar's "Find a page" box. Loaded in <head> without defer, so the page
+// shows. Also the search boxes: "Find a page" and the one above a data table. Loaded in <head> without defer, so the page
 // never flashes the wrong theme or layout.
 const THEME_KEY = "aida-theme";
 const SIDEBAR_KEY = "aida-sidebar";
@@ -64,6 +64,20 @@ function findPage(box) {
   }
 }
 
+// Show only the rows holding the text. Dialogs inside a row are not part of what it says.
+function filterTable(box) {
+  const table = box.closest(".data-table");
+  const text = box.value.trim().toLowerCase();
+  let shown = 0;
+  for (const row of table.querySelectorAll("tbody tr")) {
+    const copy = row.cloneNode(true);
+    copy.querySelectorAll("dialog").forEach((dialog) => dialog.remove());
+    row.hidden = !copy.textContent.toLowerCase().includes(text);
+    if (!row.hidden) shown += 1;
+  }
+  table.querySelector("[data-shown]").textContent = shown;
+}
+
 function applyAll() {
   applyTheme(read(THEME_KEY, "light"));
   applySidebar(read(SIDEBAR_KEY, "shown"));
@@ -94,4 +108,5 @@ document.addEventListener("click", (event) => {
 
 document.addEventListener("input", (event) => {
   if (event.target.matches("[data-find-page]")) findPage(event.target);
+  if (event.target.matches("[data-filter-table]")) filterTable(event.target);
 });

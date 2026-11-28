@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "macros/forms.html" import field, csrf_field with context %}
-{% from "macros/ui.html" import page_header, button, card, badge, modal, drawer, empty_state with context %}
+{% from "macros/ui.html" import page_header, button, card, badge, modal, drawer, empty_state, data_table with context %}
 {% set role_names = {"admin": "Admin", "reviewer": "Reviewer", "approver": "Approver"} %}
 {% set user_id_help = "4 to 50 lowercase letters, numbers, dots, dashes or underscores." %}
 {% set user_id_pattern = "[a-z0-9._\\-]{4,50}" %}
@@ -25,10 +25,8 @@
 {% block content %}
 {{ page_header("Accounts") }}
 
-{% call card(flush=true) %}
 {% if accounts %}
-<div class="overflow-x-auto">
-<table class="table">
+{% call data_table("Accounts", accounts|length, search="Search accounts") %}
   <thead>
     <tr>
       <th scope="col">{{ _("Person") }}</th>
@@ -118,12 +116,12 @@
     </tr>
     {% endfor %}
   </tbody>
-</table>
-</div>
-{% else %}
-{{ empty_state("No accounts yet", "Add the Admins, Reviewers and the Approver who will run the portal.", "+") }}
-{% endif %}
 {% endcall %}
+{% else %}
+{% call card(flush=true) %}
+{{ empty_state("No accounts yet", "Add the Admins, Reviewers and the Approver who will run the portal.", "+") }}
+{% endcall %}
+{% endif %}
 
 {% call modal("add-account", "Add an account") %}
 <p class="mb-5 text-sm text-muted">{{ _("They get an email with a link to set their password. The link works once, for 60 minutes.") }}</p>

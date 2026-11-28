@@ -244,6 +244,9 @@
   .find-field {
     position: relative;
     display: block;
+  }
+
+  .find-page {
     margin-bottom: var(--aida-space-3);
   }
 
@@ -258,7 +261,7 @@
     pointer-events: none;
   }
 
-  .input.find-page {
+  .input.find-input {
     min-height: 2.25rem;
     padding-left: 2.25rem;
     border-color: transparent;
@@ -1411,15 +1414,13 @@
     border-bottom: 1px solid var(--aida-border);
     color: var(--aida-text-muted);
     font-size: var(--aida-text-xs);
-    font-weight: 650;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    font-weight: 600;
     white-space: nowrap;
   }
 
 
   .table td {
-    padding: var(--aida-space-4) var(--aida-space-5);
+    padding: var(--aida-space-2) var(--aida-space-5);
     border-top: 1px solid var(--aida-border);
     vertical-align: middle;
   }
@@ -1431,6 +1432,67 @@
 
   .table tbody tr:hover {
     background: var(--aida-surface-hover);
+  }
+
+  /* ---------- Data table: toolbar, scrolling rows under a fixed header, row count ---------- */
+
+  .data-table {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .data-toolbar:not([hidden]) {
+    display: flex;
+    padding: var(--aida-space-3);
+    border-bottom: 1px solid var(--aida-border);
+  }
+
+  .data-toolbar .find-field {
+    width: min(20rem, 100%);
+  }
+
+  .data-scroll {
+    overflow: auto;
+  }
+
+  .data-scroll th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .data-footer {
+    padding: var(--aida-space-3) var(--aida-space-5);
+    border-top: 1px solid var(--aida-border);
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* On a screen with room, the page stops at the window and only the rows scroll. Short
+     windows scroll the whole page instead, so the table never shrinks to a slit. */
+  @media (min-width: 64rem) and (min-height: 32rem) {
+    .app-main:has(.data-table) {
+      height: 100dvh;
+    }
+
+    .app-main:has(.data-table) > main {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding-block-end: 0;
+    }
+
+    /* The card always takes the height left, however few the rows, so the footer stays put. */
+    .app-main .data-table,
+    .app-main .data-scroll {
+      flex: 1;
+      min-height: 0;
+    }
+
+    .app-main:has(.data-table) {
+      padding-bottom: var(--aida-space-3);
+    }
   }
 
   /* ---------- Modal and drawer: native <dialog>, opened by the control that names it ---------- */

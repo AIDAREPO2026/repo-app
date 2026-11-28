@@ -123,6 +123,31 @@
 {% if lead %}<p class="page-lead page-intro">{{ _(lead) }}</p>{% endif %}
 {% endmacro %}
 
+{#
+  A list of records: an optional search box, a table whose header stays while the rows
+  scroll, and a row count. On wide screens it fills the height left on the screen. The caller
+  gives the <thead> and <tbody>. label names the table; search is the search box's label,
+  and without one there is no box. static/js/shell.js does the filtering.
+#}
+{% macro data_table(label, total, search="") %}
+{% from "macros/icons.html" import icon %}
+<section class="card card-flush data-table">
+  {% if search %}
+  <div class="data-toolbar" data-needs-script hidden>
+    <div class="find-field">
+      {{ icon("search") }}
+      <input type="search" class="input find-input" data-filter-table placeholder="{{ _(search) }}" aria-label="{{ _(search) }}">
+    </div>
+  </div>
+  {% endif %}
+  {# Focusable, so the keyboard can scroll it. #}
+  <div class="data-scroll" role="region" aria-label="{{ _(label) }}" tabindex="0">
+    <table class="table">{{ caller() }}</table>
+  </div>
+  <p class="data-footer" role="status">{{ _("Rows shown:") }} <span data-shown>{{ total }}</span> / {{ total }}</p>
+</section>
+{% endmacro %}
+
 {# A dashboard figure. label is a message id; value is data. note is an optional message. #}
 {# tone: "accent" (blue), "warning" (amber) or "success" (green), for the icon and corner wash. #}
 {% macro stat_card(label, value, icon_name, note="", tone="accent") %}

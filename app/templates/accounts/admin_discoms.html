@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "macros/forms.html" import field, csrf_field with context %}
-{% from "macros/ui.html" import page_header, button, card, badge, modal, drawer, empty_state with context %}
+{% from "macros/ui.html" import page_header, button, card, badge, modal, drawer, empty_state, data_table with context %}
 {#
   The Discom master list (FR-1.6). Registration emails must use a listed, active Discom's
   domain (D-11). Discoms are deactivated, never deleted (SRS 6.3).
@@ -21,10 +21,8 @@
 {% block content %}
 {{ page_header("Discoms") }}
 
-{% call card(flush=true) %}
 {% if discoms %}
-<div class="overflow-x-auto">
-<table class="table">
+{% call data_table("Discoms", discoms|length, search="Search Discoms") %}
   <thead>
     <tr>
       <th scope="col">{{ _("Discom") }}</th>
@@ -80,12 +78,12 @@
     </tr>
     {% endfor %}
   </tbody>
-</table>
-</div>
-{% else %}
-{{ empty_state("No Discoms yet", "Add them one by one, or import the list from a CSV file.", "+") }}
-{% endif %}
 {% endcall %}
+{% else %}
+{% call card(flush=true) %}
+{{ empty_state("No Discoms yet", "Add them one by one, or import the list from a CSV file.", "+") }}
+{% endcall %}
+{% endif %}
 
 {% call modal("add-discom", "Add a Discom") %}
 <form method="post" action="/admin/discoms">

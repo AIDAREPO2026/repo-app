@@ -109,6 +109,7 @@ The Admin audit search screen is built in `P3-UI-01`.
     - empty state, skeleton loader and pagination
 - Instant press and focus feedback (`:active`, `:focus-visible`) on every interactive component. Pressed controls spring back.
 - Page transitions with the View Transitions API (`@view-transition { navigation: auto; }`), and HTMX swaps set to use transitions.
+- A data table component: search, a header that stays while rows scroll, a height that fits the screen on wide screens, and a row count.
 - A translucent top bar with `backdrop-filter` and a solid fallback.
 - A theme switcher (System, Light, Dark) on every page, remembered in the browser. Light is the default.
 - Signed-in pages float: a light sidebar with folding sections and a page finder, a row with the breadcrumb pill (menus for pages, and a button that hides the sidebar) and the page actions, then cards on the canvas. The breadcrumbs name the page, so page headings are for screen readers.

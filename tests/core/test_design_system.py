@@ -72,3 +72,16 @@ def test_p1_ui_02_theme_button_offers_three_choices_hidden_without_script() -> N
 
     assert re.findall(r'data-theme-choice="(\w+)"', html) == ["system", "light", "dark"]
     assert '<div class="theme-switcher" hidden>' in html
+
+
+def test_p1_ui_02_data_table_names_its_scroll_area_and_counts_rows() -> None:
+    template = templates.env.from_string(
+        '{% from "macros/ui.html" import data_table %}'
+        '{% call data_table("Discoms", 3, search="Search Discoms") %}<tbody></tbody>{% endcall %}'
+    )
+
+    html = template.render()
+
+    assert 'role="region" aria-label="Discoms" tabindex="0"' in html
+    assert 'aria-label="Search Discoms"' in html
+    assert "<span data-shown>3</span> / 3" in html

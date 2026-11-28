@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "macros/forms.html" import csrf_field with context %}
-{% from "macros/ui.html" import page_header, button, link_button, card, badge, alert with context %}
+{% from "macros/ui.html" import page_header, button, link_button, card, badge, alert, data_table with context %}
 {% set problems = rows|selectattr("problem")|list %}
 {% block content %}
 {{ page_header("Check the import", lead="Nothing has been saved yet. Rows with a problem are skipped; fix them in the file and import it again.") }}
@@ -11,9 +11,7 @@
   {{ badge(_("Problems: %(count)s", count=problems|length), "danger" if problems else "neutral") }}
 </div>
 
-{% call card(flush=true) %}
-<div class="overflow-x-auto">
-<table class="table">
+{% call data_table("Rows in the file", rows|length) %}
   <thead>
     <tr>
       <th scope="col">{{ _("Line") }}</th>
@@ -36,8 +34,6 @@
     </tr>
     {% endfor %}
   </tbody>
-</table>
-</div>
 {% endcall %}
 
 <form method="post" action="/admin/discoms/import" class="mt-6 flex flex-wrap gap-3">
