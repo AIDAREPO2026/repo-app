@@ -1,5 +1,5 @@
 {% extends "layouts/auth.html" %}
-{% from "macros/forms.html" import field, csrf_field with context %}
+{% from "macros/forms.html" import field, select, csrf_field with context %}
 {% from "macros/ui.html" import alert, auth_heading, button with context %}
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', path='vendor/altcha-3.7.0/altcha.css') }}">
@@ -13,18 +13,10 @@
 <form method="post" action="/register" novalidate {% if errors %}aria-describedby="register-error"{% endif %}>
   {{ csrf_field() }}
 
-  {% set discom_error = errors.get("organisation_id", "") %}
-  <div class="field">
-    <label for="organisation_id" class="field-label">{{ _("Discom") }} <span class="field-required" aria-hidden="true">*</span></label>
-    <select id="organisation_id" name="organisation_id" required class="input"
-            {% if discom_error %}aria-describedby="organisation_id-error" aria-invalid="true"{% endif %}>
-      <option value="">{{ _("Choose your Discom") }}</option>
-      {% for discom in discoms %}
-      <option value="{{ discom.id }}" {% if form.organisation_id == discom.id|string %}selected{% endif %}>{{ discom.name }}</option>
-      {% endfor %}
-    </select>
-    {% if discom_error %}<p id="organisation_id-error" class="field-error">{{ discom_error }}</p>{% endif %}
-  </div>
+  {% set discom_options = [] %}
+  {% for discom in discoms %}{% set discom_options = discom_options.append((discom.id, discom.name)) or discom_options %}{% endfor %}
+  {{ select("organisation_id", "Discom", discom_options, value=form.organisation_id or "", required=true,
+            placeholder="Choose your Discom", error=errors.get("organisation_id", "")) }}
 
   {{ field("email", "Official email address", type="email", value=form.email, autocomplete="email", required=true, maxlength=254,
            help="Use an address on your Discom's own email domain.", error=errors.get("email", "")) }}

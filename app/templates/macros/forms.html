@@ -37,3 +37,38 @@
 {% macro csrf_field() %}
 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token or '' }}">
 {% endmacro %}
+
+{#
+  A select box (P1-UI-02). It renders a native <select>, which carries the form value and
+  still works without script. static/js/select.js then draws the picker over it:
+  - a search box when there are more than 10 options, or when source is given
+  - with source, options come from that address as you type and scroll:
+      GET <source>?q=<text>&page=<n>  ->  {"items": [{"value": "..", "label": ".."}], "more": true}
+    Pass the chosen option, if any, in options so it shows before the first search.
+  - the list opens below, above or to either side, wherever there is room
+  options is a list of (value, text) pairs of data, already translated. An empty value is
+  the placeholder.
+    {% from "macros/forms.html" import select with context %}
+#}
+{% macro select(name, label, options=[], value="", required=false, error="", help="", id="", placeholder="Choose an option", source="") %}
+{% set field_id = id or name %}
+{% set described_by = [] %}
+{% if help %}{% set described_by = described_by + [field_id ~ "-help"] %}{% endif %}
+{% if error %}{% set described_by = described_by + [field_id ~ "-error"] %}{% endif %}
+<div class="field" data-select{% if source %} data-source="{{ source }}"{% endif %}
+     data-placeholder="{{ _(placeholder) }}" data-search="{{ _('Search') }}" data-loading="{{ _('Loading…') }}"
+     data-empty="{{ _('No matches') }}" data-failed="{{ _('The list did not load. Type again to retry.') }}">
+  <label for="{{ field_id }}" id="{{ field_id }}-label" class="field-label">{{ _(label) }}{% if required %} <span class="field-required" aria-hidden="true">*</span>{% endif %}</label>
+  <select id="{{ field_id }}" name="{{ name }}" class="input"
+          {% if required %}required{% endif %}
+          {% if described_by %}aria-describedby="{{ described_by|join(' ') }}"{% endif %}
+          {% if error %}aria-invalid="true"{% endif %}>
+    <option value="">{{ _(placeholder) }}</option>
+    {% for option_value, text in options %}
+    <option value="{{ option_value }}" {% if option_value|string == value|string %}selected{% endif %}>{{ text }}</option>
+    {% endfor %}
+  </select>
+  {% if help %}<p id="{{ field_id }}-help" class="field-help">{{ _(help) }}</p>{% endif %}
+  {% if error %}<p id="{{ field_id }}-error" class="field-error">{{ error }}</p>{% endif %}
+</div>
+{% endmacro %}

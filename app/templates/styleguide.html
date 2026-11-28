@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "macros/ui.html" import page_header, button, link_button, card, item_card, badge, lock_badge, alert, modal, drawer, empty_state, skeleton, pagination with context %}
-{% from "macros/forms.html" import field with context %}
+{% from "macros/forms.html" import field, select with context %}
 {#
   The style guide (P1-UI-02): every token and component, shown once forced light and once
   forced dark. Class names are written out in full so Tailwind finds them.
@@ -93,6 +93,8 @@
       <div class="mt-4">
         {{ field(scheme ~ "-name", "Full name", required=true, help="As it should appear on the account.") }}
         {{ field(scheme ~ "-email", "Email", type="email", value="not-an-email", error="Enter an email address, such as name@itped.example.") }}
+        {{ select(scheme ~ "-short", "Short list", [("a", "Admin"), ("r", "Reviewer"), ("p", "Approver")]) }}
+        {{ select(scheme ~ "-long", "Long list, with search", [(1, "North Discom"), (2, "South Discom"), (3, "East Discom"), (4, "West Discom"), (5, "Central Discom"), (6, "Coastal Discom"), (7, "Hill Discom"), (8, "Valley Discom"), (9, "Delta Discom"), (10, "Plateau Discom"), (11, "Desert Discom"), (12, "Island Discom")]) }}
       </div>
       {% endcall %}
       <div class="grid gap-4">

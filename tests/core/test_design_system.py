@@ -105,3 +105,16 @@ def test_p1_ui_02_every_button_has_an_icon() -> None:
 
     assert calls
     assert [item for item in calls if "icon_name=" not in item[1]] == []
+
+
+def test_p1_ui_02_select_renders_a_native_select_that_script_enhances() -> None:
+    template = templates.env.from_string(
+        '{% from "macros/forms.html" import select %}'
+        '{{ select("discom", "Discom", [(1, "North"), (2, "South")], value=2, source="/lookup") }}'
+    )
+
+    html = template.render()
+
+    assert 'data-select data-source="/lookup"' in html
+    assert '<select id="discom" name="discom" class="input"' in html
+    assert '<option value="2" selected>South</option>' in html

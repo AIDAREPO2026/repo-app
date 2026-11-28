@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros/forms.html" import field, csrf_field with context %}
+{% from "macros/forms.html" import field, select, csrf_field with context %}
 {% from "macros/ui.html" import page_header, button, card, badge, modal, drawer, empty_state, data_table with context %}
 {% set role_names = {"admin": "Admin", "reviewer": "Reviewer", "approver": "Approver"} %}
 {% set user_id_help = "4 to 50 lowercase letters, numbers, dots, dashes or underscores." %}
@@ -127,14 +127,7 @@
 <p class="mb-5 text-sm text-muted">{{ _("They get an email with a link to set their password. The link works once, for 60 minutes.") }}</p>
 <form method="post" action="/admin/accounts">
   {{ csrf_field() }}
-  <div class="field">
-    <label for="login_type" class="field-label">{{ _("Role") }} <span class="field-required" aria-hidden="true">*</span></label>
-    <select id="login_type" name="login_type" required class="input">
-      <option value="admin">{{ _("Admin") }}</option>
-      <option value="reviewer">{{ _("Reviewer") }}</option>
-      <option value="approver">{{ _("Approver") }}</option>
-    </select>
-  </div>
+  {{ select("login_type", "Role", [("admin", _("Admin")), ("reviewer", _("Reviewer")), ("approver", _("Approver"))], value="admin", required=true) }}
   <label class="check">
     <input name="is_alternate" type="checkbox" value="true">
     {{ _("Alternate Reviewer (Reviewers only)") }}

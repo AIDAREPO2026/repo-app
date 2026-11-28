@@ -1043,6 +1043,113 @@
     border-color: color-mix(in srgb, var(--aida-border) 60%, transparent);
   }
 
+  /* ---------- Select box: a button over the native select, and its list (select.js) ---------- */
+
+  .select-native {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    min-height: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .input.select-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--aida-space-3);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  /* A chevron drawn from two borders, turned over while the list is open. */
+  .select-button::after {
+    content: "";
+    flex: none;
+    width: 0.45rem;
+    height: 0.45rem;
+    border-right: 2px solid var(--aida-text-muted);
+    border-bottom: 2px solid var(--aida-text-muted);
+    transform: translateY(-25%) rotate(45deg);
+    transition: transform var(--aida-duration-base) var(--aida-ease-settle);
+  }
+
+  .select-button[aria-expanded="true"]::after {
+    transform: translateY(25%) rotate(225deg);
+  }
+
+  .select-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .select-value.is-placeholder {
+    color: var(--aida-text-muted);
+  }
+
+  /* As wide as its button. .menu places it where there is room, flipping at edges. */
+  .select-menu {
+    width: anchor-size(width);
+    min-width: 12rem;
+    max-width: calc(100vw - 2rem);
+    max-height: 18rem;
+    margin: var(--aida-space-1) 0;
+    overflow: hidden;
+  }
+
+  .select-menu:popover-open {
+    display: flex;
+    flex-direction: column;
+    gap: var(--aida-space-2);
+  }
+
+  /* Soft focus like the other fields, and no room left for an icon it does not have. */
+  .input.find-input.select-search {
+    flex: none;
+    padding-left: var(--aida-space-3);
+  }
+
+  .input.find-input.select-search:focus-visible {
+    outline: 1px solid color-mix(in srgb, var(--aida-focus-ring) 55%, transparent);
+    box-shadow: none;
+  }
+
+  .input.select-button[aria-expanded="true"]:not(:disabled) {
+    border-color: color-mix(in srgb, var(--aida-focus-ring) 55%, transparent);
+  }
+
+  .select-list {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .select-option {
+    padding: var(--aida-space-2) var(--aida-space-3);
+    border-radius: var(--aida-radius-sm);
+    font-size: var(--aida-text-sm);
+    cursor: pointer;
+  }
+
+  .select-option:hover,
+  .select-option.is-active {
+    background: var(--aida-surface-hover);
+  }
+
+  .select-option[aria-selected="true"] {
+    background: var(--aida-accent-subtle);
+    color: var(--aida-accent);
+    font-weight: 600;
+  }
+
+  .select-status:not(:empty) {
+    padding: var(--aida-space-2) var(--aida-space-3);
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-xs);
+  }
+
   /* ---------- Forms: filled fields that clear to the surface when used ---------- */
 
   .modal .field-label,

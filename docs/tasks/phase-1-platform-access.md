@@ -111,6 +111,7 @@ The Admin audit search screen is built in `P3-UI-01`.
 - Page transitions with the View Transitions API (`@view-transition { navigation: auto; }`), and HTMX swaps set to use transitions.
 - A dashboard of a greeting and panels: key figures that link to their pages, quick links and the login's two-step sign-in status.
 - Every button has an icon. Closing a dialog and per-row actions show the icon alone, with an accessible name.
+- A select component over the native select: search above 10 options, options from a server address with search and infinite scroll, and a list that opens where there is room.
 - A data table component: search, a header that stays while rows scroll, a height that fits the screen on wide screens, and a row count.
 - A translucent top bar with `backdrop-filter` and a solid fallback.
 - A theme button on every page that switches between light and dark in one click, remembered in the browser. Light is the default.
