@@ -52,15 +52,15 @@ A recognised Discom (SRS 6.1, FR-1.6). Created in `P1-ACC-01`.
 | Column | Type | Null | Default | Notes |
 | --- | --- | --- | --- | --- |
 | `id` | uuid | No | | Primary key |
-| `name` | text(200) | No | | Unique |
+| `name` | text(200) | No | | Unique, ignoring case: unique index `uq_organisation_name` on `lower(name)` |
 | `email_domain` | text(253) | No | | Unique. Lowercase, `CHECK (email_domain = lower(email_domain))`. Registration email must match (D-11) |
-| `status` | text | No | `'active'` | `active` or `inactive`. An inactive Discom cannot register or sign in |
-| `extra_email` | text(254) | Yes | | Phase 5 second notification address, same domain (`P5-NOT-03`) |
-| `extra_email_verified_at` | timestamptz | Yes | | Set when the confirmation link is used |
+| `status` | text | No | `'active'` | `active` or `inactive`. An inactive Discom cannot register or sign in; deactivating one ends its Member login's sessions |
+| `extra_email` | text(254) | Yes | | Phase 5 second notification address, same domain. Added by `P5-NOT-03`, not yet created |
+| `extra_email_verified_at` | timestamptz | Yes | | Set when the confirmation link is used. Added by `P5-NOT-03` |
 | `created_at` | timestamptz | No | `now()` | |
 | `updated_at` | timestamptz | No | `now()` | |
 
-The link to its Member login is `login.organisation_id`. Registration and verification timestamps (SRS 6.1) are on that login: `created_at` and `verified_at`.
+The link to its Member login is `login.organisation_id`. Migration `0009` adds that foreign key; any Member login created before it, which could only be test data, gets an inactive placeholder Discom named `Unlisted Discom <id>` so the key can be added. Registration and verification timestamps (SRS 6.1) are on that login: `created_at` and `verified_at`.
 
 ### `login`
 

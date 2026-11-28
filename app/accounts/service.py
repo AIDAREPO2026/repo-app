@@ -10,6 +10,7 @@ from fastapi import Request, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.accounts.discom_csv import ImportRow, read_discom_csv
 from app.accounts.guards import actor_for
 from app.accounts.mfa import (
     decrypt_secret,
@@ -19,9 +20,9 @@ from app.accounts.mfa import (
     provisioning_uri,
     qr_code_data_uri,
 )
-from app.accounts.models import Login, LoginAttempt, LoginToken, UserSession
+from app.accounts.models import Login, LoginAttempt, LoginToken, Organisation, UserSession
 from app.accounts.passwords import check_password_policy, hash_password, verify_password
-from app.accounts.schemas import PersonForm, PrivilegedAccountForm
+from app.accounts.schemas import DiscomForm, PersonForm, PrivilegedAccountForm
 from app.accounts.tokens import (
     issue_email_code,
     issue_link_token,
@@ -97,7 +98,7 @@ def authenticate(db: Session, user_id: str, password: str, ip: str, user_agent: 
     if is_locked(login):
         _log_attempt(db, attempted, login, ip, user_agent, "locked")
         return None
-    if login.status != "active":
+    if login.status != "active" or _discom_inactive(login):
         _log_attempt(db, attempted, login, ip, user_agent, "inactive")
         return None
     kept_hash = _check_password(login, password)
@@ -107,6 +108,11 @@ def authenticate(db: Session, user_id: str, password: str, ip: str, user_agent: 
     login.password_hash = kept_hash
     record_success(db, login, ip, user_agent)
     return login
+
+
+def _discom_inactive(login: Login) -> bool:
+    """Return True for a Member whose Discom has been deactivated (FR-1.6)."""
+    return login.organisation is not None and login.organisation.status != "active"
 
 
 def is_locked(login: Login) -> bool:
@@ -576,3 +582,127 @@ def _login_for_set_password(db: Session, token: str) -> tuple[LoginToken, Login]
     if login.status != "active":
         return None
     return login_token, login
+
+
+# P1-ACC-01: three fictional Discoms for development and staging until ITPED supplies the
+# real list (Q-09). tests/fixture_data.py uses the same ones.
+TEST_DISCOMS = (
+    DiscomForm(name="North Test Discom", email_domain="north-discom.example"),
+    DiscomForm(name="South Test Discom", email_domain="south-discom.example"),
+    DiscomForm(name="East Test Discom", email_domain="east-discom.example"),
+)
+SEED_ENVIRONMENTS = ("local", "development", "test", "staging")
+
+
+def discoms(db: Session) -> list[Organisation]:
+    """Return every Discom, active ones first, then by name."""
+    query = select(Organisation).order_by(Organisation.status != "active", func.lower(Organisation.name))
+    return list(db.scalars(query))
+
+
+def add_discom(db: Session, actor: Actor, form: DiscomForm, via: str = "form") -> Organisation:
+    """Add a Discom to the master list, refusing a name or domain already listed (FR-1.6)."""
+    _check_discom_is_unique(db, form)
+    discom = Organisation(name=form.name, email_domain=form.email_domain)
+    db.add(discom)
+    db.flush()
+    details = {"name": discom.name, "email_domain": discom.email_domain, "via": via}
+    record(db, actor, "accounts.discom_add", "organisation", str(discom.id), "success", details)
+    return discom
+
+
+def edit_discom(db: Session, actor: Actor, discom: Organisation, form: DiscomForm) -> None:
+    """Change a Discom's name or email domain, keeping both unique."""
+    _check_discom_is_unique(db, form, discom.id)
+    before = {"name": discom.name, "email_domain": discom.email_domain}
+    discom.name = form.name
+    discom.email_domain = form.email_domain
+    discom.updated_at = utc_now()
+    db.flush()
+    details = {"before": before, "after": {"name": discom.name, "email_domain": discom.email_domain}}
+    record(db, actor, "accounts.discom_edit", "organisation", str(discom.id), "success", details)
+
+
+def set_discom_active(db: Session, actor: Actor, discom: Organisation, active: bool) -> None:
+    """Deactivate or reactivate a Discom. Deactivating ends its Member's sessions at once.
+
+    Discoms are never deleted (SRS 6.3); an inactive one cannot register or sign in.
+    """
+    discom.status = "active" if active else "inactive"
+    discom.updated_at = utc_now()
+    db.flush()
+    if not active:
+        for member in db.scalars(select(Login).where(Login.organisation_id == discom.id)):
+            end_all_sessions(db, member, actor.ip)
+    action = "accounts.discom_reactivate" if active else "accounts.discom_deactivate"
+    record(db, actor, action, "organisation", str(discom.id), "success")
+
+
+def preview_discom_import(db: Session, csv_text: str) -> list[ImportRow]:
+    """Read a Discom CSV and say, row by row, whether it will be added, is already listed or has a problem.
+
+    Raises DiscomCsvError when the file as a whole cannot be read.
+    """
+    rows = read_discom_csv(csv_text)
+    for row in rows:
+        if not row.problem:
+            _compare_with_list(db, row)
+    return rows
+
+
+def import_discoms(db: Session, actor: Actor, csv_text: str) -> int:
+    """Add the new, problem-free rows of a Discom CSV and return how many were added.
+
+    The file is checked again here, so rows are judged against the list as it is now.
+    """
+    added = 0
+    for row in preview_discom_import(db, csv_text):
+        if row.will_be_added:
+            add_discom(db, actor, DiscomForm(name=row.name, email_domain=row.email_domain), via="import")
+            added += 1
+    return added
+
+
+def seed_test_discoms(db: Session, app_env: str) -> int:
+    """Add the three fictional Discoms if they are missing, outside production only, and return how many."""
+    if app_env not in SEED_ENVIRONMENTS:
+        raise AccountRuleError(f"Test Discoms are only for {', '.join(SEED_ENVIRONMENTS)}, not {app_env}.")
+    added = 0
+    for form in TEST_DISCOMS:
+        if _discom_with_domain(db, form.email_domain) is None:
+            add_discom(db, SYSTEM, form, via="seed")
+            added += 1
+    return added
+
+
+def _check_discom_is_unique(db: Session, form: DiscomForm, own_id: uuid.UUID | None = None) -> None:
+    """Refuse a name or domain that another Discom already has."""
+    same_name = _discom_with_name(db, form.name)
+    if same_name is not None and same_name.id != own_id:
+        raise AccountRuleError("A Discom with this name is already listed.")
+    same_domain = _discom_with_domain(db, form.email_domain)
+    if same_domain is not None and same_domain.id != own_id:
+        raise AccountRuleError("A Discom with this email domain is already listed.")
+
+
+def _compare_with_list(db: Session, row: ImportRow) -> None:
+    """Mark an import row that matches a listed Discom exactly, or clashes with one."""
+    same_domain = _discom_with_domain(db, row.email_domain)
+    same_name = _discom_with_name(db, row.name)
+    if same_domain is not None and same_domain is same_name:
+        row.already_listed = True
+    elif same_domain is not None:
+        row.problem = f"This domain is already listed for {same_domain.name}."
+    elif same_name is not None:
+        row.problem = f"This name is already listed with the domain {same_name.email_domain}."
+
+
+def _discom_with_name(db: Session, name: str) -> Organisation | None:
+    """Return the Discom with this name, ignoring case."""
+    query = select(Organisation).where(func.lower(Organisation.name) == name.lower())
+    return db.scalars(query).one_or_none()
+
+
+def _discom_with_domain(db: Session, email_domain: str) -> Organisation | None:
+    """Return the Discom with this email domain."""
+    return db.scalars(select(Organisation).where(Organisation.email_domain == email_domain)).one_or_none()

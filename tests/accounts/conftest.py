@@ -16,7 +16,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from app.accounts.guards import current_login
-from app.accounts.models import Login
+from app.accounts.models import Login, Organisation
 from app.core import email
 from app.core.sessions import CSRF_HEADER, VISITOR_CSRF_COOKIE
 from tests.conftest import TEST_ENV
@@ -26,18 +26,27 @@ CLIENT = ("10.0.0.9", 50000)
 CSRF_INPUT = re.compile(r'name="csrf_token" value="([^"]+)"')
 
 
-def build_login(login_type: str, status: str = "active", organisation_id: uuid.UUID | None = None) -> Login:
-    """Return an unsaved login that meets every database rule, with a unique User ID."""
+def build_organisation(status: str = "active") -> Organisation:
+    """Return an unsaved Discom with a unique name and email domain."""
+    suffix = uuid.uuid4().hex[:12]
+    return Organisation(name=f"Test Discom {suffix}", email_domain=f"{suffix}.discom.example", status=status)
+
+
+def build_login(login_type: str, status: str = "active", organisation: Organisation | None = None) -> Login:
+    """Return an unsaved login that meets every database rule, with a unique User ID.
+
+    A Member gets a new Discom unless one is given; it is saved along with the login.
+    """
     is_member = login_type == "member"
-    if is_member and organisation_id is None:
-        organisation_id = uuid.uuid4()
+    if is_member and organisation is None:
+        organisation = build_organisation()
     user_id = f"test.{uuid.uuid4().hex[:12]}"
     # Unique, because no two current privileged accounts may share an email (FR-2.7).
     return Login(
         user_id=user_id,
         email=f"{user_id}@example.test",
         login_type=login_type,
-        organisation_id=organisation_id,
+        organisation=organisation,
         full_name=None if is_member else "Test Person",
         status=status,
     )

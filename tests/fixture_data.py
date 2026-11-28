@@ -8,6 +8,8 @@ the database once the tables exist (P0-ARC-01, P1-ACC-08).
 
 from typing import NamedTuple
 
+from app.accounts.service import TEST_DISCOMS
+
 
 class FixtureDiscom(NamedTuple):
     """A fictional Discom with the email domain its staff use (D-11)."""
@@ -27,10 +29,12 @@ class FixtureLogin(NamedTuple):
     is_alternate: bool
 
 
+# The same three Discoms `python -m app.accounts.cli seed-test-discoms` adds (P1-ACC-01).
+NORTH, SOUTH, EAST = TEST_DISCOMS
 DISCOMS = [
-    FixtureDiscom("North Test Discom", "NTD", "north-discom.example"),
-    FixtureDiscom("South Test Discom", "STD", "south-discom.example"),
-    FixtureDiscom("East Test Discom", "ETD", "east-discom.example"),
+    FixtureDiscom(NORTH.name, "NTD", NORTH.email_domain),
+    FixtureDiscom(SOUTH.name, "STD", SOUTH.email_domain),
+    FixtureDiscom(EAST.name, "ETD", EAST.email_domain),
 ]
 
 LOGINS = [

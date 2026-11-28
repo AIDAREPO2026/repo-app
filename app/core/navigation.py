@@ -27,6 +27,7 @@ NAV_BY_LOGIN_TYPE: dict[str, list[NavLink]] = {
     "admin": [
         NavLink("Dashboard", "/dashboard/admin"),
         NavLink("Accounts", "/admin/accounts", "users"),
+        NavLink("Discoms", "/admin/discoms", "building"),
         SECURITY,
         STYLE_GUIDE,
     ],
