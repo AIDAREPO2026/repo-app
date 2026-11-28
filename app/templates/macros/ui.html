@@ -251,7 +251,7 @@
 {% macro toast(text, tone="info") %}
 {% from "macros/icons.html" import icon %}
 <div class="toast toast-{{ tone }}">
-  {{ icon(TONE_ICONS[tone]) }}
+  <span class="toast-icon" aria-hidden="true">{{ icon(TONE_ICONS[tone]) }}</span>
   {# The kind of notice is told by colour and drawing; screen readers get it in words. #}
   <p class="toast-text"><span class="sr-only">{{ _(TOAST_TITLES[tone]) }}: </span>{{ text }}</p>
   <button type="button" class="toast-close" data-toast-close data-needs-script hidden

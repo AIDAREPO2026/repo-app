@@ -1520,16 +1520,55 @@
   .toast {
     display: flex;
     align-items: center;
-    gap: var(--aida-space-2);
+    position: relative;
+    gap: var(--aida-space-3);
+    overflow: hidden;
+    min-width: 16rem;
     max-width: calc(100vw - 2rem);
-    padding: var(--aida-space-1) var(--aida-space-2) var(--aida-space-1) var(--aida-space-3);
-    border-radius: var(--aida-radius-md);
+    padding: var(--aida-space-3) var(--aida-space-3) var(--aida-space-3) var(--aida-space-3);
+    border-radius: var(--aida-radius-lg);
     background: var(--aida-text);
     box-shadow: var(--aida-shadow-2);
     color: var(--aida-surface);
-    font-size: var(--aida-text-xs);
+    font-size: var(--aida-text-sm);
+    font-weight: 500;
     pointer-events: auto;
-    animation: aida-toast-in var(--aida-duration-base) var(--aida-ease-settle);
+    animation: aida-toast-in var(--aida-duration-slow) var(--aida-ease-settle);
+    transition: transform var(--aida-duration-base) var(--aida-ease-settle);
+  }
+
+  /* Under the pointer it lifts, and its clock stops. */
+  .toast:hover {
+    transform: translateY(-2px) scale(1.02);
+  }
+
+  /* The icon arrives a beat after the notice, then the words slide in beside it. */
+  .toast-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: var(--aida-radius-full);
+    background: color-mix(in srgb, currentColor 16%, transparent);
+    animation: aida-icon-in var(--aida-duration-slow) var(--aida-ease-settle) var(--aida-duration-fast) backwards;
+  }
+
+  .toast-text {
+    flex: 1;
+    animation: aida-text-in var(--aida-duration-slow) var(--aida-ease-settle) var(--aida-duration-fast) backwards;
+  }
+
+  .toast-close .icon {
+    transition: transform var(--aida-duration-base) var(--aida-ease-settle);
+  }
+
+  .toast-close:hover {
+    background: color-mix(in srgb, currentColor 16%, transparent);
+  }
+
+  .toast-close:hover .icon {
+    transform: rotate(var(--aida-close-turn));
   }
 
   .toast-warning {
@@ -1544,8 +1583,8 @@
 
   .toast .icon {
     flex: none;
-    width: 0.875rem;
-    height: 0.875rem;
+    width: 1rem;
+    height: 1rem;
   }
 
   .toast-close {
@@ -1572,10 +1611,15 @@
     animation: aida-toast-out var(--aida-duration-base) var(--aida-ease-exit) forwards;
   }
 
-  /* An unseen clock: when its animation ends, shell.js closes the toast. Hovering pauses it. */
+  /* A thin line that runs down: when it ends, shell.js closes the toast. */
   .toast-timer {
-    width: 0;
-    height: 0;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: color-mix(in srgb, currentColor 45%, transparent);
+    transform-origin: left;
     animation: aida-toast-clock 3s linear forwards;
   }
 
@@ -1605,7 +1649,32 @@
 
   @keyframes aida-toast-clock {
     to {
+      transform: scaleX(0);
+    }
+  }
+
+  @keyframes aida-icon-in {
+    from {
       opacity: 0;
+      transform: scale(var(--aida-toast-scale)) rotate(var(--aida-icon-turn));
+    }
+  }
+
+  @keyframes aida-text-in {
+    from {
+      opacity: 0;
+      transform: translateX(var(--aida-text-offset));
+    }
+  }
+
+  /* The line is still the clock when motion is reduced, so it is hidden, not stopped. */
+  @media (prefers-reduced-motion: reduce) {
+    .toast-timer {
+      opacity: 0;
+    }
+
+    .toast:hover {
+      transform: none;
     }
   }
 
