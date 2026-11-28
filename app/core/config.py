@@ -1,7 +1,7 @@
 """Read configuration from environment variables, failing early when one is missing."""
 
 from cryptography.fernet import Fernet
-from pydantic import ValidationError, field_validator
+from pydantic import ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,6 +23,9 @@ class Config(BaseSettings):
     smtp_username: str = ""
     smtp_password: str = ""
     mail_from: str = "aida-portal@localhost"
+    # Where people reach the portal. Emailed links are built from this, never from the request's
+    # Host header, which the sender controls. The default suits the local stack.
+    portal_url: str = "http://localhost:8081"
 
     @field_validator("fernet_key")
     @classmethod
@@ -30,6 +33,13 @@ class Config(BaseSettings):
         """Refuse a key Fernet cannot use, so a bad key stops startup, not someone's MFA enrolment."""
         Fernet(value.encode())
         return value
+
+    @model_validator(mode="after")
+    def servers_name_their_https_address(self) -> "Config":
+        """Stop a server starting with links that point at a laptop or are not encrypted."""
+        if self.app_env in ("staging", "production") and not self.portal_url.startswith("https://"):
+            raise ValueError("PORTAL_URL must be the portal's https address on a server")
+        return self
 
 
 class MissingConfigError(RuntimeError):
@@ -41,7 +51,10 @@ def load_config(env_file: str | None = ".env") -> Config:
     try:
         return Config(_env_file=env_file)  # type: ignore[call-arg]
     except ValidationError as error:
-        names = sorted(str(issue["loc"][0]).upper() for issue in error.errors())
+        # A check across several settings has no single name, so its message is used.
+        names = sorted(
+            str(issue["loc"][0]).upper() if issue["loc"] else issue["msg"] for issue in error.errors()
+        )
         raise MissingConfigError(
             f"Missing or invalid environment variables: {', '.join(names)}. See .env.example."
         ) from None

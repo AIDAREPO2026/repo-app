@@ -112,9 +112,10 @@ Before writing a helper, search the codebase. These shared functions must be use
 | Check a sign-in, with lockout and attempt logging | `app.accounts.service.authenticate()` | `P1-ACC-04` |
 | Start or end a session, with its cookie and audit | `app.core.sessions.start_session()` and `end_session()` | `P1-ACC-06` |
 | Put the CSRF token in a form | `csrf_field()` in `templates/macros/forms.html`, imported `with context` | `P1-ACC-06` |
-| Issue and verify a CAPTCHA | `app.core.captcha.new_challenge()` and `verify()`; on a page, `<altcha-widget challenge="/captcha/challenge">` with `static/js/captcha.js` (see `accounts/register.html`) | `P0-SEC-01`, `P1-ACC-02` |
+| Issue and verify a CAPTCHA | `app.core.captcha.new_challenge()` and `verify()`; on a page, `captcha_field()` in `templates/macros/forms.html`, with `accounts/_captcha_assets.html` included in the head block | `P0-SEC-01`, `P1-ACC-02` |
 | Send an email | `app.core.email.send_email()` (queued to the worker, with retries; a `.html` template beside the `.txt` one is sent too) | `P1-ACC-09` |
-| Issue or check a single-use emailed link | `app.accounts.tokens` (`issue_link_token`, `usable_token`, `mark_used`) | `P1-ACC-09` |
+| Issue or check a single-use emailed link | `app.accounts.tokens` (`issue_link_token`, `usable_token`, `mark_used`, `retire_tokens`, `last_issued_at`) | `P1-ACC-09` |
+| Build a link to put in an email | `base_url()` in `app/accounts/router.py`, which uses `PORTAL_URL`, never the request's address | `P1-ACC-05` |
 | Issue or check an emailed sign-in code | `app.accounts.tokens` (`issue_email_code`, `use_email_code`) | `P1-ACC-10` |
 | Decide whether a login needs a second factor, and check one | `app.accounts.service` (`needs_mfa`, `finish_mfa`) | `P1-ACC-10` |
 | Create a notification | `app.workflow.notifications.notify()` | `P2-WF-05` |

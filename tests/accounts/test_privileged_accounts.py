@@ -218,7 +218,7 @@ def test_p1_acc_09_set_password_link_single_use(engine: Engine, outbox: list[Ema
     form = mismatch | {"confirm_password": PASSWORD}
     response = client.post(path, data=form, follow_redirects=False)
     assert response.status_code == 303
-    assert response.headers["location"] == "/login"
+    assert response.headers["location"] == "/login?done=password"
     reused = client.post(path, data=form)
     assert reused.status_code == 400
     assert "already been used or has expired" in reused.text

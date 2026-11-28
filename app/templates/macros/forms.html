@@ -74,3 +74,14 @@
   {% if error %}<p id="{{ field_id }}-error" class="field-error">{{ error }}</p>{% endif %}
 </div>
 {% endmacro %}
+
+{#
+  The CAPTCHA (app.core.captcha). The page also needs, in its head block:
+    {% include "accounts/_captcha_assets.html" %}
+#}
+{% macro captcha_field(error="") %}
+<div class="field">
+  <altcha-widget challenge="/captcha/challenge" name="altcha" hidelogo hidefooter></altcha-widget>
+  {% if error %}<p id="altcha-error" class="field-error" role="alert">{{ error }}</p>{% endif %}
+</div>
+{% endmacro %}

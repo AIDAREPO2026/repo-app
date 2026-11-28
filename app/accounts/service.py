@@ -10,7 +10,7 @@ from datetime import timedelta
 
 from fastapi import Request, Response
 from redis import Redis
-from sqlalchemy import ColumnElement, func, select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.accounts.discom_csv import ImportRow, read_discom_csv
@@ -48,7 +48,8 @@ from app.accounts.tokens import (
     issue_email_code,
     issue_link_token,
     last_email_code_at,
-    mark_used,
+    last_issued_at,
+    retire_tokens,
     usable_token,
     use_email_code,
 )
@@ -66,6 +67,7 @@ from app.core.constants import (
     RESERVED_WORD_MAX,
     RESERVED_WORD_MIN,
     RESERVED_WORDS_LIMIT,
+    RESET_LINK_WAIT_SECONDS,
 )
 from app.core.email import send_email
 from app.core.sessions import clear_session_cookie, client_ip, end_session, start_session, user_agent
@@ -395,7 +397,7 @@ class AccountRuleError(ValueError):
 PUBLIC_DOMAIN_REFUSED = (
     "Anyone can get an address on this email service. Use the domain of the Discom's own staff email."
 )
-LINK_NOT_USABLE = "This link has already been used or has expired. Ask an ITPED Admin to send a new one."
+LINK_NOT_USABLE = "This link has already been used or has expired."
 
 
 def privileged_accounts(db: Session) -> list[Login]:
@@ -475,11 +477,11 @@ def deactivate_account(db: Session, actor: Actor, admin: Login, target: Login) -
     record(db, actor, "accounts.deactivate", "login", str(target.id), "success")
 
 
-def end_all_sessions(db: Session, login: Login, ip: str | None) -> None:
+def end_all_sessions(db: Session, login: Login, ip: str | None, reason: str = "admin") -> None:
     """End every open session of a login, so its cookies stop working on the next request."""
     query = select(UserSession).where(UserSession.login_id == login.id, UserSession.ended_at.is_(None))
     for user_session in db.scalars(query):
-        end_session(db, user_session, login, "admin", ip)
+        end_session(db, user_session, login, reason, ip)
 
 
 def reassign_account(
@@ -513,9 +515,9 @@ def set_reviewer_role(db: Session, actor: Actor, reviewer: Login, is_alternate: 
     record(db, actor, "accounts.reviewer_role", "login", str(reviewer.id), "success", details)
 
 
-def set_password_link_is_usable(db: Session, token: str) -> bool:
-    """Return True when a set-password link can still be used, without using it."""
-    return _login_for_set_password(db, token) is not None
+def link_is_usable(db: Session, token: str, purpose: str) -> bool:
+    """Return True when an emailed password link can still be used, without using it."""
+    return _login_for_link(db, token, purpose) is not None
 
 
 def set_password_from_link(
@@ -525,21 +527,112 @@ def set_password_from_link(
 
     Raises AccountRuleError when the link is used, expired or unknown.
     """
-    found = _login_for_set_password(db, token)
-    if found is None:
-        raise AccountRuleError(LINK_NOT_USABLE)
-    login_token, login = found
-    problems = check_password_policy(password, login.user_id)
-    if password != confirm_password:
-        problems.append("The two passwords do not match.")
+    login, problems = _use_password_link(db, token, "set_password", password, confirm_password)
+    if not problems:
+        # Only privileged accounts set a first password, so the audit can name the person.
+        acting = Actor(kind=login.login_type, login_id=login.id, ip=actor.ip, user_agent=actor.user_agent)
+        record(db, acting, "accounts.password_set", "login", str(login.id), "success")
+    return problems
+
+
+def request_password_reset(
+    db: Session, actor: Actor, identifier: str, portal_url: str, captcha_passed: bool
+) -> tuple[str, str, str]:
+    """Take a "Forgot password" request. Returns (problem, address to email, link).
+
+    The visitor is answered the same way whether or not an account matches, so the address and
+    link are empty when nothing is to be sent. The audit records why not.
+    """
+    # The CAPTCHA is checked first, so bots cost us no database work (FR-1.2).
+    if not captcha_passed:
+        _audit_reset_request(db, actor, None, "captcha")
+        return CAPTCHA_FAILED, "", ""
+    if not identifier.strip():
+        return "Enter your User ID or the email address of your account.", "", ""
+    login = _login_for_reset(db, identifier)
+    if login is None:
+        _audit_reset_request(db, actor, None, "no_account")
+        return "", "", ""
+    last_sent = last_issued_at(db, login, "reset_password")
+    if last_sent is not None and utc_now() - last_sent < timedelta(seconds=RESET_LINK_WAIT_SECONDS):
+        _audit_reset_request(db, actor, login, "too_soon")
+        return "", "", ""
+    retire_tokens(db, login, "reset_password")
+    token = issue_link_token(db, login, "reset_password")
+    _audit_reset_request(db, actor, login, "")
+    return "", login.email, f"{portal_url.rstrip('/')}/reset-password/{token}"
+
+
+def send_password_reset_link(email: str, link: str) -> None:
+    """Email the link. The route sends it after answering, so timing does not tell who got one."""
+    context = {"link": link, "minutes": LINK_TOKEN_MINUTES}
+    send_email(email, "Reset your AIDA portal password", "email/reset_password.txt", context)
+
+
+def reset_password(db: Session, token: str, password: str, confirm_password: str, actor: Actor) -> list[str]:
+    """Replace a password through a reset link, once. Returns problems; empty means done.
+
+    Every session ends and any lockout is cleared (FR-1.5). A second factor is not touched.
+    """
+    login, problems = _use_password_link(db, token, "reset_password", password, confirm_password)
     if problems:
         return problems
+    login.failed_count = 0
+    login.locked_until = None
+    db.flush()
+    end_all_sessions(db, login, actor.ip, reason="password_reset")
+    # Recorded as the visitor who held the link: a shared Member login has no session here to
+    # say who that was (SRS 2.3).
+    record(db, actor, "accounts.password_reset", "login", str(login.id), "success")
+    return []
+
+
+def _use_password_link(
+    db: Session, token: str, purpose: str, password: str, confirm_password: str
+) -> tuple[Login, list[str]]:
+    """Save the password chosen through a link, and retire every password link of the login."""
+    found = _login_for_link(db, token, purpose)
+    if found is None:
+        raise AccountRuleError(LINK_NOT_USABLE)
+    _, login = found
+    problems = _password_problems(password, confirm_password, login.user_id)
+    if problems:
+        return login, problems
     login.password_hash = hash_password(password)
     login.updated_at = utc_now()
-    mark_used(login_token)
-    acting = Actor(kind=login.login_type, login_id=login.id, ip=actor.ip, user_agent=actor.user_agent)
-    record(db, acting, "accounts.password_set", "login", str(login.id), "success")
-    return []
+    retire_tokens(db, login, "set_password", "reset_password")
+    return login, []
+
+
+def _password_problems(password: str, confirm_password: str, user_id: str) -> list[str]:
+    """Return what is wrong with a new password typed twice (FR-1.7)."""
+    problems = check_password_policy(password, user_id)
+    if password != confirm_password:
+        problems.append("The two passwords do not match.")
+    return problems
+
+
+def _audit_reset_request(db: Session, actor: Actor, login: Login | None, refusal: str) -> None:
+    """Audit asking for a reset link. What the visitor typed is not kept."""
+    result = "denied" if refusal else "success"
+    details = {"reason": refusal} if refusal else None
+    target = str(login.id) if login else None
+    record(db, actor, "accounts.password_reset_request", "login", target, result, details)
+
+
+def _login_for_reset(db: Session, identifier: str) -> Login | None:
+    """Return the account a User ID or email names, if it may sign in, locked for this request."""
+    value = identifier.strip().lower()
+    # A User ID cannot hold "@", and current accounts never share an email.
+    query = (
+        select(Login)
+        .where(or_(Login.user_id == value, func.lower(Login.email) == value), Login.status == "active")
+        .with_for_update(of=Login)
+    )
+    login = db.scalars(query).one_or_none()
+    if login is None or _discom_inactive(login):
+        return None
+    return login
 
 
 def create_first_admin(db: Session, form: PrivilegedAccountForm, password: str) -> Login:
@@ -627,13 +720,13 @@ def _active_reviewer(db: Session, is_alternate: bool) -> Login | None:
     return db.scalars(query).one_or_none()
 
 
-def _login_for_set_password(db: Session, token: str) -> tuple[LoginToken, Login] | None:
-    """Return a usable set-password token and its login, if the login is still active."""
-    login_token = usable_token(db, token, "set_password")
+def _login_for_link(db: Session, token: str, purpose: str) -> tuple[LoginToken, Login] | None:
+    """Return a usable password link's token and login, if the account may still sign in."""
+    login_token = usable_token(db, token, purpose)
     if login_token is None:
         return None
     login = db.get_one(Login, login_token.login_id)
-    if login.status != "active":
+    if login.status != "active" or _discom_inactive(login):
         return None
     return login_token, login
 
@@ -1128,9 +1221,7 @@ def _account_problems(db: Session, form: RegistrationForm, discom: Organisation)
         problems["user_id"] = USER_ID_NOT_ALLOWED
     elif _user_id_taken(db, form.user_id):
         problems["user_id"] = "That User ID is taken. Choose another."
-    password_problems = check_password_policy(form.password, form.user_id)
-    if form.password != form.confirm_password:
-        password_problems.append("The two passwords do not match.")
+    password_problems = _password_problems(form.password, form.confirm_password, form.user_id)
     if password_problems:
         problems["password"] = " ".join(password_problems)
     return problems

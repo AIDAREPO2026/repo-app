@@ -25,6 +25,7 @@ TEST_ENV = {
     "SECRET_KEY": "test-secret",
     "FERNET_KEY": "gx6V4-N-1aeztRnhXk1AckH9v919v2IVPFoP5IapC4A=",
     "IP_HASH_SALT": "test-salt",
+    "PORTAL_URL": "https://testserver",
 }
 os.environ.update(TEST_ENV)
 
