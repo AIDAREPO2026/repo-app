@@ -5,9 +5,11 @@ Docker Compose files, the Dockerfile and the Nginx configuration (`P0-OPS-02`), 
 | File | What it holds |
 | --- | --- |
 | `docker-compose.yml` | Every container: `nginx`, `app`, `worker`, `beat`, `tusd`, `seaweedfs`, `clamav`, `postgres`, `redis`. Only `nginx` publishes ports. |
-| `docker-compose.dev.yml` | Local development only: the Mailpit inbox at http://127.0.0.1:8025, and the SeaweedFS file browser at http://127.0.0.1:8888 to see stored files. Both are reachable from this machine only and have no login. |
+| `docker-compose.dev.yml` | Local development only: the portal over plain HTTP at http://localhost:8081, the Mailpit inbox at http://127.0.0.1:8025, and the SeaweedFS file browser at http://127.0.0.1:8888 to see stored files. All are reachable from this machine only; the inbox and file browser have no login. |
 | `Dockerfile` | One image with two targets: `app` (FastAPI) and `worker` (adds LibreOffice, FFmpeg and libmagic, used by `worker` and `beat`) |
-| `nginx/default.conf` | HTTPS, the security headers, rate limits, the proxy to `app` and to `tusd` at `/files/`, and the internal protected-file location |
+| `nginx/default.conf` | HTTPS, rate limits, and the redirect from HTTP |
+| `nginx/snippets/portal-routes.conf` | Everything the portal serves: the security headers, the proxy to `app` and to `tusd` at `/files/`, and the internal protected-file location |
+| `nginx/local-http.conf` | Local development only: the same routes over plain HTTP on port 8081, mounted by `docker-compose.dev.yml` |
 | `nginx/make-dev-cert.sh` | Creates a self-signed certificate for `https://localhost` in `nginx/certs/` (not committed) |
 
 ## Start the stack locally
@@ -26,7 +28,7 @@ Fill in every `change-me` value in `.env`; each line says how to generate it. Th
 docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml up --build
 ```
 
-Open https://localhost/healthz and accept the self-signed certificate. If ports 80 and 443 are already taken on your machine, put `HTTP_PORT=8080 HTTPS_PORT=8443` before the command and use https://localhost:8443.
+Open http://localhost:8081. The dev file serves the portal there over plain HTTP, through the same Nginx routes, limits and security headers (`nginx/local-http.conf`), so no certificate is needed; browsers accept the Secure session cookie on `localhost`. HTTPS still runs at https://localhost/healthz with the self-signed certificate, for checking TLS and the headers. If ports 80 and 443 are already taken on your machine, put `HTTP_PORT=8080 HTTPS_PORT=8443` before the command and use https://localhost:8443.
 
 The first start takes several minutes: the worker image installs LibreOffice, and ClamAV downloads its virus signatures.
 

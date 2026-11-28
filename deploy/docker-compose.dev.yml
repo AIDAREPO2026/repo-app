@@ -1,8 +1,16 @@
-# Local development only. Adds the Mailpit mail catcher, so emails are captured
-# instead of sent, and opens the SeaweedFS file browser. Both are published on this
-# machine only: the inbox at http://127.0.0.1:8025, the files at http://127.0.0.1:8888
+# Local development only. Serves the portal over plain HTTP at http://localhost:8081,
+# adds the Mailpit mail catcher, so emails are captured instead of sent, and opens the
+# SeaweedFS file browser. All are published on this machine only: the inbox at
+# http://127.0.0.1:8025, the files at http://127.0.0.1:8888
 
 services:
+  # Plain HTTP, so local testing needs no self-signed certificate (local-http.conf).
+  nginx:
+    ports:
+      - "127.0.0.1:8081:8081"
+    volumes:
+      - ./nginx/local-http.conf:/etc/nginx/conf.d/local-http.conf:ro
+
   mailpit:
     image: axllent/mailpit:v1.34.0
     restart: unless-stopped

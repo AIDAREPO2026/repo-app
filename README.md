@@ -101,7 +101,7 @@ uv run playwright install chromium
 Then point them at a running portal, for example the local Docker stack:
 
 ```bash
-E2E_BASE_URL=https://localhost:8443 uv run pytest tests/e2e
+E2E_BASE_URL=http://localhost:8081 uv run pytest tests/e2e
 ```
 
 Large and antivirus test files are built on demand (see [tests/files/README.md](tests/files/README.md)):
