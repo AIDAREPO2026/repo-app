@@ -27,7 +27,6 @@ Anything decided while building that the spec does not say, and any change from 
 
 | Date | Decision or deviation | Reason | Agreed by |
 | --- | --- | --- | --- |
-| | None | |
 | 2026-11-28 | Added Reactivate next to Deactivate | Deactivating a Discom by mistake would otherwise need a database fix. Nothing is deleted (SRS 6.3) | Pending tech lead review |
 | 2026-11-28 | Deactivating a Discom ends the open sessions of its Member login, and sign-in refuses it with the usual message, logged with reason `inactive` | The spec says its Member login cannot sign in; ending sessions makes that apply at once, as for a deactivated account | Pending tech lead review |
 | 2026-11-28 | The CSV import preview keeps nothing on the server: the file text goes back in a hidden field and is checked again when saved. Rows with a problem, repeats and Discoms already listed are skipped and shown; the rest are added. Limits: 100 KB and 500 rows, UTF-8, columns `name` and `email_domain` | No temporary table or file to clean up; checking again on save means the preview cannot be tampered with | Pending tech lead review |
