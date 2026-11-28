@@ -32,7 +32,7 @@ All of them need ITPED confirmation, because the SRS is ITPED's document. `P0-GO
 | Q-08 | Wording of the AIDA Endorsed disclaimer (FR-9.3) | Draft text in `P2-END-01` | AIDA |
 | Q-09 | List of the 70 recognised Discoms with official email domains | Three test Discoms until supplied | ITPED |
 | Q-10 | Text for the About page, terms of use, disclaimer, privacy notice and cookie notice | Placeholder text, clearly marked | ITPED |
-| Q-11 | Visual design: a designer's mock-ups and brand assets, or a default theme | Clean default theme built in `P1-UI-02` from the UI and motion rules: system font, calm grid-blue accent, light and dark. A designer's colours, radii and spacing replace the values in `static/css/tokens.css` only | ITPED |
+| Q-11 | Visual design: a designer's mock-ups and brand assets, or a default theme | Theme built in `P1-UI-02` from the AIDA logo the user supplied: its blue, amber and red, deepened or lightened where needed to pass WCAG AA, with navy text and a navy sidebar, in light and dark, on the system font. A designer's colours, radii and spacing replace the values in `static/css/tokens.css` only | ITPED |
 
 ## Taxonomy baseline (SRS Appendix A)
 
