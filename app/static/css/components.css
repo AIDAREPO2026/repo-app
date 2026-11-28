@@ -7,10 +7,11 @@
 
   .page {
     width: 100%;
-    max-width: 72rem;
+    max-width: 76rem;
     margin-inline: auto;
     padding-inline: var(--aida-space-5);
   }
+
 
   .page-narrow {
     max-width: 28rem;
@@ -23,22 +24,37 @@
     justify-content: space-between;
     gap: var(--aida-space-4);
     margin-bottom: var(--aida-space-6);
+    padding-bottom: var(--aida-space-5);
+    border-bottom: 1px solid var(--aida-border);
   }
 
+  /* The section a page belongs to, above its title. */
+  .page-eyebrow {
+    margin-bottom: var(--aida-space-1);
+    color: var(--aida-accent);
+    font-size: var(--aida-text-xs);
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+
   .page-title {
-    font-size: var(--aida-text-3xl);
-    line-height: var(--aida-text-3xl-leading);
-    letter-spacing: var(--aida-text-3xl-tracking);
+    font-size: var(--aida-text-2xl);
+    line-height: var(--aida-text-2xl-leading);
+    letter-spacing: var(--aida-text-2xl-tracking);
     font-weight: 700;
   }
 
+
   .page-lead {
     margin-top: var(--aida-space-2);
-    max-width: 40rem;
+    max-width: 44rem;
     color: var(--aida-text-muted);
-    font-size: var(--aida-text-lg);
-    line-height: var(--aida-text-lg-leading);
+    font-size: var(--aida-text-base);
+    line-height: var(--aida-text-base-leading);
   }
+
 
   .section-title {
     font-size: var(--aida-text-xl);
@@ -54,7 +70,7 @@
     position: sticky;
     top: 0;
     z-index: 20;
-    background: var(--aida-glass);
+    background: var(--aida-brand-stripe) top / 100% 3px no-repeat, var(--aida-glass);
     -webkit-backdrop-filter: var(--aida-glass-filter);
     backdrop-filter: var(--aida-glass-filter);
     border-bottom: 1px solid var(--aida-border);
@@ -64,16 +80,18 @@
   /* Without backdrop-filter, translucency would leave text over busy content: go solid. */
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .topbar {
-      background: var(--aida-surface);
+      background: var(--aida-brand-stripe) top / 100% 3px no-repeat, var(--aida-surface);
     }
   }
 
   .topbar-inner {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: var(--aida-space-5);
-    min-height: 3.5rem;
+    min-height: 4rem;
   }
+
 
   .brand {
     display: inline-flex;
@@ -82,32 +100,43 @@
     color: var(--aida-text);
     font-weight: 650;
     text-decoration: none;
-    letter-spacing: -0.01em;
   }
+
 
   .brand:hover {
     color: var(--aida-text);
   }
 
-  .brand-mark {
-    display: grid;
-    place-items: center;
-    width: 2rem;
-    height: 2rem;
+  /* The AIDA logo has dark lettering, so it always sits on its light backing, in both themes. */
+  .brand-logo {
+    width: auto;
+    height: 2.5rem;
+    padding: var(--aida-space-1);
     border-radius: var(--aida-radius-sm);
-    background: var(--aida-accent);
-    color: var(--aida-accent-contrast);
-    font-size: var(--aida-text-sm);
-    font-weight: 750;
+    background: var(--aida-logo-surface);
   }
 
+  .brand-name {
+    font-size: var(--aida-text-sm);
+    line-height: 1.25;
+    letter-spacing: -0.005em;
+  }
+
+  /* Phones show the logo and name only: the subtitle would wrap the top bar to three lines. */
   .brand-sub {
-    display: block;
+    display: none;
     color: var(--aida-text-muted);
     font-size: var(--aida-text-xs);
     font-weight: 500;
     letter-spacing: 0;
   }
+
+  @media (min-width: 40rem) {
+    .brand-sub {
+      display: block;
+    }
+  }
+
 
   .nav-list {
     display: flex;
@@ -170,9 +199,7 @@
       display: flex;
       flex-direction: column;
       height: 100dvh;
-      padding: var(--aida-space-4) var(--aida-space-3);
-      border-right: 1px solid var(--aida-border);
-      background: var(--aida-surface);
+      padding: var(--aida-space-5) var(--aida-space-3) var(--aida-space-4);
     }
 
     .mobile-bar {
@@ -181,8 +208,9 @@
   }
 
   .sidebar-brand {
-    padding: var(--aida-space-2) var(--aida-space-3) var(--aida-space-5);
+    padding: 0 var(--aida-space-2) var(--aida-space-5);
   }
+
 
   .sidebar-nav {
     flex: 1;
@@ -192,7 +220,19 @@
   .side-nav {
     display: grid;
     gap: 0.125rem;
+    margin-bottom: var(--aida-space-5);
   }
+
+  /* A menu section's name, small and quiet above its links. */
+  .side-section {
+    padding: 0 var(--aida-space-3) var(--aida-space-2);
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-xs);
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
 
   .side-link {
     display: flex;
@@ -221,7 +261,90 @@
     background: var(--aida-accent-subtle);
     color: var(--aida-accent);
     font-weight: 650;
+    /* The amber marker on the current page, from the logo. Its colour is not the only sign:
+       the background and weight change too. */
+    box-shadow: inset 3px 0 0 var(--aida-brand-amber);
   }
+
+  /* ---------- Brand chrome: the navy sidebar, menu drawer and sign-in brand panel ---------- */
+
+  .chrome {
+    background: var(--aida-brand-stripe) top / 100% 3px no-repeat, var(--aida-chrome);
+    color: var(--aida-chrome-text);
+  }
+
+  .chrome :focus-visible {
+    outline-color: var(--aida-chrome-focus);
+  }
+
+  .chrome .brand,
+  .chrome .brand:hover {
+    color: var(--aida-chrome-strong);
+  }
+
+  /* In the narrow sidebar the product name sits under the logo, which already names AIDA. */
+  .chrome .brand {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--aida-space-3);
+  }
+
+  .chrome .brand-sub {
+    display: none;
+  }
+
+  .chrome .side-section {
+    color: var(--aida-chrome-label);
+  }
+
+  .chrome .side-link {
+    color: var(--aida-chrome-text);
+  }
+
+  .chrome .side-link:hover {
+    background: var(--aida-chrome-hover);
+    color: var(--aida-chrome-strong);
+  }
+
+  .chrome .side-link:active {
+    background: var(--aida-chrome-active);
+  }
+
+  .chrome .side-link[aria-current="page"] {
+    background: var(--aida-chrome-active);
+    color: var(--aida-chrome-strong);
+  }
+
+  .chrome .account-panel {
+    border-color: var(--aida-chrome-border);
+  }
+
+  .chrome .account-name {
+    color: var(--aida-chrome-strong);
+  }
+
+  .chrome .account-role {
+    color: var(--aida-chrome-label);
+  }
+
+  .chrome .avatar {
+    background: var(--aida-brand-amber);
+    color: var(--aida-on-amber);
+  }
+
+  .chrome .icon-button {
+    color: var(--aida-chrome-text);
+  }
+
+  .chrome .icon-button:hover {
+    background: var(--aida-chrome-hover);
+    color: var(--aida-chrome-strong);
+  }
+
+  .chrome .dialog-header {
+    color: var(--aida-chrome-strong);
+  }
+
 
   /* A slim translucent bar above the page content, holding the breadcrumbs. */
   .page-bar {
@@ -242,8 +365,9 @@
   .page-bar-inner {
     display: flex;
     align-items: center;
-    min-height: 2.75rem;
+    min-height: 3.5rem;
   }
+
 
   /* Breadcrumbs: small and quiet, with thin chevrons; the current page in full text colour. */
   .breadcrumbs {
@@ -375,8 +499,17 @@
   .footer {
     border-top: 1px solid var(--aida-border);
     color: var(--aida-text-muted);
-    font-size: var(--aida-text-sm);
+    font-size: var(--aida-text-xs);
   }
+
+  .footer-inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--aida-space-2) var(--aida-space-5);
+    padding-block: var(--aida-space-5);
+  }
+
 
   /* ---------- Buttons: instant press and focus feedback ---------- */
 
@@ -399,6 +532,13 @@
     transition: transform var(--aida-duration-fast) var(--aida-ease-enter);
   }
 
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+
   .btn:active {
     transform: scale(var(--aida-press-scale));
   }
@@ -406,7 +546,9 @@
   .btn-primary {
     background: var(--aida-accent);
     color: var(--aida-accent-contrast);
+    box-shadow: var(--aida-shadow-0);
   }
+
 
   .btn-primary:hover {
     background: var(--aida-accent-hover);
@@ -421,12 +563,16 @@
     background: var(--aida-surface);
     border-color: var(--aida-border);
     color: var(--aida-text);
+    box-shadow: var(--aida-shadow-0);
   }
+
 
   .btn-secondary:hover {
     background: var(--aida-surface-hover);
+    border-color: var(--aida-border-strong);
     color: var(--aida-text);
   }
+
 
   .btn-secondary:active {
     background: var(--aida-surface-pressed);
@@ -501,10 +647,11 @@
   }
 
   .card-title {
-    font-size: var(--aida-text-lg);
-    line-height: var(--aida-text-lg-leading);
+    font-size: var(--aida-text-base);
+    line-height: var(--aida-text-base-leading);
     font-weight: 650;
   }
+
 
   .card-text {
     margin-top: var(--aida-space-1);
@@ -524,8 +671,72 @@
 
   .item-card:hover {
     color: inherit;
-    border-color: var(--aida-border-strong);
+    border-color: var(--aida-accent);
+    box-shadow: var(--aida-shadow-2);
   }
+
+  /* A figure on a dashboard: what it counts, the number, and where to act on it. */
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--aida-space-2);
+  }
+
+  .stat-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--aida-space-3);
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-sm);
+    font-weight: 550;
+  }
+
+  .stat-icon {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--aida-radius-md);
+    background: var(--aida-accent-subtle);
+    color: var(--aida-accent);
+  }
+
+  .stat-value {
+    font-size: var(--aida-text-3xl);
+    line-height: var(--aida-text-3xl-leading);
+    letter-spacing: var(--aida-text-3xl-tracking);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-note {
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-xs);
+  }
+
+  /* A shortcut card: icon, title, one line, and an arrow that nudges on hover. */
+  .action-card {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--aida-space-4);
+  }
+
+  .action-card .stat-icon {
+    flex: none;
+  }
+
+  .action-card-arrow {
+    margin-left: auto;
+    color: var(--aida-text-muted);
+    transition: transform var(--aida-duration-fast) var(--aida-ease-enter);
+  }
+
+  .action-card:hover .action-card-arrow {
+    color: var(--aida-accent);
+    transform: translateX(0.25rem);
+  }
+
 
   .item-card:active {
     transform: scale(var(--aida-press-scale));
@@ -625,10 +836,12 @@
 
   .field-label {
     display: block;
-    margin-bottom: var(--aida-space-1);
+    margin-bottom: var(--aida-space-2);
+    color: var(--aida-text);
     font-size: var(--aida-text-sm);
     font-weight: 600;
   }
+
 
   .field-required {
     color: var(--aida-danger);
@@ -642,18 +855,55 @@
     border: 1px solid var(--aida-border-strong);
     border-radius: var(--aida-radius-md);
     background: var(--aida-surface);
+    box-shadow: var(--aida-shadow-0);
     color: var(--aida-text);
     font: inherit;
   }
 
-  .input:hover {
+  .input::placeholder {
+    color: var(--aida-text-muted);
+  }
+
+  .input:disabled {
+    background: var(--aida-surface-sunken);
+    color: var(--aida-text-muted);
+    cursor: not-allowed;
+  }
+
+  textarea.input {
+    min-height: 6rem;
+    resize: vertical;
+  }
+
+  /* A select box drawn like the other fields, with its arrow made from two token-coloured
+     triangles, so it matches in light, dark and high contrast. The open list stays native. */
+  select.input {
+    appearance: none;
+    padding-right: 2.5rem;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--aida-text-muted) 50%),
+      linear-gradient(135deg, var(--aida-text-muted) 50%, transparent 50%);
+    background-position:
+      calc(100% - 1.15rem) 50%,
+      calc(100% - 0.8rem) 50%;
+    background-size: 0.35rem 0.35rem;
+    background-repeat: no-repeat;
+    cursor: pointer;
+  }
+
+
+  .input:hover:not(:disabled) {
     border-color: var(--aida-text-muted);
   }
 
+
   .input:focus-visible {
+    outline: 2px solid var(--aida-focus-ring);
     outline-offset: 0;
     border-color: var(--aida-focus-ring);
+    box-shadow: var(--aida-field-halo);
   }
+
 
   .input[aria-invalid="true"] {
     border-color: var(--aida-danger);
@@ -686,6 +936,13 @@
     accent-color: var(--aida-accent);
   }
 
+  /* Native checkboxes and radios anywhere take the accent too. */
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--aida-accent);
+  }
+
+
   /* ---------- Tables ---------- */
 
   .table {
@@ -696,20 +953,28 @@
   }
 
   .table th {
-    padding: var(--aida-space-3) var(--aida-space-4);
+    padding: var(--aida-space-3) var(--aida-space-5);
     background: var(--aida-surface-sunken);
+    border-bottom: 1px solid var(--aida-border);
     color: var(--aida-text-muted);
     font-size: var(--aida-text-xs);
-    font-weight: 600;
+    font-weight: 650;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
   }
 
+
   .table td {
-    padding: var(--aida-space-3) var(--aida-space-4);
+    padding: var(--aida-space-4) var(--aida-space-5);
     border-top: 1px solid var(--aida-border);
-    vertical-align: top;
+    vertical-align: middle;
   }
+
+  .table tbody tr:first-child td {
+    border-top: 0;
+  }
+
 
   .table tbody tr:hover {
     background: var(--aida-surface-hover);
@@ -783,10 +1048,17 @@
     transform: translateX(calc(-1 * var(--aida-drawer-offset)));
   }
 
+  /* The menu drawer wears the navy chrome; .drawer above would otherwise paint it white. */
+  .drawer.chrome {
+    background: var(--aida-chrome);
+    color: var(--aida-chrome-text);
+  }
+
   .drawer-left[open] {
     display: flex;
     flex-direction: column;
     width: min(18rem, 85%);
+    border-color: var(--aida-chrome-border);
   }
 
   @starting-style {
@@ -901,6 +1173,138 @@
   .page-link[aria-disabled="true"] {
     color: var(--aida-text-muted);
     pointer-events: none;
+  }
+
+  /* ---------- Sign-in layout: brand panel beside the form (layouts/auth.html) ---------- */
+
+  .auth-shell {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    min-height: 100dvh;
+    background: var(--aida-surface);
+  }
+
+  .auth-brand {
+    display: flex;
+    flex-direction: column;
+    gap: var(--aida-space-5);
+    padding: var(--aida-space-5);
+  }
+
+  .auth-logo {
+    align-self: flex-start;
+  }
+
+  .auth-pitch {
+    display: none;
+  }
+
+  .auth-eyebrow {
+    color: var(--aida-brand-amber);
+    font-size: var(--aida-text-xs);
+    font-weight: 650;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .auth-title {
+    margin-top: var(--aida-space-3);
+    color: var(--aida-chrome-strong);
+    font-size: var(--aida-text-3xl);
+    line-height: var(--aida-text-3xl-leading);
+    letter-spacing: var(--aida-text-3xl-tracking);
+    font-weight: 700;
+  }
+
+  .auth-text {
+    max-width: 30rem;
+    margin-top: var(--aida-space-4);
+    font-size: var(--aida-text-lg);
+    line-height: var(--aida-text-lg-leading);
+  }
+
+  .auth-points {
+    display: grid;
+    gap: var(--aida-space-4);
+    max-width: 30rem;
+    margin-top: var(--aida-space-6);
+    padding-top: var(--aida-space-6);
+    border-top: 1px solid var(--aida-chrome-border);
+    font-size: var(--aida-text-sm);
+  }
+
+  .auth-points li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--aida-space-3);
+  }
+
+  .auth-points .icon {
+    color: var(--aida-brand-amber);
+  }
+
+  .auth-foot {
+    display: none;
+    color: var(--aida-chrome-label);
+    font-size: var(--aida-text-xs);
+  }
+
+  .auth-panel {
+    display: flex;
+    flex-direction: column;
+    padding: var(--aida-space-6) var(--aida-space-5);
+  }
+
+  .auth-main {
+    width: 100%;
+    max-width: 26rem;
+    margin-inline: auto;
+  }
+
+  .auth-heading {
+    margin-bottom: var(--aida-space-6);
+  }
+
+  .auth-heading-title {
+    font-size: var(--aida-text-2xl);
+    line-height: var(--aida-text-2xl-leading);
+    letter-spacing: var(--aida-text-2xl-tracking);
+    font-weight: 700;
+  }
+
+  .auth-heading-lead {
+    margin-top: var(--aida-space-2);
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-sm);
+  }
+
+  /* Wide screens: the brand panel takes the left side with its full story and a soft glow. */
+  @media (min-width: 64rem) {
+    .auth-shell {
+      grid-template-rows: none;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    }
+
+    .auth-panel {
+      justify-content: center;
+    }
+
+    .auth-brand {
+      position: sticky;
+      top: 0;
+      height: 100dvh;
+      justify-content: space-between;
+      padding: var(--aida-space-7);
+      background:
+        var(--aida-brand-stripe) top / 100% 3px no-repeat,
+        var(--aida-chrome-glow),
+        var(--aida-chrome);
+    }
+
+    .auth-pitch,
+    .auth-foot {
+      display: block;
+    }
   }
 
   /* ---------- Style guide swatches ---------- */

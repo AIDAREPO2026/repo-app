@@ -1,0 +1,35 @@
+{#
+  The layout for signing in, registering and setting a password: the AIDA brand panel beside
+  the form on wide screens, and a compact brand header above it on small ones. Pages extend
+  this and fill {% block content %} with an auth_heading() and their form.
+#}
+{% extends "base.html" %}
+{% from "macros/icons.html" import icon %}
+{% from "macros/ui.html" import flash_messages with context %}
+{% block visitor_shell %}
+<div class="auth-shell">
+  <aside class="auth-brand chrome" aria-label="{{ _('About the portal') }}">
+    <a href="/" class="auth-logo">
+      <img src="{{ url_for('static', path='img/aida-logo.png') }}" class="brand-logo" width="139" height="62" alt="AIDA">
+    </a>
+    <div class="auth-pitch">
+      <p class="auth-eyebrow">{{ _("All India Discoms Association") }}</p>
+      <p class="auth-title">{{ _("Digital Resource Repository") }}</p>
+      <p class="auth-text">{{ _("Reports, guidelines and proven practices from Discoms across India, kept in one governed library.") }}</p>
+      <ul class="auth-points">
+        <li>{{ icon("document") }}<span>{{ _("Every document is reviewed by ITPED before it is published.") }}</span></li>
+        <li>{{ icon("building") }}<span>{{ _("One login for each recognised Discom, checked by ITPED.") }}</span></li>
+        <li>{{ icon("lock") }}<span>{{ _("Two-step sign-in and data kept on servers in India.") }}</span></li>
+      </ul>
+    </div>
+    <p class="auth-foot">{{ _("Maintained by ITPED for AIDA member Discoms.") }}</p>
+  </aside>
+
+  <div class="auth-panel">
+    {{ flash_messages(messages|default([])) }}
+    <main id="main" tabindex="-1" class="auth-main focus:outline-none">
+      {% block visitor_content %}{{ self.content() }}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

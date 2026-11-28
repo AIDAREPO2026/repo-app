@@ -45,14 +45,47 @@
 </nav>
 {% endmacro %}
 
-{# The heading block at the top of a page, with optional actions from the caller. #}
-{% macro page_header(title, lead="") %}
+{# The heading block at the top of a page, with optional actions from the caller.
+   eyebrow names the part of the portal the page belongs to, such as "Administration". #}
+{% macro page_header(title, lead="", eyebrow="") %}
 <header class="page-header">
   <div>
+    {% if eyebrow %}<p class="page-eyebrow">{{ _(eyebrow) }}</p>{% endif %}
     <h1 class="page-title">{{ _(title) }}</h1>
     {% if lead %}<p class="page-lead">{{ _(lead) }}</p>{% endif %}
   </div>
   {% if caller %}<div class="flex flex-wrap gap-2">{{ caller() }}</div>{% endif %}
+</header>
+{% endmacro %}
+
+{# A dashboard figure. label is a message id; value is data. note is an optional message. #}
+{% macro stat_card(label, value, icon_name, note="") %}
+{% from "macros/icons.html" import icon %}
+<section class="card stat">
+  <div class="stat-head"><h2>{{ _(label) }}</h2><span class="stat-icon" aria-hidden="true">{{ icon(icon_name) }}</span></div>
+  <p class="stat-value">{{ value }}</p>
+  {% if note %}<p class="stat-note">{{ _(note) }}</p>{% endif %}
+</section>
+{% endmacro %}
+
+{# A shortcut to another page: the whole card is the link. #}
+{% macro action_card(href, title, text, icon_name) %}
+{% from "macros/icons.html" import icon %}
+<a href="{{ href }}" class="card item-card action-card">
+  <span class="stat-icon" aria-hidden="true">{{ icon(icon_name) }}</span>
+  <span>
+    <span class="card-title block">{{ _(title) }}</span>
+    <span class="card-text block">{{ _(text) }}</span>
+  </span>
+  <span class="action-card-arrow" aria-hidden="true">{{ icon("arrow-right") }}</span>
+</a>
+{% endmacro %}
+
+{# The heading on a sign-in style page (layouts/auth.html). #}
+{% macro auth_heading(title, lead="") %}
+<header class="auth-heading">
+  <h1 class="auth-heading-title">{{ _(title) }}</h1>
+  {% if lead %}<p class="auth-heading-lead">{{ _(lead) }}</p>{% endif %}
 </header>
 {% endmacro %}
 
