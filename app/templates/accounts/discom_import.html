@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "macros/forms.html" import csrf_field with context %}
+{% from "macros/ui.html" import page_header, button, link_button, card, badge, alert with context %}
+{% set problems = rows|selectattr("problem")|list %}
+{% block content %}
+{{ page_header("Check the import", "Nothing has been saved yet. Rows with a problem are skipped; fix them in the file and import it again.") }}
+
+<div class="mb-6 flex flex-wrap gap-2">
+  {{ badge(_("To add: %(count)s", count=to_add), "success") }}
+  {{ badge(_("Already listed: %(count)s", count=rows|selectattr("already_listed")|list|length)) }}
+  {{ badge(_("Problems: %(count)s", count=problems|length), "danger" if problems else "neutral") }}
+</div>
+
+{% call card(flush=true) %}
+<div class="overflow-x-auto">
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">{{ _("Line") }}</th>
+      <th scope="col">{{ _("Discom") }}</th>
+      <th scope="col">{{ _("Email domain") }}</th>
+      <th scope="col">{{ _("Result") }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td class="text-muted">{{ row.line }}</td>
+      <td>{{ row.name }}</td>
+      <td class="font-mono text-xs">{{ row.email_domain }}</td>
+      <td>
+        {% if row.problem %}{{ badge("Skipped", "danger") }}<p class="mt-1 text-xs text-muted">{{ row.problem }}</p>
+        {% elif row.already_listed %}{{ badge("Already listed") }}
+        {% else %}{{ badge("Will be added", "success") }}{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endcall %}
+
+<form method="post" action="/admin/discoms/import" class="mt-6 flex flex-wrap gap-3">
+  {{ csrf_field() }}
+  {# The file travels back unchanged and is checked again when saved. #}
+  <textarea name="csv_text" hidden>{{ csv_text }}</textarea>
+  {% if to_add %}
+  {{ button(_("Add 1 Discom") if to_add == 1 else _("Add %(count)s Discoms", count=to_add)) }}
+  {% endif %}
+  {{ link_button("Back to Discoms", "/admin/discoms") }}
+</form>
+{% endblock %}

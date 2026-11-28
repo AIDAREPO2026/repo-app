@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% from "macros/forms.html" import field, csrf_field with context %}
+{% from "macros/ui.html" import page_header, button, card, badge, modal, drawer, empty_state with context %}
+{#
+  The Discom master list (FR-1.6). Registration emails must use a listed, active Discom's
+  domain (D-11). Discoms are deactivated, never deleted (SRS 6.3).
+#}
+{% set domain_help = "The part after @ in staff emails, such as discom.co.in." %}
+{% set domain_pattern = "([A-Za-z0-9]([A-Za-z0-9\\-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]{2,63}" %}
+
+{% macro discom_fields(prefix, discom=none) %}
+{{ field("name", "Discom name", value=discom.name if discom else "", required=true, autocomplete="off", maxlength=200, id=prefix ~ "name") }}
+{{ field("email_domain", "Email domain", value=discom.email_domain if discom else "", required=true, autocomplete="off", maxlength=253, pattern=domain_pattern, help=domain_help, id=prefix ~ "email_domain") }}
+{% endmacro %}
+
+{% block content %}
+{% call page_header("Discoms", "The recognised Discoms. Only an active Discom can register, and only from its own email domain.") %}
+  {{ button("Import CSV", "secondary", type="button", commandfor="import-discoms", command="show-modal") }}
+  {{ button("Add Discom", type="button", commandfor="add-discom", command="show-modal") }}
+{% endcall %}
+
+{% call card(flush=true) %}
+{% if discoms %}
+<div class="overflow-x-auto">
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">{{ _("Discom") }}</th>
+      <th scope="col">{{ _("Email domain") }}</th>
+      <th scope="col">{{ _("Status") }}</th>
+      <th scope="col"><span class="sr-only">{{ _("Actions") }}</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for discom in discoms %}
+    {% set active = discom.status == "active" %}
+    <tr>
+      <td class="font-semibold">{{ discom.name }}</td>
+      <td class="font-mono text-xs">{{ discom.email_domain }}</td>
+      <td>{% if active %}{{ badge("Active", "success") }}{% else %}{{ badge("Inactive") }}{% endif %}</td>
+      <td>
+        <div class="flex justify-end">
+          {{ button("Manage", "secondary", type="button", size="sm", commandfor="manage-" ~ discom.id, command="show-modal") }}
+        </div>
+
+        {% call drawer("manage-" ~ discom.id, discom.name) %}
+        <form method="post" action="/admin/discoms/{{ discom.id }}/edit">
+          {{ csrf_field() }}
+          {{ discom_fields("edit-" ~ discom.id ~ "-", discom) }}
+          {{ button("Save changes") }}
+        </form>
+
+        {% if active %}
+        <h3 class="section-title mt-8">{{ _("Deactivate") }}</h3>
+        <p class="mb-4 text-sm text-muted">{{ _("The Discom can no longer register, and its Member login is signed out and cannot sign in.") }}</p>
+        {{ button("Deactivate Discom", "danger", type="button", commandfor="deactivate-" ~ discom.id, command="show-modal") }}
+        {% else %}
+        <h3 class="section-title mt-8">{{ _("Reactivate") }}</h3>
+        <p class="mb-4 text-sm text-muted">{{ _("The Discom can register again, and its Member login can sign in.") }}</p>
+        <form method="post" action="/admin/discoms/{{ discom.id }}/reactivate">
+          {{ csrf_field() }}
+          {{ button("Reactivate Discom", "secondary") }}
+        </form>
+        {% endif %}
+        {% endcall %}
+
+        {% if active %}
+        {% call modal("deactivate-" ~ discom.id, "Deactivate this Discom?") %}
+        <p class="text-sm text-muted">{{ _("%(name)s can no longer register, and its Member login is signed out at once. You can reactivate it later.", name=discom.name) }}</p>
+        <form method="post" action="/admin/discoms/{{ discom.id }}/deactivate" class="dialog-actions">
+          {{ csrf_field() }}
+          {{ button("Cancel", "secondary", type="button", commandfor="deactivate-" ~ discom.id, command="close") }}
+          {{ button("Deactivate", "danger") }}
+        </form>
+        {% endcall %}
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+{{ empty_state("No Discoms yet", "Add them one by one, or import the list from a CSV file.", "+") }}
+{% endif %}
+{% endcall %}
+
+{% call modal("add-discom", "Add a Discom") %}
+<form method="post" action="/admin/discoms">
+  {{ csrf_field() }}
+  {{ discom_fields("add-") }}
+  <div class="dialog-actions">
+    {{ button("Cancel", "secondary", type="button", commandfor="add-discom", command="close") }}
+    {{ button("Add Discom") }}
+  </div>
+</form>
+{% endcall %}
+
+{% call modal("import-discoms", "Import Discoms from CSV") %}
+<p class="mb-5 text-sm text-muted">{{ _("The first line must be: name,email_domain. You will see each row before anything is saved.") }}</p>
+<form method="post" action="/admin/discoms/import/preview" enctype="multipart/form-data">
+  {{ csrf_field() }}
+  <div class="field">
+    <label for="import-file" class="field-label">{{ _("CSV file") }} <span class="field-required" aria-hidden="true">*</span></label>
+    <input id="import-file" name="file" type="file" accept=".csv,text/csv" required class="input" aria-describedby="import-file-help">
+    <p id="import-file-help" class="field-help">{{ _("Saved as CSV UTF-8, up to 100 KB.") }}</p>
+  </div>
+  <div class="dialog-actions">
+    {{ button("Cancel", "secondary", type="button", commandfor="import-discoms", command="close") }}
+    {{ button("Check the file") }}
+  </div>
+</form>
+{% endcall %}
+{% endblock %}

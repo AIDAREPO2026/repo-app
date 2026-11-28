@@ -8,10 +8,11 @@ from collections.abc import Callable
 from typing import Annotated, Any
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy.orm import Session
 
+from app.accounts.discom_csv import DiscomCsvError, ImportRow
 from app.accounts.guards import (
     LOGIN_PATH,
     MFA_PATH,
@@ -21,8 +22,10 @@ from app.accounts.guards import (
     public_route,
     require_login_type,
 )
-from app.accounts.models import Login
+from app.accounts.models import Login, Organisation
 from app.accounts.schemas import (
+    DiscomForm,
+    DiscomImportForm,
     MfaCodeForm,
     MfaOffForm,
     MfaSetupForm,
@@ -35,18 +38,24 @@ from app.accounts.schemas import (
 )
 from app.accounts.service import (
     AccountRuleError,
+    add_discom,
     after_sign_in_path,
     app_enrolment_details,
     create_privileged_account,
     deactivate_account,
+    discoms,
+    edit_discom,
     finish_mfa,
+    import_discoms,
     needs_mfa,
+    preview_discom_import,
     privileged_account,
     privileged_accounts,
     reassign_account,
     reset_mfa,
     send_email_code,
     send_set_password_link,
+    set_discom_active,
     set_password_from_link,
     set_password_link_is_usable,
     set_reviewer_role,
@@ -395,10 +404,19 @@ def render_accounts(
     )
 
 
-def run_account_change(
-    request: Request, db: Session, admin: Login, change: Callable[[Actor], object], done: str
+# Renders an Admin list page with an error: render_accounts or render_discoms.
+ListPage = Callable[..., HTMLResponse]
+
+
+def run_admin_change(
+    request: Request,
+    db: Session,
+    admin: Login,
+    change: Callable[[Actor], object],
+    done_url: str,
+    list_page: ListPage,
 ) -> Response:
-    """Make one account change and go back to the list, or show the list with the rule it broke.
+    """Make one Admin change and go on to done_url, or show the list page with the rule it broke.
 
     A broken rule rolls back everything the change did, such as the deactivation half of a
     reassign whose replacement was refused.
@@ -407,8 +425,15 @@ def run_account_change(
         change(actor_for(request, admin))
     except AccountRuleError as error:
         db.rollback()
-        return render_accounts(request, db, admin, error=str(error), status_code=400)
-    return RedirectResponse(f"{ACCOUNTS_PATH}?done={done}", status_code=303)
+        return list_page(request, db, admin, error=str(error), status_code=400)
+    return RedirectResponse(done_url, status_code=303)
+
+
+def run_account_change(
+    request: Request, db: Session, admin: Login, change: Callable[[Actor], object], done: str
+) -> Response:
+    """Make one account change and go back to the Accounts list."""
+    return run_admin_change(request, db, admin, change, f"{ACCOUNTS_PATH}?done={done}", render_accounts)
 
 
 def account_or_404(db: Session, login_id: uuid.UUID) -> Login:
@@ -554,3 +579,162 @@ def styleguide(request: Request, login: Annotated[Login | None, Depends(current_
         "breadcrumbs": breadcrumbs(login.login_type, Crumb("Style guide")),
     }
     return templates.TemplateResponse(request, "styleguide.html", context)
+
+
+DISCOMS_PATH = "/admin/discoms"
+DISCOM_DONE_MESSAGES = {
+    "added": "Discom added.",
+    "edited": "Discom updated.",
+    "deactivated": "Discom deactivated. Its Member login can no longer sign in.",
+    "reactivated": "Discom reactivated.",
+}
+# The 70 Discoms are a few kilobytes; this stops a wrong file early (Q-09).
+MAX_IMPORT_BYTES = 100_000
+
+
+def render_discoms(
+    request: Request,
+    db: Session,
+    admin: Login,
+    error: str = "",
+    done: str = "",
+    added: int | None = None,
+    status_code: int = 200,
+) -> HTMLResponse:
+    """Render the Discom master list, with an error or a done message if there is one."""
+    messages = []
+    if error:
+        messages.append(("error", error))
+    if done in DISCOM_DONE_MESSAGES:
+        messages.append(("success", DISCOM_DONE_MESSAGES[done]))
+    if added is not None:
+        messages.append(("success", f"Discoms added from the file: {added}."))
+    context = {
+        "title": "Discoms",
+        "nav": nav_for("admin"),
+        "breadcrumbs": breadcrumbs("admin", Crumb("Discoms")),
+        "discoms": discoms(db),
+        "messages": messages,
+    }
+    return templates.TemplateResponse(
+        request, "accounts/admin_discoms.html", context, status_code=status_code
+    )
+
+
+def run_discom_change(
+    request: Request, db: Session, admin: Login, change: Callable[[Actor], object], done: str
+) -> Response:
+    """Make one Discom change and go back to the list."""
+    return run_admin_change(request, db, admin, change, f"{DISCOMS_PATH}?done={done}", render_discoms)
+
+
+def discom_or_404(db: Session, discom_id: uuid.UUID) -> Organisation:
+    """Return a Discom, or answer 404."""
+    discom = db.get(Organisation, discom_id)
+    if discom is None:
+        raise HTTPException(status_code=404)
+    return discom
+
+
+@router.get(DISCOMS_PATH, response_class=HTMLResponse)
+def discoms_page(
+    request: Request, db: DbSession, admin: AdminLogin, done: str = "", added: int | None = None
+) -> HTMLResponse:
+    """List the recognised Discoms, with forms to add, edit, deactivate and import them (FR-1.6)."""
+    return render_discoms(request, db, admin, done=done, added=added)
+
+
+@router.post(DISCOMS_PATH)
+def discom_add(
+    request: Request, db: DbSession, admin: AdminLogin, form: Annotated[DiscomForm, Form()]
+) -> Response:
+    """Add a Discom."""
+
+    def change(actor: Actor) -> None:
+        add_discom(db, actor, form)
+
+    return run_discom_change(request, db, admin, change, "added")
+
+
+@router.post(DISCOMS_PATH + "/{discom_id}/edit")
+def discom_edit(
+    request: Request,
+    db: DbSession,
+    admin: AdminLogin,
+    discom_id: uuid.UUID,
+    form: Annotated[DiscomForm, Form()],
+) -> Response:
+    """Change a Discom's name or email domain."""
+    discom = discom_or_404(db, discom_id)
+
+    def change(actor: Actor) -> None:
+        edit_discom(db, actor, discom, form)
+
+    return run_discom_change(request, db, admin, change, "edited")
+
+
+@router.post(DISCOMS_PATH + "/{discom_id}/deactivate")
+def discom_deactivate(request: Request, db: DbSession, admin: AdminLogin, discom_id: uuid.UUID) -> Response:
+    """Deactivate a Discom, so it cannot register and its Member cannot sign in."""
+    discom = discom_or_404(db, discom_id)
+
+    def change(actor: Actor) -> None:
+        set_discom_active(db, actor, discom, active=False)
+
+    return run_discom_change(request, db, admin, change, "deactivated")
+
+
+@router.post(DISCOMS_PATH + "/{discom_id}/reactivate")
+def discom_reactivate(request: Request, db: DbSession, admin: AdminLogin, discom_id: uuid.UUID) -> Response:
+    """Make a deactivated Discom active again."""
+    discom = discom_or_404(db, discom_id)
+
+    def change(actor: Actor) -> None:
+        set_discom_active(db, actor, discom, active=True)
+
+    return run_discom_change(request, db, admin, change, "reactivated")
+
+
+def render_import_preview(request: Request, csv_text: str, rows: list[ImportRow]) -> HTMLResponse:
+    """Render what an import would do, row by row, before anything is saved."""
+    context = {
+        "title": "Check the import",
+        "nav": nav_for("admin"),
+        "breadcrumbs": breadcrumbs("admin", Crumb("Discoms", DISCOMS_PATH), Crumb("Check the import")),
+        "csv_text": csv_text,
+        "rows": rows,
+        "to_add": sum(1 for row in rows if row.will_be_added),
+    }
+    return templates.TemplateResponse(request, "accounts/discom_import.html", context)
+
+
+@router.post(DISCOMS_PATH + "/import/preview", response_class=HTMLResponse)
+def discom_import_preview(
+    request: Request, db: DbSession, admin: AdminLogin, file: Annotated[UploadFile, File()]
+) -> HTMLResponse:
+    """Show what importing a CSV of Discoms would do. Nothing is saved yet."""
+    content = file.file.read(MAX_IMPORT_BYTES + 1)
+    if len(content) > MAX_IMPORT_BYTES:
+        return render_discoms(request, db, admin, error="The file is larger than 100 KB.", status_code=400)
+    try:
+        csv_text = content.decode("utf-8-sig")
+        rows = preview_discom_import(db, csv_text)
+    except UnicodeDecodeError:
+        return render_discoms(
+            request, db, admin, error="Save the file as CSV UTF-8 and try again.", status_code=400
+        )
+    except DiscomCsvError as error:
+        return render_discoms(request, db, admin, error=str(error), status_code=400)
+    return render_import_preview(request, csv_text, rows)
+
+
+@router.post(DISCOMS_PATH + "/import")
+def discom_import(
+    request: Request, db: DbSession, admin: AdminLogin, form: Annotated[DiscomImportForm, Form()]
+) -> Response:
+    """Add the new, problem-free rows shown in the preview."""
+    try:
+        added = import_discoms(db, actor_for(request, admin), form.csv_text)
+    except DiscomCsvError as error:
+        return render_discoms(request, db, admin, error=str(error), status_code=400)
+    return RedirectResponse(f"{DISCOMS_PATH}?added={added}", status_code=303)
