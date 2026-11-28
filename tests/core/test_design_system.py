@@ -118,3 +118,13 @@ def test_p1_ui_02_select_renders_a_native_select_that_script_enhances() -> None:
     assert 'data-select data-source="/lookup"' in html
     assert '<select id="discom" name="discom" class="input"' in html
     assert '<option value="2" selected>South</option>' in html
+
+
+def test_p1_ui_02_only_success_and_note_toasts_close_themselves() -> None:
+    macro = templates.env.get_template("macros/ui.html").module.flash_messages  # type: ignore[attr-defined]
+
+    html = str(macro([("success", "Saved"), ("error", "Not saved")]))
+
+    assert html.count('class="toast toast-') == 2
+    assert html.count("toast-timer") == 1  # the error stays until closed
+    assert 'role="status"' in html

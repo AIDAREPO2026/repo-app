@@ -81,6 +81,13 @@ function filterTable(box) {
   table.querySelector("[data-shown]").textContent = shown;
 }
 
+function closeToast(toast) {
+  toast.classList.add("is-leaving");
+  toast.addEventListener("animationend", (event) => {
+    if (event.target === toast) toast.remove();
+  });
+}
+
 function applyAll() {
   applyTheme(read(THEME_KEY, "light"));
   applySidebar(read(SIDEBAR_KEY, "shown"));
@@ -102,11 +109,18 @@ document.addEventListener("click", (event) => {
     save(THEME_KEY, theme);
     applyTheme(theme);
   }
+  const dismiss = event.target.closest("[data-toast-close]");
+  if (dismiss) closeToast(dismiss.closest(".toast"));
   if (event.target.closest("[data-sidebar-toggle]")) {
     const state = root.classList.contains("sidebar-hidden") ? "shown" : "hidden";
     save(SIDEBAR_KEY, state);
     moveSidebar(state);
   }
+});
+
+// A toast's bar running out closes it.
+document.addEventListener("animationend", (event) => {
+  if (event.target.matches(".toast-timer")) closeToast(event.target.closest(".toast"));
 });
 
 document.addEventListener("input", (event) => {

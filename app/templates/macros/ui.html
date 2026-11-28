@@ -8,7 +8,8 @@
 
 {# Tone names for flash message categories. #}
 {% set FLASH_TONES = {"error": "danger", "success": "success", "warning": "warning", "info": "info"} %}
-{% set ALERT_MARKS = {"danger": "!", "warning": "!", "success": "✓", "info": "i"} %}
+{% set TONE_ICONS = {"danger": "error", "warning": "warning", "success": "check", "info": "info"} %}
+{% set TOAST_TITLES = {"danger": "Something went wrong", "warning": "Please check", "success": "Done", "info": "Note"} %}
 
 {#
   A button. variant: primary, secondary, danger or link. size: "" or "sm".
@@ -208,19 +209,41 @@
 <span class="badge badge-warning">{{ _("Available to member Discoms – log in") }}</span>
 {% endmacro %}
 
-{# A message box. tone: info, success, warning or danger. text is shown as given (already translated). #}
+{# A message box that is part of the page. tone: info, success, warning or danger. text is
+   shown as given (already translated). #}
 {% macro alert(text, tone="info", id="") %}
+{% from "macros/icons.html" import icon %}
 <div class="alert alert-{{ tone }}"{% if id %} id="{{ id }}"{% endif %}{% if tone == "danger" %} role="alert"{% endif %}>
-  <span class="alert-icon" aria-hidden="true">{{ ALERT_MARKS[tone] }}</span>
+  <span class="tone-tile" aria-hidden="true">{{ icon(TONE_ICONS[tone]) }}</span>
   <p class="alert-text">{{ text }}</p>
+</div>
+{% endmacro %}
+
+{#
+  A notification about what just happened, floating at the bottom centre. Success and note
+  toasts close themselves when their bar runs out, which pauses under the pointer or focus.
+  Warnings and errors stay until closed, so nobody misses them (WCAG 2.2.1).
+  static/js/shell.js closes them; without script they stay.
+#}
+{% macro toast(text, tone="info") %}
+{% from "macros/icons.html" import icon %}
+<div class="toast toast-{{ tone }}">
+  <span class="tone-tile" aria-hidden="true">{{ icon(TONE_ICONS[tone]) }}</span>
+  <div class="toast-body">
+    <p class="toast-title">{{ _(TOAST_TITLES[tone]) }}</p>
+    <p class="toast-text">{{ text }}</p>
+  </div>
+  <button type="button" class="icon-button toast-close" data-toast-close data-needs-script hidden
+          aria-label="{{ _('Dismiss notification') }}" title="{{ _('Dismiss notification') }}">{{ icon("close") }}</button>
+  {% if tone in ("success", "info") %}<span class="toast-timer" aria-hidden="true"></span>{% endif %}
 </div>
 {% endmacro %}
 
 {# Flash messages: a list of (category, text) pairs. Categories: error, success, warning, info. #}
 {% macro flash_messages(messages) %}
-<div class="page mt-4 grid gap-2 empty:hidden" role="status" aria-live="polite">
+<div class="toasts" role="status" aria-live="polite">
   {%- for category, text in messages -%}
-  {{ alert(text, FLASH_TONES.get(category, "info")) }}
+  {{ toast(text, FLASH_TONES.get(category, "info")) }}
   {%- endfor -%}
 </div>
 {% endmacro %}

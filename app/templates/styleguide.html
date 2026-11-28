@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros/ui.html" import page_header, button, link_button, card, item_card, badge, lock_badge, alert, modal, drawer, empty_state, skeleton, pagination with context %}
+{% from "macros/ui.html" import page_header, button, link_button, card, item_card, badge, lock_badge, alert, toast, modal, drawer, empty_state, skeleton, pagination with context %}
 {% from "macros/forms.html" import field, select with context %}
 {#
   The style guide (P1-UI-02): every token and component, shown once forced light and once
@@ -84,6 +84,7 @@
         {{ alert(_("The change was saved."), "success") }}
         {{ alert(_("Check this before going on."), "warning") }}
         {{ alert(_("Something went wrong."), "danger") }}
+        {{ toast(_("The Discom was not added."), "danger") }}
       </div>
       {% endcall %}
     </div>

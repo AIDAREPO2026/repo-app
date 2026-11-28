@@ -1454,12 +1454,46 @@
 
   /* ---------- Alerts and flash messages ---------- */
 
+  /* The tone sets the icon tile and, on toasts, the timer bar. */
+  .alert-info,
+  .toast-info {
+    --tone: var(--aida-info);
+  }
+
+  .alert-success,
+  .toast-success {
+    --tone: var(--aida-success);
+  }
+
+  .alert-warning,
+  .toast-warning {
+    --tone: var(--aida-warning);
+  }
+
+  .alert-danger,
+  .toast-danger {
+    --tone: var(--aida-danger);
+  }
+
+  .tone-tile {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--aida-radius-sm);
+    background: color-mix(in srgb, var(--tone) 14%, transparent);
+    color: var(--tone);
+  }
+
   .alert {
     display: flex;
+    align-items: center;
     gap: var(--aida-space-3);
-    padding: var(--aida-space-3) var(--aida-space-4);
-    border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+    padding: var(--aida-space-3);
+    border: 1px solid color-mix(in srgb, var(--tone) 25%, transparent);
     border-radius: var(--aida-radius-md);
+    background: color-mix(in srgb, var(--tone) 6%, var(--aida-surface));
     font-size: var(--aida-text-sm);
     animation: aida-enter var(--aida-duration-slow) var(--aida-ease-enter);
   }
@@ -1468,29 +1502,124 @@
     color: var(--aida-text);
   }
 
-  .alert-info {
-    background: var(--aida-info-subtle);
-    color: var(--aida-info);
+  /* ---------- Toasts: what just happened, at the bottom centre ---------- */
+
+  .toasts {
+    position: fixed;
+    right: 0;
+    bottom: var(--aida-space-5);
+    left: 0;
+    z-index: 60;
+    margin-inline: auto;
+    display: grid;
+    gap: var(--aida-space-3);
+    width: min(22rem, calc(100vw - 2rem));
   }
 
-  .alert-success {
-    background: var(--aida-success-subtle);
-    color: var(--aida-success);
+  .toast {
+    position: relative;
+    display: flex;
+    gap: var(--aida-space-3);
+    overflow: hidden;
+    padding: var(--aida-space-3);
+    border: 1px solid var(--aida-border);
+    border-radius: var(--aida-radius-lg);
+    background: var(--aida-surface-glass);
+    -webkit-backdrop-filter: var(--aida-glass-filter);
+    backdrop-filter: var(--aida-glass-filter);
+    box-shadow: var(--aida-shadow-2);
+    animation: aida-toast-in var(--aida-duration-slow) var(--aida-ease-settle);
   }
 
-  .alert-warning {
-    background: var(--aida-warning-subtle);
-    color: var(--aida-warning);
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .toast {
+      background: var(--aida-surface);
+    }
   }
 
-  .alert-danger {
-    background: var(--aida-danger-subtle);
-    color: var(--aida-danger);
+  .toast.is-leaving {
+    animation: aida-toast-out var(--aida-duration-base) var(--aida-ease-exit) forwards;
   }
 
-  .alert-icon {
-    flex: none;
-    font-weight: 750;
+  .toast-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .toast-title {
+    font-size: var(--aida-text-sm);
+    font-weight: 600;
+  }
+
+  .toast-text {
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-xs);
+  }
+
+  .toast-close {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .toast-close .icon {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  /* The bar drains over the toast's life. It is a clock, so it keeps its length even when
+     motion is reduced; it is only hidden then. */
+  .toast-timer {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: var(--tone);
+    transform-origin: left;
+    animation: aida-toast-drain 5s linear forwards;
+  }
+
+  .toast:hover .toast-timer,
+  .toast:focus-within .toast-timer {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .toast-timer {
+      opacity: 0;
+    }
+  }
+
+  .toast .tone-tile {
+    animation: aida-tile-pop var(--aida-duration-slow) var(--aida-ease-settle) var(--aida-duration-fast) backwards;
+  }
+
+  /* It rises from the bottom edge and leaves the same way. */
+  @keyframes aida-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(var(--aida-toast-offset)) scale(var(--aida-toast-scale));
+    }
+  }
+
+  @keyframes aida-toast-out {
+    to {
+      opacity: 0;
+      transform: translateY(var(--aida-toast-offset)) scale(var(--aida-toast-scale));
+    }
+  }
+
+  @keyframes aida-tile-pop {
+    from {
+      opacity: 0;
+      transform: scale(var(--aida-toast-scale)) rotate(var(--aida-tile-turn));
+    }
+  }
+
+  @keyframes aida-toast-drain {
+    to {
+      transform: scaleX(0);
+    }
   }
 
   /* ---------- Forms ---------- */
