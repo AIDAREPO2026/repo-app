@@ -120,13 +120,14 @@ def test_p1_ui_02_select_renders_a_native_select_that_script_enhances() -> None:
     assert '<option value="2" selected>South</option>' in html
 
 
-def test_p1_ui_02_only_success_and_note_toasts_close_themselves() -> None:
+def test_p1_ui_02_every_toast_closes_itself_and_names_its_kind() -> None:
     macro = templates.env.get_template("macros/ui.html").module.flash_messages  # type: ignore[attr-defined]
 
     html = str(macro([("success", "Saved"), ("error", "Not saved")]))
 
     assert html.count('class="toast toast-') == 2
-    assert html.count("toast-timer") == 1  # the error stays until closed
+    assert html.count("toast-timer") == 2
+    assert "Something went wrong: </span>Not saved" in html
     assert 'role="status"' in html
 
 

@@ -244,22 +244,19 @@
 {% endmacro %}
 
 {#
-  A notification about what just happened, floating at the bottom centre. Success and note
-  toasts close themselves when their bar runs out, which pauses under the pointer or focus.
-  Warnings and errors stay until closed, so nobody misses them (WCAG 2.2.1).
-  static/js/shell.js closes them; without script they stay.
+  A short notice about what just happened, like a tooltip at the bottom centre. It closes
+  itself; success and note after 3 seconds, warning and error after 6. The clock pauses
+  under the pointer or keyboard focus. static/js/shell.js closes it; without script it stays.
 #}
 {% macro toast(text, tone="info") %}
 {% from "macros/icons.html" import icon %}
 <div class="toast toast-{{ tone }}">
-  <span class="tone-tile" aria-hidden="true">{{ icon(TONE_ICONS[tone]) }}</span>
-  <div class="toast-body">
-    <p class="toast-title">{{ _(TOAST_TITLES[tone]) }}</p>
-    <p class="toast-text">{{ text }}</p>
-  </div>
-  <button type="button" class="icon-button toast-close" data-toast-close data-needs-script hidden
+  {{ icon(TONE_ICONS[tone]) }}
+  {# The kind of notice is told by colour and drawing; screen readers get it in words. #}
+  <p class="toast-text"><span class="sr-only">{{ _(TOAST_TITLES[tone]) }}: </span>{{ text }}</p>
+  <button type="button" class="toast-close" data-toast-close data-needs-script hidden
           aria-label="{{ _('Dismiss notification') }}" title="{{ _('Dismiss notification') }}">{{ icon("close") }}</button>
-  {% if tone in ("success", "info") %}<span class="toast-timer" aria-hidden="true"></span>{% endif %}
+  <span class="toast-timer" aria-hidden="true"></span>
 </div>
 {% endmacro %}
 

@@ -162,9 +162,8 @@
   --aida-press-scale-large: 0.99;
   --aida-enter-offset: 0.5rem;
   --aida-drawer-offset: 100%;
-  --aida-toast-offset: 1.5rem;
-  --aida-toast-scale: 0.92;
-  --aida-tile-turn: -12deg;
+  --aida-toast-offset: 0.5rem;
+  --aida-toast-scale: 0.97;
   /* The loading placeholder's pulse (keyframes in components.css). */
   --aida-skeleton-animation: aida-pulse 1.6s ease-in-out infinite;
 
@@ -210,7 +209,6 @@
     --aida-drawer-offset: 0%;
     --aida-toast-offset: 0rem;
     --aida-toast-scale: 1;
-    --aida-tile-turn: 0deg;
     --aida-skeleton-animation: none;
   }
 }
