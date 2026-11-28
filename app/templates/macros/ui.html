@@ -140,6 +140,8 @@
   <button type="button" class="icon-button" data-bulk-clear aria-label="{{ _('Clear selection') }}" title="{{ _('Clear selection') }}">{{ icon("close") }}</button>
 </div>
 <div class="menu row-menu" popover role="group" aria-label="{{ _('Row actions') }}">
+  {# The one highlight, which table.js slides to the item in use. #}
+  <span class="menu-glider" aria-hidden="true"></span>
   <button type="button" class="menu-item" data-row-open><span class="menu-icon">{{ icon("edit") }}</span><span class="menu-text">{{ _("Manage") }}</span></button>
   <button type="button" class="menu-item" data-row-copy><span class="menu-icon">{{ icon("copy") }}</span><span class="menu-text">{{ _(copy_label) }}</span></button>
   <button type="button" class="menu-item" data-row-select><span class="menu-icon">{{ icon("check") }}</span><span class="menu-text" data-row-select-label></span></button>

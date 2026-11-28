@@ -1966,8 +1966,8 @@
   /* Compact, like the menus of a desktop app: small rows, bare icons, nothing that moves
      once it is open. It fades in from the pointer's corner. */
   .menu.row-menu {
-    min-width: 10rem;
-    padding: var(--aida-space-1);
+    min-width: 13rem;
+    padding: var(--aida-space-2);
     border-radius: var(--aida-radius-md);
     transform-origin: top left;
   }
@@ -1985,8 +1985,8 @@
 
   .row-menu .menu-item,
   .row-menu .menu-item:active {
-    gap: var(--aida-space-2);
-    padding: 0.375rem var(--aida-space-2);
+    gap: var(--aida-space-3);
+    padding: var(--aida-space-2) var(--aida-space-3);
     border-radius: var(--aida-radius-sm);
     font-weight: 500;
     transform: none;
@@ -2004,9 +2004,31 @@
     background: transparent;
   }
 
+  /* Above the highlight, which slides underneath. */
+  .row-menu .menu-item {
+    position: relative;
+  }
+
   .row-menu .menu-item:focus {
-    background: var(--aida-accent-subtle);
     outline: none;
+  }
+
+  .menu-glider {
+    position: absolute;
+    top: 0;
+    right: var(--aida-space-2);
+    left: var(--aida-space-2);
+    border-radius: var(--aida-radius-sm);
+    background: var(--aida-accent-subtle);
+    transition: transform var(--aida-duration-base) var(--aida-ease-settle);
+  }
+
+  .row-menu.is-opening .menu-glider {
+    transition-duration: 0s;
+  }
+
+  .row-menu .menu-item:focus .menu-icon {
+    color: var(--aida-accent);
   }
 
   /* More contrast and forced colours need a real ring, not only a tint. */

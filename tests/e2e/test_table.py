@@ -78,7 +78,13 @@ def test_p1_ui_02_right_click_opens_the_row_menu_inside_the_window(table: Page) 
     expect(menu.get_by_role("button", name="Select row")).to_be_focused()
     menu.get_by_role("button", name="Copy domain").hover()
     expect(menu.get_by_role("button", name="Copy domain")).to_be_focused()
-    assert box["width"] <= 220 and box["height"] <= 130  # compact
+    assert box["width"] <= 260 and box["height"] <= 170  # roomy, not sprawling
+    # The one highlight has slid under the item in use.
+    copy_item = menu.get_by_role("button", name="Copy domain").bounding_box()
+    glider = table.locator(".menu-glider")
+    table.wait_for_timeout(400)
+    under = glider.bounding_box()
+    assert copy_item and under and abs(under["y"] - copy_item["y"]) <= 1
 
     menu.get_by_role("button", name="Select row").click()
     expect(table.get_by_role("checkbox", name="Select North")).to_be_checked()
