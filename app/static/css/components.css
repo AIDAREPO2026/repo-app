@@ -924,3 +924,20 @@
     opacity: 0.5;
   }
 }
+
+/* ALTCHA CAPTCHA widget (decision record 0006): its own CSS, recoloured with our tokens. */
+altcha-widget {
+  --altcha-color-base: var(--aida-surface);
+  --altcha-color-base-content: var(--aida-text);
+  --altcha-color-neutral: var(--aida-text-muted);
+  --altcha-color-primary: var(--aida-accent);
+  --altcha-color-primary-content: var(--aida-text-on-accent);
+  --altcha-color-success: var(--aida-success);
+  --altcha-color-error: var(--aida-danger);
+  --altcha-border-color: var(--aida-border);
+  --altcha-border-radius: var(--aida-radius-md);
+  --altcha-checkbox-border-color: var(--aida-border-strong);
+  --altcha-checkbox-outline-color: var(--aida-focus-ring);
+  --altcha-shadow: none;
+  --altcha-max-width: 100%;
+}

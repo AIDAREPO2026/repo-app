@@ -7,6 +7,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.core.captcha import MAX_PAYLOAD_LENGTH
+
 
 class SignInForm(BaseModel):
     """The sign-in form. Limits stop oversized input before any password is hashed."""
@@ -108,3 +110,25 @@ class DiscomImportForm(BaseModel):
     """The CSV text carried from the import preview to the save step."""
 
     csv_text: str = Field(min_length=1, max_length=100_000)
+
+
+class RegistrationForm(BaseModel):
+    """A Discom's request for its Member login (FR-1.1).
+
+    Only lengths are checked here. The formats are checked by the service after the CAPTCHA,
+    so the page can show each problem next to its field instead of a bare 422.
+    """
+
+    organisation_id: str = Field(default="", max_length=36)
+    email: str = Field(default="", max_length=254)
+    user_id: str = Field(default="", max_length=254)
+    password: str = Field(default="", max_length=1024)
+    confirm_password: str = Field(default="", max_length=1024)
+    # The ALTCHA widget's answer (app.core.captcha). Empty when the widget did not run.
+    altcha: str = Field(default="", max_length=MAX_PAYLOAD_LENGTH)
+
+    @field_validator("email", "user_id", "organisation_id", mode="before")
+    @classmethod
+    def tidy_text(cls, value: object) -> object:
+        """Drop spaces and use lowercase, as User IDs and email domains are stored."""
+        return value.strip().lower() if isinstance(value, str) else value

@@ -3,6 +3,7 @@
 Business rules. Functions take `db` and `actor` explicitly, so every caller can see what a rule needs.
 """
 
+import re
 import uuid
 from datetime import timedelta
 
@@ -22,7 +23,14 @@ from app.accounts.mfa import (
 )
 from app.accounts.models import Login, LoginAttempt, LoginToken, Organisation, UserSession
 from app.accounts.passwords import check_password_policy, hash_password, verify_password
-from app.accounts.schemas import DiscomForm, PersonForm, PrivilegedAccountForm
+from app.accounts.schemas import (
+    EMAIL_PATTERN,
+    USER_ID_PATTERN,
+    DiscomForm,
+    PersonForm,
+    PrivilegedAccountForm,
+    RegistrationForm,
+)
 from app.accounts.tokens import (
     issue_email_code,
     issue_link_token,
@@ -539,7 +547,7 @@ def _check_new_account(db: Session, form: PrivilegedAccountForm) -> None:
 
 def _new_account_problem(db: Session, form: PrivilegedAccountForm) -> str | None:
     """Return why a new privileged account is not allowed, or None."""
-    if db.scalar(select(Login.id).where(Login.user_id == form.user_id)) is not None:
+    if _user_id_taken(db, form.user_id):
         return "That User ID is already in use. Choose another."
     if _current_email_taken(db, form.email):
         return "Another current account uses that email. Each person needs their own (FR-2.7)."
@@ -549,6 +557,11 @@ def _new_account_problem(db: Session, form: PrivilegedAccountForm) -> str | None
         role = "alternate" if form.is_alternate else "primary"
         return f"There is already an active {role} Reviewer. Use Reassign to replace them."
     return None
+
+
+def _user_id_taken(db: Session, user_id: str) -> bool:
+    """Return True when any login, in any state, already has this User ID."""
+    return db.scalar(select(Login.id).where(Login.user_id == user_id)) is not None
 
 
 def _current_email_taken(db: Session, email: str) -> bool:
@@ -706,3 +719,122 @@ def _discom_with_name(db: Session, name: str) -> Organisation | None:
 def _discom_with_domain(db: Session, email_domain: str) -> Organisation | None:
     """Return the Discom with this email domain."""
     return db.scalars(select(Organisation).where(Organisation.email_domain == email_domain)).one_or_none()
+
+
+CAPTCHA_FAILED = (
+    "The check that you are not a robot did not finish. Tick the box, wait for it, then send the form again."
+)
+DISCOM_TAKEN = (
+    "This Discom already has a portal login or a request waiting for ITPED. Contact ITPED if you need help."
+)
+
+
+def register_member(
+    db: Session, actor: Actor, form: RegistrationForm, captcha_passed: bool
+) -> dict[str, str]:
+    """Record a Discom's request for its Member login (FR-1.1). Returns problems by field; empty means sent.
+
+    A visitor is told only about the CAPTCHA, format problems and a Discom that already has a
+    login. An email outside the Discom's domain, or a User ID or email already in use, gets the
+    same "sent" answer as a good request, so the form cannot be used to learn Discom domains or
+    existing User IDs (spec security). The audit event records why nothing was created.
+    """
+    # Spec: the CAPTCHA is checked before anything else, so bots cost us no database work.
+    if not captcha_passed:
+        _audit_registration(db, actor, "denied", {"reason": "captcha"})
+        return {"altcha": CAPTCHA_FAILED}
+    problems = _registration_format_problems(db, form)
+    if problems:
+        _audit_registration(db, actor, "denied", {"reason": "format", "fields": sorted(problems)})
+        return problems
+    discom = db.get_one(Organisation, uuid.UUID(form.organisation_id))
+    details: dict[str, object] = {"organisation_id": str(discom.id), "user_id": form.user_id}
+    if _discom_has_member_login(db, discom):
+        _audit_registration(db, actor, "denied", details | {"reason": "discom_has_login"})
+        return {"organisation_id": DISCOM_TAKEN}
+    hidden_reason = _hidden_registration_problem(db, form, discom)
+    if hidden_reason:
+        _audit_registration(db, actor, "denied", details | {"reason": hidden_reason})
+        return {}
+    login = _add_pending_member(db, form, discom)
+    record(db, actor, "accounts.register", "login", str(login.id), "success", details)
+    return {}
+
+
+def registration_discoms(db: Session) -> list[Organisation]:
+    """Return the active Discoms a visitor can choose on the registration form, by name."""
+    query = (
+        select(Organisation).where(Organisation.status == "active").order_by(func.lower(Organisation.name))
+    )
+    return list(db.scalars(query))
+
+
+def _registration_format_problems(db: Session, form: RegistrationForm) -> dict[str, str]:
+    """Return the problems a visitor can fix on the form, by field name."""
+    problems = {}
+    if _active_discom(db, form.organisation_id) is None:
+        problems["organisation_id"] = "Choose your Discom from the list."
+    if not re.fullmatch(EMAIL_PATTERN, form.email):
+        problems["email"] = "Enter your official email address, such as name@yourdiscom.co.in."
+    if not re.fullmatch(USER_ID_PATTERN, form.user_id):
+        problems["user_id"] = "Use 4 to 50 lowercase letters, numbers, dots, dashes or underscores."
+    password_problems = check_password_policy(form.password, form.user_id)
+    if form.password != form.confirm_password:
+        password_problems.append("The two passwords do not match.")
+    if password_problems:
+        problems["password"] = " ".join(password_problems)
+    return problems
+
+
+def _active_discom(db: Session, organisation_id: str) -> Organisation | None:
+    """Return the active Discom with this ID, or None for an unknown, inactive or malformed ID."""
+    try:
+        discom_id = uuid.UUID(organisation_id)
+    except ValueError:
+        return None
+    discom = db.get(Organisation, discom_id)
+    if discom is None or discom.status != "active":
+        return None
+    return discom
+
+
+def _discom_has_member_login(db: Session, discom: Organisation) -> bool:
+    """Return True when the Discom already has a pending or active Member login (FR-1.6)."""
+    query = select(Login.id).where(
+        Login.organisation_id == discom.id,
+        Login.login_type == "member",
+        Login.status.in_(("pending", "active")),
+    )
+    return db.scalar(query) is not None
+
+
+def _hidden_registration_problem(db: Session, form: RegistrationForm, discom: Organisation) -> str | None:
+    """Return why a well-formed request cannot be accepted, for the audit only, or None."""
+    # D-11: the email must be on the Discom's own domain, not a subdomain or a lookalike.
+    if form.email.rpartition("@")[2] != discom.email_domain:
+        return "email_domain"
+    if _user_id_taken(db, form.user_id):
+        return "user_id_taken"
+    if _current_email_taken(db, form.email):
+        return "email_taken"
+    return None
+
+
+def _add_pending_member(db: Session, form: RegistrationForm, discom: Organisation) -> Login:
+    """Add the Discom's Member login, pending until ITPED verifies it (P1-ACC-03)."""
+    login = Login(
+        user_id=form.user_id,
+        email=form.email,
+        login_type="member",
+        organisation_id=discom.id,
+        password_hash=hash_password(form.password),
+        status="pending",
+    )
+    db.add(login)
+    db.flush()
+    return login
+
+
+def _audit_registration(db: Session, actor: Actor, result: str, details: dict[str, object]) -> None:
+    """Audit a registration request that created nothing; the request itself has no login yet."""
+    record(db, actor, "accounts.register", "login", None, result, details)
