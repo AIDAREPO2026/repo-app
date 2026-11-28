@@ -2,12 +2,12 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In review |
+| Status | Done |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p1-acc-05-password-reset` |
 | Pull request | [#34](https://github.com/AIDAREPO2026/repo-app/pull/34) |
 | Started | 2026-11-28 |
-| Finished | Not finished |
+| Finished | 2026-11-28 |
 
 Spec: [docs/tasks/phase-1-platform-access.md](../tasks/phase-1-platform-access.md#p1-acc-05--build-password-reset-with-captcha)
 
@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Merged #34 on the user's approval. Status Done; tracker row set to Done. No second review or staging check is recorded. |
 | 2026-11-28 | Raghvendra Singh | At the user's request, a reset now emails the owner that the password changed (#34). The user also confirmed the two open choices. |
 | 2026-11-28 | Raghvendra Singh | Built the forgot-password and reset pages. Closed two leaks found on the way: links built from the Host header, and tokens in access logs. Checked the whole journey in a browser with a real worker. Next: review. |
 | 2026-11-28 | Raghvendra Singh | Started the task. |
