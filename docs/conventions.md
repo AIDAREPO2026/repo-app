@@ -155,7 +155,7 @@ The `apple-design` skill in `.claude/skills/` is the reference for look and feel
 
 - Build every page from the design-system tokens (CSS variables) and component macros. No one-off colours, sizes, shadows or animations.
 - Give feedback immediately: style `:active` and `:focus-visible` states, and show an HTMX loading indicator for any request that may take longer than about 300 ms.
-- Animate only `transform` and `opacity`, for 150 to 300 ms. Motion must never delay content: the page renders first and motion adds polish.
+- Animate only `transform` and `opacity`, for 150 to 300 ms. The one exception is the sidebar hiding and showing: a 550 ms glide without bounce (`--aida-duration-glide`), as a view transition. Motion must never delay content: the page renders first and motion adds polish.
 - Pressable controls squash on press and spring back, using the shared spring easing (`--aida-ease-spring`, a CSS `linear()` curve). Add a new control to the spring rule in `components.css`; do not write another curve.
 - Use CSS transitions and the View Transitions API (`hx-swap="... transition:true"` for HTMX swaps). Spring or animation libraries need tech lead approval and are only for real gesture features.
 - Do not add drag, flick or rubber-band physics, sound or haptics to the web portal.

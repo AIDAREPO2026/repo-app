@@ -1126,26 +1126,37 @@
     view-transition-name: app-main;
   }
 
-  ::view-transition-group(app-main) {
-    animation-duration: var(--aida-duration-slow);
-    animation-timing-function: var(--aida-ease-spring);
+  /* The content and the sidebar move together on one slow, even glide, with no bounce. */
+  ::view-transition-group(app-main),
+  ::view-transition-group(sidebar) {
+    animation-duration: var(--aida-duration-glide);
+    animation-timing-function: var(--aida-ease-glide);
   }
 
-  /* Keep the content's own size while its box changes, or the text would stretch. */
+  /* Only the new content is drawn, at its own size, so it slides instead of cross-fading
+     two layouts over each other. */
   ::view-transition-old(app-main),
+  .sidebar-moving::view-transition-old(root) {
+    display: none;
+  }
+
+  ::view-transition-new(app-main),
+  .sidebar-moving::view-transition-new(root) {
+    animation: none;
+  }
+
   ::view-transition-new(app-main) {
-    height: 100%;
-    object-fit: none;
-    object-position: left top;
+    width: auto;
+    height: auto;
   }
 
   /* The sidebar leaves to the left and comes back the same way. */
   ::view-transition-old(sidebar):only-child {
-    animation: aida-sidebar-out var(--aida-duration-base) var(--aida-ease-exit) both;
+    animation: aida-sidebar-out var(--aida-duration-glide) var(--aida-ease-glide) both;
   }
 
   ::view-transition-new(sidebar):only-child {
-    animation: aida-sidebar-in var(--aida-duration-slow) var(--aida-ease-spring) both;
+    animation: aida-sidebar-in var(--aida-duration-glide) var(--aida-ease-glide) both;
   }
 
   @keyframes aida-sidebar-out {
