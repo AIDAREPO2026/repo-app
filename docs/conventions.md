@@ -151,6 +151,20 @@ Before writing a helper, search the codebase. These shared functions must be use
 - Wrap user-facing text in `_()` so Hindi can be added later (SRS 5.5).
 - Never render an admin-only field in a Member or public template. Pass view schemas that do not contain those fields (`P2-CON-02`).
 
+**Checks every UI change must pass**
+
+A change that adds or alters a page, component or message is not finished until these hold. Where a test can check a rule, it does; add to that test when you add a page, and add a rule here when a UI defect gets through review.
+
+| Rule | Checked by |
+| --- | --- |
+| A result is announced once: any `?done=`-style name a redirect adds is removed from the address by `forgetResult()` in `static/js/shell.js` | `tests/core/test_ui_rules.py` |
+| A message's colour matches what happened: success, note, warning or failure. A change that takes something away (deactivate, delete, reset, turn off) is a warning, never a plain success | `tests/core/test_ui_rules.py` |
+| Choices use `select()`, not a bare `<select>` | `tests/core/test_ui_rules.py` |
+| Every button has an icon | `tests/core/test_design_system.py` |
+| No script errors, no sideways scroll and no control stuck at its pressed size, on desktop and phone widths | `tests/e2e/test_ui_health.py` |
+| Light and dark both pass axe | `tests/e2e/` |
+| Do the action in a browser, then reload the page and press Back: nothing repeats or reappears | By hand, noted in the pull request |
+
 **UI and motion rules**
 
 The `apple-design` skill in `.claude/skills/` is the reference for look and feel. These rules decide what applies here, and win over the skill in any conflict.
