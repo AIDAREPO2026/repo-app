@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "macros/forms.html" import csrf_field with context %}
+{% from "macros/ui.html" import page_header, button, badge, data_table with context %}
+
+{% block content %}
+{{ page_header("Signed-in devices") }}
+<p class="mb-3 text-sm text-muted">{{ _("This login works on up to %(limit)s devices at once. A device left unused for 30 minutes is signed out.", limit=limit) }}</p>
+
+{% call data_table("Signed-in devices", devices|length, columns=[_("Device"), _("IP address"), _("Last activity"), _("Signed in")], copy_label="Copy IP address", file="devices", compact=true) %}
+  <thead>
+    <tr>
+      <th scope="col" class="w-px whitespace-nowrap">{{ _("Sr no") }}</th>
+      <th scope="col">{{ _("Device") }}</th>
+      <th scope="col">{{ _("IP address") }}</th>
+      <th scope="col">{{ _("Last activity") }}</th>
+      <th scope="col">{{ _("Signed in") }}</th>
+      <th scope="col"><span class="sr-only">{{ _("Actions") }}</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for device in devices %}
+    {% set name = device_name(device.user_agent) %}
+    {% set is_this = device.id == current_session_id %}
+    <tr data-export='{{ [name, device.ip|string, device.last_seen_at|ist, device.created_at|ist]|tojson }}' data-copy="{{ device.ip }}">
+      <td class="text-muted">{{ loop.index }}</td>
+      <td><span class="font-semibold">{{ name }}</span>{% if is_this %} {{ badge("This device", "accent") }}{% endif %}</td>
+      <td class="font-mono text-sm">{{ device.ip }}</td>
+      <td class="text-sm">{{ device.last_seen_at|ist }}</td>
+      <td class="text-sm">{{ device.created_at|ist }}</td>
+      <td>
+        <div class="flex justify-end">
+          <form method="post" action="/account/devices/{{ device.id }}/sign-out" data-confirm="{{ _('You are signed out here and go back to the sign-in page.') if is_this else _('Whoever is using it must sign in again. Check with your colleagues first: this login is shared.') }}" data-confirm-title="{{ _('Sign out this device?') }}" data-confirm-action="{{ _('Sign out') }}">
+            {{ csrf_field() }}
+            {{ button("Sign out", "secondary", size="sm", icon_name="sign-out", icon_only=true, needs_script=true) }}
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+{% endcall %}
+{% endblock %}

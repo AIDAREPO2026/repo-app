@@ -56,6 +56,7 @@ Before writing a helper, search the codebase. These shared functions must be use
 | Check that a User ID is allowed | `app.accounts.user_id_rules` (`shape_problem`, `is_reserved`); words come from `app.accounts.service.reserved_words()` | `P1-ACC-02` |
 | Check a sign-in, with lockout and attempt logging | `app.accounts.service.authenticate()` | `P1-ACC-04` |
 | Start or end a session, with its cookie and audit | `app.core.sessions.start_session()` and `end_session()` | `P1-ACC-06` |
+| List a login's signed-in sessions, ending idle ones | `app.core.sessions.signed_in_sessions()` | `P1-ACC-07` |
 | Put the CSRF token in a form | `csrf_field()` in `templates/macros/forms.html`, imported `with context` | `P1-ACC-06` |
 | Issue and verify a CAPTCHA | `app.core.captcha.new_challenge()` and `verify()`; on a page, `captcha_field()` in `templates/macros/forms.html`, with `accounts/_captcha_assets.html` included in the head block | `P0-SEC-01`, `P1-ACC-02` |
 | Send an email | `app.core.email.send_email()` (queued to the worker, with retries; a `.html` template beside the `.txt` one is sent too) | `P1-ACC-09` |

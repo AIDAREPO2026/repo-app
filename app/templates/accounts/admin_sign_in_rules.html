@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "macros/forms.html" import select, csrf_field with context %}
+{% from "macros/ui.html" import page_header, card, button with context %}
+
+{% block content %}
+{{ page_header("Sign-in rules") }}
+
+{% call card("Devices for a Discom login") %}
+<p class="card-text mt-3">{{ _("A Discom's shared login works on up to %(limit)s devices at once. Choose what happens when someone signs in on one more.", limit=limit) }}</p>
+<form method="post" action="/admin/sign-in-rules" class="mt-5 max-w-md" data-confirm="{{ _('This changes what every Discom gets when all its devices are in use.') }}" data-confirm-title="{{ _('Save this sign-in rule?') }}" data-confirm-action="{{ _('Save') }}">
+  {{ csrf_field() }}
+  {{ select("policy", "When every device is in use", [("block", _("Refuse the new sign-in")), ("end_oldest", _("Sign out the oldest device and allow it"))], value=policy, required=true) }}
+  {{ button("Save", icon_name="check", needs_script=true) }}
+</form>
+{% endcall %}
+{% endblock %}
