@@ -53,7 +53,7 @@ function moveSidebar(state) {
 // Show only the menu entries whose name holds the text, opening the sections they are in.
 function findPage(box) {
   const text = box.value.trim().toLowerCase();
-  const menu = box.parentElement.querySelector("nav");
+  const menu = box.closest(".sidebar").querySelector("nav");
   for (const item of menu.querySelectorAll("li")) {
     item.hidden = !item.textContent.toLowerCase().includes(text);
   }

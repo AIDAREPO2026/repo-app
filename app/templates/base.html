@@ -24,8 +24,11 @@
     <aside id="sidebar" class="sidebar" aria-label="{{ _('Sidebar') }}">
       <div class="sidebar-brand">{{ brand() }}</div>
       {# Hidden without script, which does the filtering. #}
-      <input type="search" class="input find-page" data-find-page data-needs-script hidden
-             placeholder="{{ _('Find a page…') }}" aria-label="{{ _('Find a page') }}">
+      <div class="find-field" data-needs-script hidden>
+        {{ icon("search") }}
+        <input type="search" class="input find-page" data-find-page
+               placeholder="{{ _('Find a page…') }}" aria-label="{{ _('Find a page') }}">
+      </div>
       <div class="sidebar-nav">{{ nav_menu(nav) }}</div>
       {{ account_panel(login, "sidebar") }}
     </aside>

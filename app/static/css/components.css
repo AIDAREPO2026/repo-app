@@ -201,8 +201,11 @@
       margin: var(--aida-space-3) 0 var(--aida-space-3) var(--aida-space-3);
       border-radius: var(--aida-radius-lg);
       overflow: hidden;
-      border: 1px solid var(--aida-border);
-      background: var(--aida-brand-stripe) top / 100% 3px no-repeat, var(--aida-surface);
+      border: 1px solid color-mix(in srgb, var(--aida-border) 60%, transparent);
+      background: linear-gradient(
+        var(--aida-surface) 40%,
+        color-mix(in srgb, var(--aida-accent) 5%, var(--aida-surface))
+      );
       box-shadow: var(--aida-shadow-1);
       padding: var(--aida-space-4) var(--aida-space-3) var(--aida-space-3);
     }
@@ -228,15 +231,39 @@
     height: 2.25rem;
   }
 
+  /* The logo already spells out the association's name. */
   .sidebar .brand-sub,
   .drawer-left .brand-sub {
+    display: none;
+  }
+
+  .find-field[hidden] {
+    display: none;
+  }
+
+  .find-field {
+    position: relative;
     display: block;
-    color: var(--aida-warning);
+    margin-bottom: var(--aida-space-3);
+  }
+
+  .find-field .icon {
+    position: absolute;
+    top: 50%;
+    left: var(--aida-space-3);
+    width: 1rem;
+    height: 1rem;
+    color: var(--aida-text-muted);
+    transform: translateY(-50%);
+    pointer-events: none;
   }
 
   .input.find-page {
-    margin-bottom: var(--aida-space-3);
     min-height: 2.25rem;
+    padding-left: 2.25rem;
+    border-color: transparent;
+    background: var(--aida-surface-sunken);
+    box-shadow: none;
     font-size: var(--aida-text-sm);
   }
 
@@ -259,13 +286,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-top: var(--aida-space-2);
     padding: var(--aida-space-2) var(--aida-space-3);
     border-radius: var(--aida-radius-md);
     color: var(--aida-text-muted);
     font-size: var(--aida-text-xs);
-    font-weight: 650;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-weight: 600;
     list-style: none;
     cursor: pointer;
   }
@@ -297,7 +323,7 @@
     border-radius: var(--aida-radius-md);
     color: var(--aida-text-muted);
     font-size: var(--aida-text-sm);
-    font-weight: 550;
+    font-weight: 500;
     text-decoration: none;
   }
 
@@ -311,13 +337,17 @@
     transform: scale(var(--aida-press-scale));
   }
 
+  /* The current page: a soft fill and a heavier weight, so colour is not the only sign. */
   .side-link[aria-current="page"] {
     background: var(--aida-accent-subtle);
     color: var(--aida-accent);
-    font-weight: 650;
-    /* The amber marker on the current page, from the logo. Its colour is not the only sign:
-       the background and weight change too. */
-    box-shadow: inset 3px 0 0 var(--aida-brand-amber);
+    font-weight: 600;
+  }
+
+  .side-link .icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    stroke-width: 1.4;
   }
 
   /* ---------- Brand chrome: the navy sidebar, menu drawer and sign-in brand panel ---------- */
@@ -664,7 +694,7 @@
     gap: var(--aida-space-3);
     margin-top: var(--aida-space-4);
     padding: var(--aida-space-3) var(--aida-space-2) 0;
-    border-top: 1px solid var(--aida-border);
+    border-top: 1px solid color-mix(in srgb, var(--aida-border) 60%, transparent);
   }
 
   /* An enrolment QR code (P1-ACC-10). Always dark on white, which scanners need in dark mode too. */
