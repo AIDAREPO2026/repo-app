@@ -1206,6 +1206,19 @@
     }
   }
 
+  /* By night the colour washes and button glow go, so surfaces stay clean graphite. */
+  .theme-dark body {
+    --aida-canvas-wash: none;
+  }
+
+  .theme-dark .btn-primary {
+    box-shadow: var(--aida-shadow-0);
+  }
+
+  .theme-dark .stat {
+    background: var(--aida-surface);
+  }
+
   /* ---------- Badges ---------- */
 
   .badge {
