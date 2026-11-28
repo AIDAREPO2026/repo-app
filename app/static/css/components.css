@@ -312,7 +312,7 @@
   .side-section .icon {
     width: 0.875rem;
     height: 0.875rem;
-    transition: transform var(--aida-duration-slow) var(--aida-ease-spring);
+    transition: transform var(--aida-duration-slow) var(--aida-ease-settle);
   }
 
   .side-group[open] > .side-section .icon {
@@ -508,7 +508,7 @@
   .crumb-caret .icon {
     width: 0.75rem;
     height: 0.75rem;
-    transition: transform var(--aida-duration-slow) var(--aida-ease-spring);
+    transition: transform var(--aida-duration-slow) var(--aida-ease-settle);
   }
 
   /* The caret turns over while its menu is open. */
@@ -592,7 +592,7 @@
   }
 
   .menu:popover-open {
-    animation: aida-menu-in var(--aida-duration-slow) var(--aida-ease-spring);
+    animation: aida-menu-in var(--aida-duration-slow) var(--aida-ease-settle);
   }
 
   @keyframes aida-menu-in {
@@ -968,7 +968,7 @@
 
   /* ---------- Welcome banner: the top of a dashboard ---------- */
 
-  /* ---------- Spring feel: controls squash under the finger and spring back ---------- */
+  /* ---------- Press feel: controls give a little under the pointer and settle back ---------- */
 
   .btn,
   .nav-link,
@@ -981,7 +981,7 @@
   .account-button,
   .side-section,
   .item-card {
-    transition: transform var(--aida-duration-slow) var(--aida-ease-spring);
+    transition: transform var(--aida-duration-base) var(--aida-ease-settle);
   }
 
   .btn:not(:disabled):active,
@@ -995,13 +995,13 @@
   .account-button:active,
   .side-section:active {
     transform: scale(var(--aida-press-scale));
-    transition: transform var(--aida-duration-fast) var(--aida-ease-enter);
+    transition: transform var(--aida-duration-press) var(--aida-ease-settle);
   }
 
   /* Large surfaces move less than small ones, or the press looks like a jump. */
   .item-card:active {
     transform: scale(var(--aida-press-scale-large));
-    transition: transform var(--aida-duration-fast) var(--aida-ease-enter);
+    transition: transform var(--aida-duration-press) var(--aida-ease-settle);
   }
 
   /* ---------- Glass: panels let the backdrop through ---------- */
@@ -1119,61 +1119,25 @@
     border-top: 1px solid var(--aida-border);
   }
 
-  /* ---------- Micro-interactions: the icon answers the pointer ---------- */
+  /* ---------- Micro-interactions: a small lift, and arrows that point ---------- */
 
-  /* Only for a real pointer, and never when the person asks for less motion. Pressing is
-     handled by the spring rules above. */
+  /* Only for a real pointer, and never when the person asks for less motion. */
   @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-    .btn .icon,
-    .side-link .icon,
-    .menu-icon,
-    .icon-button .icon,
-    .account-button .avatar,
     .figure-label .icon,
-    .crumb-button .icon:first-child,
     .crumb-caret {
-      transition: transform var(--aida-duration-slow) var(--aida-ease-spring);
+      transition: transform var(--aida-duration-base) var(--aida-ease-settle);
     }
 
-    /* Buttons and clickable figures rise a touch. */
     .btn:not(:disabled):hover:not(:active) {
       transform: translateY(-1px);
     }
 
-    .btn:hover .icon,
-    .side-link:hover .icon,
-    .menu-item:hover .menu-icon,
-    .icon-button:hover .icon,
-    .crumb-button:hover .icon:first-child {
-      transform: scale(1.15);
-    }
-
-    .account-button:hover .avatar {
-      transform: scale(1.08);
-    }
-
-    /* Drawings that suggest a direction move that way. */
     a.figure:hover .figure-label .icon {
-      transform: translateX(0.25rem);
+      transform: translateX(0.125rem);
     }
 
     .crumb-button:hover .crumb-caret {
-      transform: translateY(2px);
-    }
-
-    .dialog-header .btn-icon:hover .icon {
-      transform: rotate(90deg);
-    }
-
-    .theme-button:hover .icon {
-      transform: rotate(30deg) scale(1.1);
-    }
-
-    /* While the button is held, the drawing settles back with it. */
-    .btn:active .icon,
-    .side-link:active .icon,
-    .icon-button:active .icon {
-      transform: scale(0.9);
+      transform: translateY(1px);
     }
   }
 
@@ -1188,11 +1152,11 @@
     view-transition-name: app-main;
   }
 
-  /* The content and the sidebar move together on one slow, even glide, with no bounce. */
+  /* The content and the sidebar move together on one even glide. */
   ::view-transition-group(app-main),
   ::view-transition-group(sidebar) {
     animation-duration: var(--aida-duration-glide);
-    animation-timing-function: var(--aida-ease-glide);
+    animation-timing-function: var(--aida-ease-settle);
   }
 
   /* Only the new content is drawn, at its own size, so it slides instead of cross-fading
@@ -1214,11 +1178,11 @@
 
   /* The sidebar leaves to the left and comes back the same way. */
   ::view-transition-old(sidebar):only-child {
-    animation: aida-sidebar-out var(--aida-duration-glide) var(--aida-ease-glide) both;
+    animation: aida-sidebar-out var(--aida-duration-glide) var(--aida-ease-settle) both;
   }
 
   ::view-transition-new(sidebar):only-child {
-    animation: aida-sidebar-in var(--aida-duration-glide) var(--aida-ease-glide) both;
+    animation: aida-sidebar-in var(--aida-duration-glide) var(--aida-ease-settle) both;
   }
 
   @keyframes aida-sidebar-out {
@@ -1655,7 +1619,7 @@
   .drawer[open] {
     opacity: 1;
     transform: none;
-    transition-timing-function: var(--aida-ease-enter), var(--aida-ease-spring);
+    transition-timing-function: var(--aida-ease-enter), var(--aida-ease-settle);
     transition-duration: var(--aida-duration-slow);
   }
 
@@ -1670,7 +1634,7 @@
     padding: var(--aida-space-5);
     border-radius: var(--aida-radius-lg);
     /* Grows out of its control and shrinks back into it (same path both ways). */
-    transform: scale(0.96) translateY(var(--aida-enter-offset));
+    transform: scale(0.98) translateY(var(--aida-enter-offset));
   }
 
   /* The drawer slides in from the right edge and leaves the same way. */
@@ -1706,7 +1670,7 @@
     }
 
     .modal[open] {
-      transform: scale(0.96) translateY(var(--aida-enter-offset));
+      transform: scale(0.98) translateY(var(--aida-enter-offset));
     }
 
     .drawer[open] {

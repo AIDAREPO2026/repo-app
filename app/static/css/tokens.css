@@ -153,14 +153,13 @@
   --aida-ease-enter: cubic-bezier(0.2, 0, 0, 1);
   --aida-ease-exit: cubic-bezier(0.4, 0, 1, 1);
   /* The sidebar hiding and showing: slower than other motion, easing gently to rest. */
-  --aida-duration-glide: 550ms;
-  --aida-ease-glide: cubic-bezier(0.32, 0.72, 0, 1);
-  /* A loose, rubbery spring (damping about 0.4): overshoots by a quarter, dips back under,
-     then settles. */
-  --aida-ease-spring: linear(0, 0.25 8%, 0.8 18%, 1.18 28%, 1.26 34%, 1.14 44%, 0.96 56%, 0.93 62%, 0.98 72%, 1.025 80%, 1 92%, 1);
+  --aida-duration-glide: 400ms;
+  /* Soft settle: quick to start, easing to rest with no overshoot. */
+  --aida-ease-settle: cubic-bezier(0.32, 0.72, 0, 1);
+  --aida-duration-press: 100ms;
   /* How far things move and shrink. Reduced motion sets these to none. */
-  --aida-press-scale: 0.92;
-  --aida-press-scale-large: 0.97;
+  --aida-press-scale: 0.97;
+  --aida-press-scale-large: 0.99;
   --aida-enter-offset: 0.5rem;
   --aida-drawer-offset: 100%;
   /* The loading placeholder's pulse (keyframes in components.css). */
@@ -203,7 +202,7 @@
     --aida-duration-glide: 120ms;
     --aida-press-scale: 1;
     --aida-press-scale-large: 1;
-    --aida-ease-spring: ease;
+    --aida-duration-press: 0ms;
     --aida-enter-offset: 0rem;
     --aida-drawer-offset: 0%;
     --aida-skeleton-animation: none;

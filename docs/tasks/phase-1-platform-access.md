@@ -107,7 +107,7 @@ The Admin audit search screen is built in `P3-UI-01`.
     - alert and flash message
     - modal using the native `<dialog>`, and a side drawer
     - empty state, skeleton loader and pagination
-- Instant press and focus feedback (`:active`, `:focus-visible`) on every interactive component. Pressed controls spring back.
+- Instant press and focus feedback (`:active`, `:focus-visible`) on every interactive component. Pressed controls shrink slightly and settle back.
 - Page transitions with the View Transitions API (`@view-transition { navigation: auto; }`), and HTMX swaps set to use transitions.
 - A dashboard of a greeting and panels: key figures that link to their pages, quick links and the login's two-step sign-in status.
 - Every button has an icon. Closing a dialog and per-row actions show the icon alone, with an accessible name.

@@ -102,15 +102,15 @@ The `apple-design` skill in [`.claude/skills/`](.claude/skills/apple-design/SKIL
 
 - Build every page from the design-system tokens (CSS variables) and component macros. No one-off colours, sizes, shadows or animations.
 - Give feedback immediately: style `:active` and `:focus-visible` states, and show an HTMX loading indicator for any request that may take longer than about 300 ms.
-- Animate only `transform` and `opacity`, for 150 to 300 ms. The one exception is the sidebar hiding and showing: a 550 ms glide without bounce (`--aida-duration-glide`), as a view transition. Motion must never delay content: the page renders first and motion adds polish.
-- Pressable controls squash on press and spring back, using the shared spring easing (`--aida-ease-spring`, a CSS `linear()` curve). Add a new control to the spring rule in `components.css`; do not write another curve.
+- Animate only `transform` and `opacity`, for 150 to 300 ms. The one exception is the sidebar hiding and showing: a 400 ms glide (`--aida-duration-glide`), as a view transition. Motion must never delay content: the page renders first and motion adds polish.
+- Motion settles softly with no overshoot (`--aida-ease-settle`). Pressable controls shrink slightly and return; add a new control to the press rule in `components.css`.
 - Use CSS transitions and the View Transitions API (`hx-swap="... transition:true"` for HTMX swaps). Spring or animation libraries need tech lead approval and are only for real gesture features.
 - Do not add drag, flick or rubber-band physics, sound or haptics to the web portal.
 - Open and close modals, drawers and menus along the same path, and from the control that opened them.
 - Use translucent glass (`backdrop-filter`) for the panels of signed-in pages (sidebar, cards, breadcrumb bar), menus, dialogs, the top bar and modal scrims, through `--aida-surface-glass` and `--aida-glass`. Text on it must pass WCAG AA contrast, with a solid fallback.
 - Respect `prefers-reduced-motion` (switch to a short cross-fade or no motion), `prefers-reduced-transparency` (solid surfaces) and `prefers-contrast: more` (solid surfaces, stronger borders). Nothing may flash more than three times a second.
 - Use the `system-ui` font stack, with size in `rem`, tighter letter-spacing on large headings and none on body text. Do not use Apple's SF Pro font files on the web, and do not copy Apple's own designs, icons or assets.
-- Keep the tone calm and professional: no confetti, looping or attention-seeking motion; the only bounce is the short spring on a control the person is using on a governed knowledge portal.
+- Keep the tone calm and professional: no confetti, bouncing or attention-seeking motion on a governed knowledge portal.
 
 **New libraries**
 
