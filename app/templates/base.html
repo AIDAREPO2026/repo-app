@@ -1,5 +1,5 @@
 <!doctype html>
-{# Light unless the person chooses otherwise; static/js/theme.js applies their choice. #}
+{# Light unless the person chooses otherwise; static/js/shell.js applies their choice. #}
 <html lang="en" class="theme-light">
 <head>
   <meta charset="utf-8">
@@ -7,7 +7,7 @@
   <meta name="color-scheme" content="light dark">
   <title>{% block title %}{{ _(title) }}{% endblock %} | {{ _("AIDA Digital Resource Repository") }}</title>
   <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}">
-  <script src="{{ url_for('static', path='js/theme.js') }}"></script>
+  <script src="{{ url_for('static', path='js/shell.js') }}"></script>
   {% block head %}{% endblock %}
 </head>
 {% from "macros/ui.html" import flash_messages, breadcrumbs as breadcrumb_trail with context %}
@@ -21,11 +21,13 @@
   {% if login %}
   {# Signed in: an app shell with the menu in a sidebar, or in a drawer on small screens. #}
   <div class="app-shell">
-    <aside class="sidebar chrome" aria-label="{{ _('Sidebar') }}">
+    <aside id="sidebar" class="sidebar" aria-label="{{ _('Sidebar') }}">
       <div class="sidebar-brand">{{ brand() }}</div>
+      {# Hidden without script, which does the filtering. #}
+      <input type="search" class="input find-page" data-find-page data-needs-script hidden
+             placeholder="{{ _('Find a page…') }}" aria-label="{{ _('Find a page') }}">
       <div class="sidebar-nav">{{ nav_menu(nav) }}</div>
-      {{ theme_switcher() }}
-      {{ account_panel(login) }}
+      {{ account_panel(login, "sidebar") }}
     </aside>
 
     <header class="topbar mobile-bar">
@@ -34,27 +36,33 @@
         {{ brand() }}
       </div>
     </header>
-    <dialog id="menu-drawer" class="drawer drawer-left chrome" aria-label="{{ _('Menu') }}" closedby="any">
+    <dialog id="menu-drawer" class="drawer drawer-left" aria-label="{{ _('Menu') }}" closedby="any">
       <div class="dialog-header">
         {{ brand() }}
         <button type="button" class="icon-button" commandfor="menu-drawer" command="close" aria-label="{{ _('Close menu') }}">{{ icon("close") }}</button>
       </div>
       <div class="flex-1">{{ nav_menu(nav, "Menu") }}</div>
-      {{ theme_switcher() }}
-      {{ account_panel(login) }}
+      {{ account_panel(login, "drawer") }}
     </dialog>
 
     <div class="app-main">
-      {% if breadcrumbs is defined %}
-      <div class="page-dock"><div class="page-bar"><div class="page-bar-inner">{{ breadcrumb_trail(breadcrumbs) }}</div></div></div>
-      {% endif %}
-      <div class="app-panel">
-        {{ flash_messages(messages|default([])) }}
-        <main id="main" tabindex="-1" class="page flex-1 py-6 focus:outline-none">
-          {% block content %}{% endblock %}
-        </main>
-        {{ site_footer() }}
+      {# One row above the page: where you are on the left, what you can do on the right. #}
+      {% set page_actions %}{% block page_actions %}{% endblock %}{% endset %}
+      <div class="page-dock">
+        {% if breadcrumbs is defined %}
+        <div class="page-bar">
+          <button type="button" class="icon-button sidebar-toggle" data-sidebar-toggle data-needs-script hidden
+                  aria-controls="sidebar" aria-expanded="true" aria-label="{{ _('Show or hide the menu') }}"
+                  title="{{ _('Show or hide the menu') }}">{{ icon("sidebar") }}</button>
+          {{ breadcrumb_trail(breadcrumbs, nav) }}
+        </div>
+        {% endif %}
+        {% if page_actions|trim %}<div class="page-actions">{{ page_actions }}</div>{% endif %}
       </div>
+      {{ flash_messages(messages|default([])) }}
+      <main id="main" tabindex="-1" class="page flex-1 focus:outline-none">
+        {% block content %}{% endblock %}
+      </main>
     </div>
   </div>
   {% else %}

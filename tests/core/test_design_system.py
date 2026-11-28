@@ -4,8 +4,9 @@ import re
 from pathlib import Path
 
 import pytest
+from starlette.requests import Request
 
-from app.core.navigation import Crumb, breadcrumbs
+from app.core.navigation import Crumb, breadcrumbs, nav_for
 from app.core.templates import templates
 
 APP_DIR = Path(__file__).resolve().parents[2] / "app"
@@ -43,29 +44,31 @@ def test_p1_ui_02_breadcrumbs_start_at_the_dashboard_and_end_unlinked() -> None:
     trail = breadcrumbs("admin", Crumb("Accounts", "/admin/accounts"), Crumb("Asha Rao", "/ignored"))
 
     assert trail == [
-        Crumb("Dashboard", "/dashboard/admin", "grid"),
-        Crumb("Accounts", "/admin/accounts", "users"),
+        Crumb("Dashboard", "/dashboard/admin"),
+        Crumb("Accounts", "/admin/accounts"),
         Crumb("Asha Rao"),
     ]
 
 
-def test_p1_ui_02_breadcrumbs_markup_marks_the_current_page() -> None:
-    macro = templates.env.get_template("macros/ui.html").module.breadcrumbs  # type: ignore[attr-defined]
+def test_p1_ui_02_breadcrumbs_open_menus_and_mark_the_current_page() -> None:
+    template = templates.env.from_string(
+        '{% from "macros/ui.html" import breadcrumbs with context %}{{ breadcrumbs(trail, nav) }}'
+    )
+    request = Request({"type": "http", "path": "/admin/discoms", "headers": [], "query_string": b""})
+    trail = breadcrumbs("admin", Crumb("Discoms"))
 
-    html = str(macro(breadcrumbs("reviewer", Crumb("Style guide"))))
+    html = template.render(request=request, trail=trail, nav=nav_for("admin"))
 
     assert '<nav aria-label="Breadcrumb">' in html
-    # The way home shows its icon; the name stays for screen readers.
-    assert '<a href="/dashboard/reviewer" class="crumb-link" title="Dashboard">' in html
-    assert '<span class="sr-only">Dashboard</span></a>' in html
-    assert 'aria-current="page"' in html
-    assert '<span class="crumb-label">Style guide</span>' in html
+    assert 'popovertarget="crumb-home"' in html
+    assert 'popovertarget="crumb-section"' in html  # Discoms sits in Administration
+    assert '<span class="crumb-current" aria-current="page">Discoms</span>' in html
 
 
-def test_p1_ui_02_theme_switcher_offers_three_choices_hidden_without_script() -> None:
+def test_p1_ui_02_theme_button_offers_three_choices_hidden_without_script() -> None:
     macro = templates.env.get_template("macros/ui.html").module.theme_switcher  # type: ignore[attr-defined]
 
     html = str(macro())
 
     assert re.findall(r'data-theme-choice="(\w+)"', html) == ["system", "light", "dark"]
-    assert 'aria-label="Theme" hidden' in html
+    assert '<div class="theme-switcher" hidden>' in html

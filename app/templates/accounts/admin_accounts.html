@@ -18,10 +18,12 @@
 {% else %}{{ badge("Active", "success") }}{% endif %}
 {% endmacro %}
 
-{% block content %}
-{% call page_header("Accounts", "Named Admin, Reviewer and Approver accounts. Each belongs to one person with their own email.", eyebrow="Administration") %}
+{% block page_actions %}
   {{ button("Add account", type="button", commandfor="add-account", command="show-modal") }}
-{% endcall %}
+{% endblock %}
+
+{% block content %}
+{{ page_header("Accounts") }}
 
 {% call card(flush=true) %}
 {% if accounts %}

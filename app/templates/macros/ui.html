@@ -21,15 +21,51 @@
   {%- if commandfor %} commandfor="{{ commandfor }}" command="{{ command }}"{% endif %}>{{ _(label) }}</button>
 {% endmacro %}
 
-{# System, light or dark. static/js/theme.js shows it, marks the choice and remembers it. #}
-{% macro theme_switcher() %}
+{#
+  A menu that opens from the button with popovertarget="<id>". The browser handles opening,
+  Escape and clicking away, with no script. The caller fills it with .menu-item elements.
+#}
+{% macro menu_panel(id, title) %}
+<div id="{{ id }}" popover class="menu">
+  <p class="menu-title">{{ _(title) }}</p>
+  {{ caller() }}
+</div>
+{% endmacro %}
+
+{# The pages of a menu section as menu items, the current one ticked. links are NavLinks. #}
+{% macro page_items(links) %}
 {% from "macros/icons.html" import icon %}
-<div class="theme-switcher" role="group" aria-label="{{ _('Theme') }}" hidden>
-  {% for value, label, icon_name in [("system", "System", "monitor"), ("light", "Light", "sun"), ("dark", "Dark", "moon")] %}
-  {# Icon only: the label names the button for screen readers, and shows on hover. #}
-  <button type="button" class="theme-option" data-theme-choice="{{ value }}" aria-pressed="false"
-          aria-label="{{ _(label) }}" title="{{ _(label) }}">{{ icon(icon_name) }}</button>
+{% for link in links %}
+{% set current = request.url.path == link.path %}
+<a href="{{ link.path }}" class="menu-item"{% if current %} aria-current="page"{% endif %}>
+  <span class="menu-icon">{{ icon(link.icon) }}</span>
+  <span class="menu-text">{{ _(link.label) }}{% if link.description %}<span class="menu-note">{{ _(link.description) }}</span>{% endif %}</span>
+  {% if current %}{{ icon("check") }}{% endif %}
+</a>
+{% endfor %}
+{% endmacro %}
+
+{#
+  One button for system, light or dark. static/js/shell.js shows it, ticks the choice and
+  remembers it. id must be unique on the page.
+#}
+{% macro theme_switcher(id="theme-menu") %}
+{% from "macros/icons.html" import icon %}
+{% set choices = [("system", "System", "monitor"), ("light", "Light", "sun"), ("dark", "Dark", "moon")] %}
+<div class="theme-switcher" hidden>
+  <button type="button" class="icon-button theme-button" popovertarget="{{ id }}" aria-label="{{ _('Theme') }}" title="{{ _('Theme') }}">
+    {# One drawing per choice; CSS shows the one in use. #}
+    {% for value, label, icon_name in choices %}<span class="theme-icon theme-icon-{{ value }}">{{ icon(icon_name) }}</span>{% endfor %}
+  </button>
+  {% call menu_panel(id, "Theme") %}
+  {% for value, label, icon_name in choices %}
+  <button type="button" class="menu-item" data-theme-choice="{{ value }}" aria-pressed="false"
+          popovertarget="{{ id }}" popovertargetaction="hide">
+    <span class="menu-icon">{{ icon(icon_name) }}</span><span class="menu-text">{{ _(label) }}</span>
+    <span class="menu-check">{{ icon("check") }}</span>
+  </button>
   {% endfor %}
+  {% endcall %}
 </div>
 {% endmacro %}
 
@@ -39,44 +75,52 @@
 {% endmacro %}
 
 {#
-  Where the reader is: a list of Crumb(label, path) from app.core.navigation.breadcrumbs().
-  The last crumb is the current page and is not a link.
+  Where the reader is: a list of Crumb(label, path) from app.core.navigation.breadcrumbs(),
+  and the login's menu (nav). The home button opens every page; the section step opens the
+  pages beside this one. The last crumb is the current page and is not a link.
 #}
-{% macro breadcrumbs(trail) %}
+{% macro breadcrumbs(trail, nav) %}
 {% from "macros/icons.html" import icon %}
+{# The first page below the dashboard decides the section. The dashboard itself has none. #}
+{% set matches = nav|selectattr("label", "equalto", trail[1].label)|list if trail|length > 1 else [] %}
+{% set section = matches[0].group if matches else "" %}
 <nav aria-label="{{ _('Breadcrumb') }}">
   <ol class="breadcrumbs">
-    {% for crumb in trail %}
     <li class="crumb">
-      {% if not loop.first %}<span class="crumb-separator">{{ icon("chevron") }}</span>{% endif %}
-      {% if crumb.path %}
-      {# The way home is its icon alone; every other step keeps its name. #}
-      {% set icon_only = loop.first and crumb.icon %}
-      <a href="{{ crumb.path }}" class="crumb-link"{% if icon_only %} title="{{ _(crumb.label) }}"{% endif %}>
-        {%- if crumb.icon %}{{ icon(crumb.icon) }}{% endif -%}
-        <span{% if icon_only %} class="sr-only"{% endif %}>{{ _(crumb.label) }}</span></a>
-      {% else %}
-      <span class="crumb-current" aria-current="page">
-        {%- if crumb.icon %}{{ icon(crumb.icon) }}{% endif -%}
-        <span class="crumb-label">{{ _(crumb.label) }}</span></span>
-      {% endif %}
+      <button type="button" class="crumb-button" popovertarget="crumb-home" aria-label="{{ _('Go to') }}" title="{{ _('Go to') }}">
+        {{ icon("home") }}<span class="crumb-caret">{{ icon("chevron-down") }}</span>
+      </button>
+      {% call menu_panel("crumb-home", "Go to") %}{{ page_items(nav) }}{% endcall %}
+    </li>
+    {% if section and section != "Overview" %}
+    <li class="crumb">
+      <span class="crumb-separator">{{ icon("chevron") }}</span>
+      <button type="button" class="crumb-button" popovertarget="crumb-section">
+        {{ _(section) }}<span class="crumb-caret">{{ icon("chevron-down") }}</span>
+      </button>
+      {% call menu_panel("crumb-section", section) %}{{ page_items(nav|selectattr("group", "equalto", section)) }}{% endcall %}
+    </li>
+    {% endif %}
+    {# The dashboard step is the home button, so it is named only when it is the current page. #}
+    {% for crumb in (trail[1:] if trail|length > 1 else trail) %}
+    <li class="crumb">
+      <span class="crumb-separator">{{ icon("chevron") }}</span>
+      {% if crumb.path %}<a href="{{ crumb.path }}" class="crumb-link">{{ _(crumb.label) }}</a>
+      {% else %}<span class="crumb-current" aria-current="page">{{ _(crumb.label) }}</span>{% endif %}
     </li>
     {% endfor %}
   </ol>
 </nav>
 {% endmacro %}
 
-{# The heading block at the top of a page, with optional actions from the caller.
-   eyebrow names the part of the portal the page belongs to, such as "Administration". #}
-{% macro page_header(title, lead="", eyebrow="") %}
-<header class="page-header">
-  <div>
-    {% if eyebrow %}<p class="page-eyebrow">{{ _(eyebrow) }}</p>{% endif %}
-    <h1 class="page-title">{{ _(title) }}</h1>
-    {% if lead %}<p class="page-lead">{{ _(lead) }}</p>{% endif %}
-  </div>
-  {% if caller %}<div class="flex flex-wrap gap-2">{{ caller() }}</div>{% endif %}
-</header>
+{#
+  The page's heading. The breadcrumb bar already names the page, so the h1 is for screen
+  readers only; lead shows when the reader needs a sentence of explanation. Page actions go
+  in {% block page_actions %}, which base.html puts beside the breadcrumbs.
+#}
+{% macro page_header(title, lead="") %}
+<h1 class="sr-only">{{ _(title) }}</h1>
+{% if lead %}<p class="page-lead page-intro">{{ _(lead) }}</p>{% endif %}
 {% endmacro %}
 
 {# A dashboard figure. label is a message id; value is data. note is an optional message. #}

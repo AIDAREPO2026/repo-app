@@ -3,7 +3,7 @@
 {% from "macros/ui.html" import page_header, button, link_button, card, badge, alert with context %}
 {% set problems = rows|selectattr("problem")|list %}
 {% block content %}
-{{ page_header("Check the import", eyebrow="Administration", lead="Nothing has been saved yet. Rows with a problem are skipped; fix them in the file and import it again.") }}
+{{ page_header("Check the import", lead="Nothing has been saved yet. Rows with a problem are skipped; fix them in the file and import it again.") }}
 
 <div class="mb-6 flex flex-wrap gap-2">
   {{ badge(_("To add: %(count)s", count=to_add), "success") }}

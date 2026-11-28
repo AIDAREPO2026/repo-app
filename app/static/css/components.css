@@ -17,27 +17,6 @@
     max-width: 28rem;
   }
 
-  .page-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--aida-space-4);
-    margin-bottom: var(--aida-space-6);
-    padding-bottom: var(--aida-space-5);
-    border-bottom: 1px solid var(--aida-border);
-  }
-
-  /* The section a page belongs to, above its title. */
-  .page-eyebrow {
-    margin-bottom: var(--aida-space-1);
-    color: var(--aida-accent);
-    font-size: var(--aida-text-xs);
-    font-weight: 650;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
 
   .page-title {
     font-size: var(--aida-text-xl);
@@ -181,26 +160,26 @@
     min-height: 100dvh;
   }
 
-  /* Signed-in pages float: the menu, breadcrumbs and content are separate rounded panels
-     on a slightly darker backdrop. */
+  /* Signed-in pages float: the sidebar, the breadcrumb pill, the page actions and each card
+     are separate surfaces on the canvas. */
   .app-shell {
-    background: var(--aida-surface-sunken);
+    background: var(--aida-canvas);
   }
 
   .app-main {
-    gap: var(--aida-space-3);
+    gap: var(--aida-space-4);
     padding: var(--aida-space-3);
   }
 
-  .app-panel {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    overflow: clip;
-    border: 1px solid var(--aida-border);
-    border-radius: var(--aida-radius-lg);
-    background: var(--aida-canvas-wash), var(--aida-canvas);
-    box-shadow: var(--aida-shadow-1);
+  /* Content uses the full width beside the sidebar. */
+  .app-main > main {
+    max-width: none;
+    padding-block-end: var(--aida-space-5);
+  }
+
+  .app-main > .page-dock,
+  .app-main > main {
+    padding-inline: var(--aida-space-3);
   }
 
   .sidebar {
@@ -221,8 +200,19 @@
       height: calc(100dvh - 2 * var(--aida-space-3));
       margin: var(--aida-space-3) 0 var(--aida-space-3) var(--aida-space-3);
       border-radius: var(--aida-radius-lg);
-      box-shadow: var(--aida-shadow-2);
-      padding: var(--aida-space-5) var(--aida-space-3) var(--aida-space-4);
+      overflow: hidden;
+      border: 1px solid var(--aida-border);
+      background: var(--aida-brand-stripe) top / 100% 3px no-repeat, var(--aida-surface);
+      box-shadow: var(--aida-shadow-1);
+      padding: var(--aida-space-4) var(--aida-space-3) var(--aida-space-3);
+    }
+
+    .sidebar-hidden .app-shell {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sidebar-hidden .sidebar {
+      display: none;
     }
 
     .mobile-bar {
@@ -231,7 +221,23 @@
   }
 
   .sidebar-brand {
-    padding: 0 var(--aida-space-2) var(--aida-space-5);
+    padding: 0 var(--aida-space-1) var(--aida-space-3);
+  }
+
+  .sidebar .brand-logo {
+    height: 2.25rem;
+  }
+
+  .sidebar .brand-sub,
+  .drawer-left .brand-sub {
+    display: block;
+    color: var(--aida-warning);
+  }
+
+  .input.find-page {
+    margin-bottom: var(--aida-space-3);
+    min-height: 2.25rem;
+    font-size: var(--aida-text-sm);
   }
 
 
@@ -239,25 +245,49 @@
     flex: 1;
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: var(--aida-chrome-border) transparent;
+    scrollbar-color: var(--aida-border) transparent;
   }
 
   .side-nav {
     display: grid;
     gap: 0.125rem;
-    margin-bottom: var(--aida-space-4);
+    margin-bottom: var(--aida-space-1);
   }
 
-  /* A menu section's name, small and quiet above its links. */
+  /* A menu section: its name folds and unfolds the links under it. */
   .side-section {
-    padding: 0 var(--aida-space-3) var(--aida-space-2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--aida-space-2) var(--aida-space-3);
+    border-radius: var(--aida-radius-md);
     color: var(--aida-text-muted);
     font-size: var(--aida-text-xs);
     font-weight: 650;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+    list-style: none;
+    cursor: pointer;
   }
 
+  .side-section::-webkit-details-marker {
+    display: none;
+  }
+
+  .side-section:hover {
+    background: var(--aida-surface-hover);
+    color: var(--aida-text);
+  }
+
+  .side-section .icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    transition: transform var(--aida-duration-slow) var(--aida-ease-spring);
+  }
+
+  .side-group[open] > .side-section .icon {
+    transform: rotate(90deg);
+  }
 
   .side-link {
     display: flex;
@@ -304,103 +334,67 @@
     outline-color: var(--aida-chrome-focus);
   }
 
-  .chrome .brand,
-  .chrome .brand:hover {
-    color: var(--aida-chrome-strong);
-  }
-
-  /* In the narrow sidebar the product name sits under the logo, which already names AIDA. */
-  .chrome .brand {
-    flex-direction: column;
-    align-items: flex-start;
+  /* The row above the page: a breadcrumb pill, and a pill of page actions. */
+  .page-dock {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
     gap: var(--aida-space-3);
   }
 
-  .chrome .brand-sub {
-    display: none;
-  }
-
-  .chrome .side-section {
-    color: var(--aida-chrome-label);
-  }
-
-  .chrome .side-link {
-    color: var(--aida-chrome-text);
-  }
-
-  .chrome .side-link:hover {
-    background: var(--aida-chrome-hover);
-    color: var(--aida-chrome-strong);
-  }
-
-  .chrome .side-link:active {
-    background: var(--aida-chrome-active);
-  }
-
-  .chrome .side-link[aria-current="page"] {
-    background: var(--aida-chrome-active);
-    color: var(--aida-chrome-strong);
-  }
-
-  .chrome .account-panel {
-    border-color: var(--aida-chrome-border);
-  }
-
-  .chrome .account-name {
-    color: var(--aida-chrome-strong);
-  }
-
-  .chrome .account-role {
-    color: var(--aida-chrome-label);
-  }
-
-  .chrome .avatar {
-    background: var(--aida-brand-amber);
-    color: var(--aida-on-amber);
-  }
-
-  .chrome .icon-button {
-    color: var(--aida-chrome-text);
-  }
-
-  .chrome .icon-button:hover {
-    background: var(--aida-chrome-hover);
-    color: var(--aida-chrome-strong);
-  }
-
-  .chrome .dialog-header {
-    color: var(--aida-chrome-strong);
-  }
-
-
-  /* A floating bar above the page content, holding the breadcrumbs. */
-  .page-bar {
+  .page-bar,
+  .page-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--aida-space-1);
+    max-width: 100%;
+    padding: var(--aida-space-1);
     border: 1px solid var(--aida-border);
-    border-radius: var(--aida-radius-lg);
+    border-radius: var(--aida-radius-full);
     background: var(--aida-surface);
     box-shadow: var(--aida-shadow-1);
   }
 
-  /* On wide screens the bar stays in view. Its dock is the backdrop colour and covers the gap
-     above, so scrolled content never shows over or around the floating bar. */
+  .page-actions {
+    flex-wrap: wrap;
+    margin-left: auto;
+  }
+
+  .page-actions .btn {
+    border-radius: var(--aida-radius-full);
+  }
+
+  /* Only wide screens have a sidebar to hide. A rule separates it from the trail. */
+  .page-bar .sidebar-toggle {
+    display: none;
+    width: 2rem;
+    height: 2rem;
+  }
+
+  /* On wide screens the row stays in view. It is the canvas colour and covers the gap above,
+     so scrolled content never shows around the floating pills. */
   @media (min-width: 64rem) {
     .page-dock {
       position: sticky;
       top: 0;
       z-index: 10;
       margin-top: calc(-1 * var(--aida-space-3));
-      padding-top: var(--aida-space-3);
-      background: var(--aida-surface-sunken);
+      padding-block: var(--aida-space-3) var(--aida-space-1);
+      background: var(--aida-canvas);
+    }
+
+    .page-bar .sidebar-toggle:not([hidden]) {
+      display: grid;
+      margin-right: var(--aida-space-1);
+      border-right: 1px solid var(--aida-border);
+      border-radius: var(--aida-radius-full) 0 0 var(--aida-radius-full);
     }
   }
 
-  .page-bar-inner {
-    display: flex;
-    padding-inline: var(--aida-space-3);
-    align-items: center;
-    min-height: 3rem;
+  .page-intro {
+    margin-bottom: var(--aida-space-5);
   }
-
 
   /* Breadcrumbs: small and quiet, with thin chevrons; the current page in full text colour. */
   .breadcrumbs {
@@ -430,42 +424,62 @@
   }
 
   .crumb-link,
+  .crumb-button,
   .crumb-current {
     display: inline-flex;
     align-items: center;
-    gap: var(--aida-space-2);
+    gap: var(--aida-space-1);
     min-height: 2rem;
     padding: 0 var(--aida-space-2);
-    border-radius: var(--aida-radius-sm);
+    border-radius: var(--aida-radius-full);
   }
 
-  .crumb-link {
+  .crumb-link,
+  .crumb-button {
     color: var(--aida-text-muted);
     text-decoration: none;
   }
 
-  .crumb-link:hover {
+  .crumb-button {
+    border: 0;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .crumb-link:hover,
+  .crumb-button:hover {
     background: var(--aida-surface-hover);
     color: var(--aida-text);
   }
 
   .crumb-current {
     min-width: 0;
-    background: var(--aida-accent-subtle);
-    color: var(--aida-accent);
-    font-weight: 600;
-  }
-
-  .crumb-label {
     overflow: hidden;
+    color: var(--aida-text);
+    font-weight: 650;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .crumb-link .icon,
-  .crumb-current .icon {
+  .crumb-button .icon {
     width: 1rem;
     height: 1rem;
+  }
+
+  .crumb-caret {
+    display: inline-flex;
+  }
+
+  .crumb-caret .icon {
+    width: 0.75rem;
+    height: 0.75rem;
+    transition: transform var(--aida-duration-slow) var(--aida-ease-spring);
+  }
+
+  /* The caret turns over while its menu is open. */
+  .crumb:has(.menu:popover-open) .crumb-caret .icon {
+    transform: rotate(180deg);
   }
 
   .icon {
@@ -497,66 +511,151 @@
     transform: scale(var(--aida-press-scale));
   }
 
-  /* Theme choice. It carries its own surface, so it reads the same on the navy chrome. */
-  .theme-switcher {
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    width: fit-content;
-    padding: 0.125rem;
+  /* The theme button shows the drawing for the choice in use. */
+  .theme-icon {
+    display: none;
+  }
+
+  :root:not([data-theme]) .theme-icon-light,
+  :root[data-theme="light"] .theme-icon-light,
+  :root[data-theme="dark"] .theme-icon-dark,
+  :root[data-theme="system"] .theme-icon-system {
+    display: inline-flex;
+  }
+
+  /* ---------- Menus: popovers opened from a button ---------- */
+
+  .menu {
+    position: fixed;
+    inset: auto;
+    /* Beside the button that opened it, flipped when there is no room. */
+    position-area: bottom span-right;
+    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+    width: max-content;
+    min-width: 12rem;
+    max-width: min(20rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 6rem);
+    margin: var(--aida-space-2) 0;
+    padding: var(--aida-space-2);
+    overflow-y: auto;
     border: 1px solid var(--aida-border);
-    border-radius: var(--aida-radius-md);
-    background: var(--aida-surface-sunken);
+    border-radius: var(--aida-radius-lg);
+    background: var(--aida-surface);
+    color: var(--aida-text);
+    box-shadow: var(--aida-shadow-2);
+    letter-spacing: 0;
+    text-align: left;
+    text-transform: none;
   }
 
-  .theme-option {
-    display: grid;
-    place-items: center;
-    min-width: 2.5rem;
-    height: 2rem;
-    border: 0;
-    border-radius: var(--aida-radius-sm);
-    background: transparent;
+  /* Browsers without anchor positioning get the menu in the middle of the screen. */
+  @supports not (position-area: bottom) {
+    .menu {
+      inset: 0;
+      margin: auto;
+      height: fit-content;
+    }
+  }
+
+  .menu:popover-open {
+    animation: aida-menu-in var(--aida-duration-slow) var(--aida-ease-spring);
+  }
+
+  @keyframes aida-menu-in {
+    from {
+      opacity: 0;
+      transform: scale(var(--aida-press-scale));
+    }
+  }
+
+  .menu-title {
+    padding: var(--aida-space-1) var(--aida-space-2) var(--aida-space-2);
     color: var(--aida-text-muted);
-    cursor: pointer;
-    /* Above the thumb. */
-    position: relative;
+    font-size: var(--aida-text-xs);
+    font-weight: 650;
+    text-transform: uppercase;
   }
 
-  .theme-option:hover {
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: var(--aida-space-3);
+    width: 100%;
+    padding: var(--aida-space-2);
+    border: 0;
+    border-radius: var(--aida-radius-md);
+    background: transparent;
+    color: var(--aida-text);
+    font: inherit;
+    font-size: var(--aida-text-sm);
+    font-weight: 600;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .menu-item:hover {
     background: var(--aida-surface-hover);
     color: var(--aida-text);
   }
 
-  /* The chosen option sits on a thumb that springs from one segment to the next. */
-  .theme-switcher::before {
-    content: "";
-    position: absolute;
-    top: 0.125rem;
-    bottom: 0.125rem;
-    left: 0.125rem;
-    width: calc((100% - 0.25rem) / 3);
+  .menu-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
     border-radius: var(--aida-radius-sm);
-    background: var(--aida-accent);
-    transition: transform var(--aida-duration-slow) var(--aida-ease-spring);
+    background: var(--aida-accent-subtle);
+    color: var(--aida-accent);
   }
 
-  .theme-switcher:has([data-theme-choice="light"][aria-pressed="true"])::before {
-    transform: translateX(100%);
+  .menu-icon .icon,
+  .menu-item > .icon,
+  .menu-check .icon {
+    width: 1rem;
+    height: 1rem;
   }
 
-  .theme-switcher:has([data-theme-choice="dark"][aria-pressed="true"])::before {
-    transform: translateX(200%);
+  .menu-text {
+    display: grid;
+    flex: 1;
+    min-width: 0;
   }
 
-  .theme-option[aria-pressed="true"],
-  .theme-option[aria-pressed="true"]:hover {
+  .menu-note {
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-xs);
+    font-weight: 500;
+  }
+
+  .menu-item > .icon,
+  .menu-check {
+    color: var(--aida-accent);
+  }
+
+  .menu-item[aria-pressed="false"] .menu-check {
+    visibility: hidden;
+  }
+
+  .account-button {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: var(--aida-space-3);
+    min-width: 0;
+    padding: var(--aida-space-1);
+    border: 0;
+    border-radius: var(--aida-radius-md);
     background: transparent;
-    color: var(--aida-text-on-accent);
+    color: var(--aida-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
   }
 
-  .chrome .theme-switcher {
-    width: 100%;
+  .account-button:hover {
+    background: var(--aida-surface-hover);
   }
 
   .account-panel {
@@ -843,6 +942,43 @@
     font-size: var(--aida-text-xs);
   }
 
+  .stat {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: var(--aida-space-4);
+    row-gap: 0;
+    align-content: center;
+    border-left: 4px solid var(--stat-tone);
+  }
+
+  /* The heading and icon join the grid, so the number can sit above its name. */
+  .stat-head {
+    display: contents;
+  }
+
+  .stat-head .stat-icon {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+    align-self: center;
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .stat-head h2 {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .stat-value {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .stat-note {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
   /* A shortcut card: icon, title, one line, and an arrow that nudges on hover. */
   .action-card {
     flex-direction: row;
@@ -927,6 +1063,16 @@
     font-size: var(--aida-text-base);
   }
 
+  .hero-lead::before {
+    content: "";
+    display: inline-block;
+    width: 1.5rem;
+    height: 2px;
+    margin-right: var(--aida-space-2);
+    vertical-align: middle;
+    background: var(--aida-brand-amber);
+  }
+
   .hero :focus-visible {
     outline-color: var(--aida-hero-text);
   }
@@ -938,8 +1084,11 @@
   .side-link,
   .page-link,
   .crumb-link,
+  .crumb-button,
   .icon-button,
-  .theme-option,
+  .menu-item,
+  .account-button,
+  .side-section,
   .action-card,
   .item-card {
     transition: transform var(--aida-duration-slow) var(--aida-ease-spring);
@@ -950,8 +1099,11 @@
   .side-link:active,
   .page-link:active,
   .crumb-link:active,
+  .crumb-button:active,
   .icon-button:active,
-  .theme-option:active {
+  .menu-item:active,
+  .account-button:active,
+  .side-section:active {
     transform: scale(var(--aida-press-scale));
     transition: transform var(--aida-duration-fast) var(--aida-ease-enter);
   }
@@ -1261,17 +1413,10 @@
     transform: translateX(calc(-1 * var(--aida-drawer-offset)));
   }
 
-  /* The menu drawer wears the navy chrome; .drawer above would otherwise paint it white. */
-  .drawer.chrome {
-    background: var(--aida-chrome);
-    color: var(--aida-chrome-text);
-  }
-
   .drawer-left[open] {
     display: flex;
     flex-direction: column;
     width: min(18rem, 85%);
-    border-color: var(--aida-chrome-border);
   }
 
   @starting-style {

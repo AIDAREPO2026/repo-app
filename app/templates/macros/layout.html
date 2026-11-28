@@ -15,24 +15,35 @@
 </a>
 {% endmacro %}
 
-{# The menu for the login type, in its sections. label names the landmark, so two menus on a
-   page stay distinct. #}
+{# The menu for the login type. Each section folds; the one holding this page starts open.
+   label names the landmark, so two menus on a page stay distinct. #}
 {% macro nav_menu(nav, label="Main") %}
 <nav aria-label="{{ _(label) }}">
-  {% for link in nav %}
-  {# Links come in section order, so a new section starts whenever the group changes. #}
-  {% if loop.changed(link.group) %}
-  {% if not loop.first %}</ul>{% endif %}
-  <p class="side-section">{{ _(link.group) }}</p>
-  <ul class="side-nav">
-  {% endif %}
-    <li>
-      <a href="{{ link.path }}" class="side-link"
-         {% if request.url.path == link.path %}aria-current="page"{% endif %}>{{ icon(link.icon) }}<span>{{ _(link.label) }}</span></a>
-    </li>
+  {# Links come in section order, and "Overview" links need no section heading. #}
+  {% for link in nav if link.group == "Overview" %}
+  {% if loop.first %}<ul class="side-nav">{% endif %}
+    {{ nav_link(link) }}
   {% if loop.last %}</ul>{% endif %}
   {% endfor %}
+  {% for link in nav if link.group != "Overview" %}
+  {% if loop.changed(link.group) %}
+  {% if not loop.first %}</ul></details>{% endif %}
+  {% set here = nav|selectattr("group", "equalto", link.group)|selectattr("path", "equalto", request.url.path)|list %}
+  <details class="side-group"{% if here %} open{% endif %}>
+    <summary class="side-section">{{ _(link.group) }}{{ icon("chevron") }}</summary>
+    <ul class="side-nav">
+  {% endif %}
+    {{ nav_link(link) }}
+  {% if loop.last %}</ul></details>{% endif %}
+  {% endfor %}
 </nav>
+{% endmacro %}
+
+{% macro nav_link(link) %}
+<li>
+  <a href="{{ link.path }}" class="side-link"
+     {% if request.url.path == link.path %}aria-current="page"{% endif %}>{{ icon(link.icon) }}<span>{{ _(link.label) }}</span></a>
+</li>
 {% endmacro %}
 
 {# The visitors' menu, across the top bar. Empty until public pages arrive (P3-PUB-01). #}
@@ -57,16 +68,23 @@
 </footer>
 {% endmacro %}
 
-{# Who is signed in, and the way out. #}
-{% macro account_panel(login) %}
+{# Who is signed in: a button opening their account menu, with the theme button beside it. #}
+{% macro account_panel(login, id) %}
 {% from "macros/forms.html" import csrf_field with context %}
+{% from "macros/ui.html" import menu_panel, theme_switcher with context %}
 {% set name = login.full_name or login.user_id %}
 <div class="account-panel">
-  <span class="avatar" aria-hidden="true">{{ name[:1]|upper }}</span>
-  <p class="account-name">{{ name }}<span class="account-role">{{ _(ROLE_NAMES[login.login_type]) }}</span></p>
+  <button type="button" class="account-button" popovertarget="{{ id }}-account">
+    <span class="avatar" aria-hidden="true">{{ name[:1]|upper }}</span>
+    <span class="account-name">{{ name }}<span class="account-role">{{ _(ROLE_NAMES[login.login_type]) }}</span></span>
+  </button>
+  {% call menu_panel(id ~ "-account", "Your account") %}
+  <a href="/account/security" class="menu-item"><span class="menu-icon">{{ icon("shield") }}</span><span class="menu-text">{{ _("Two-step sign-in") }}</span></a>
   <form method="post" action="/logout">
     {{ csrf_field() }}
-    <button type="submit" class="icon-button" aria-label="{{ _('Sign out') }}" title="{{ _('Sign out') }}">{{ icon("sign-out") }}</button>
+    <button type="submit" class="menu-item"><span class="menu-icon">{{ icon("sign-out") }}</span><span class="menu-text">{{ _("Sign out") }}</span></button>
   </form>
+  {% endcall %}
+  {{ theme_switcher(id ~ "-theme") }}
 </div>
 {% endmacro %}

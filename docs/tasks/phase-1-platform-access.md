@@ -111,7 +111,7 @@ The Admin audit search screen is built in `P3-UI-01`.
 - Page transitions with the View Transitions API (`@view-transition { navigation: auto; }`), and HTMX swaps set to use transitions.
 - A translucent top bar with `backdrop-filter` and a solid fallback.
 - A theme switcher (System, Light, Dark) on every page, remembered in the browser. Light is the default.
-- Signed-in pages float: the sidebar, breadcrumb bar and content area are separate rounded panels.
+- Signed-in pages float: a light sidebar with folding sections and a page finder, a row with the breadcrumb pill (menus for pages, and a button that hides the sidebar) and the page actions, then cards on the canvas. The breadcrumbs name the page, so page headings are for screen readers.
 - `prefers-reduced-motion`, `prefers-reduced-transparency` and `prefers-contrast: more` handled once, in the tokens, so no component needs its own check.
 - A style-guide page at `/_styleguide` showing every token and component, in light and dark, for review by ITPED and the designer.
 - If a designer supplies mock-ups (Q-11), take colours, radii and spacing from them. If not, build the clean default and record that in [decisions.md](../decisions.md).
