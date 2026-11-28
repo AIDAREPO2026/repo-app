@@ -1045,11 +1045,19 @@
 
   /* ---------- Select box: a button over the native select, and its list (select.js) ---------- */
 
-  .select-native {
+  /* The select sits inside its field, so the 1px box cannot stray across the page. Named
+     with .input and .field, or the general field styles would make it full width again. */
+  .field[data-select] {
+    position: relative;
+  }
+
+  .field .input.select-native {
     position: absolute;
     width: 1px;
     height: 1px;
     min-height: 0;
+    padding: 0;
+    border: 0;
     opacity: 0;
     pointer-events: none;
   }

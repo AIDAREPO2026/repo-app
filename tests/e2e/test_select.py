@@ -51,6 +51,14 @@ def form(page: Page) -> Page:
     return page
 
 
+def test_p1_ui_02_hidden_select_takes_no_room(form: Page) -> None:
+    box = form.locator("#long").bounding_box()
+    sideways = form.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
+
+    assert box and box["width"] <= 1
+    assert sideways == 0
+
+
 def test_p1_ui_02_search_appears_only_above_ten_options(form: Page) -> None:
     form.get_by_role("button", name="short").click()
     expect(form.get_by_role("listbox", name="short")).to_be_focused()
