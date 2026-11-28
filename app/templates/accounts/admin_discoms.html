@@ -14,8 +14,8 @@
 {% endmacro %}
 
 {% block page_actions %}
-  {{ button("Import CSV", "secondary", type="button", commandfor="import-discoms", command="show-modal") }}
-  {{ button("Add Discom", type="button", commandfor="add-discom", command="show-modal") }}
+  {{ button("Import CSV", "secondary", type="button", commandfor="import-discoms", command="show-modal", icon_name="upload") }}
+  {{ button("Add Discom", type="button", commandfor="add-discom", command="show-modal", icon_name="plus") }}
 {% endblock %}
 
 {% block content %}
@@ -40,26 +40,26 @@
       <td>{% if active %}{{ badge("Active", "success") }}{% else %}{{ badge("Inactive") }}{% endif %}</td>
       <td>
         <div class="flex justify-end">
-          {{ button("Manage", "secondary", type="button", size="sm", commandfor="manage-" ~ discom.id, command="show-modal") }}
+          {{ button("Manage", "secondary", type="button", size="sm", commandfor="manage-" ~ discom.id, command="show-modal", icon_name="edit", icon_only=true) }}
         </div>
 
         {% call drawer("manage-" ~ discom.id, discom.name) %}
         <form method="post" action="/admin/discoms/{{ discom.id }}/edit">
           {{ csrf_field() }}
           {{ discom_fields("edit-" ~ discom.id ~ "-", discom) }}
-          {{ button("Save changes") }}
+          {{ button("Save changes", icon_name="check") }}
         </form>
 
         {% if active %}
         <h3 class="section-title mt-8">{{ _("Deactivate") }}</h3>
         <p class="mb-4 text-sm text-muted">{{ _("The Discom can no longer register, and its Member login is signed out and cannot sign in.") }}</p>
-        {{ button("Deactivate Discom", "danger", type="button", commandfor="deactivate-" ~ discom.id, command="show-modal") }}
+        {{ button("Deactivate Discom", "danger", type="button", commandfor="deactivate-" ~ discom.id, command="show-modal", icon_name="power") }}
         {% else %}
         <h3 class="section-title mt-8">{{ _("Reactivate") }}</h3>
         <p class="mb-4 text-sm text-muted">{{ _("The Discom can register again, and its Member login can sign in.") }}</p>
         <form method="post" action="/admin/discoms/{{ discom.id }}/reactivate">
           {{ csrf_field() }}
-          {{ button("Reactivate Discom", "secondary") }}
+          {{ button("Reactivate Discom", "secondary", icon_name="refresh") }}
         </form>
         {% endif %}
         {% endcall %}
@@ -69,8 +69,8 @@
         <p class="text-sm text-muted">{{ _("%(name)s can no longer register, and its Member login is signed out at once. You can reactivate it later.", name=discom.name) }}</p>
         <form method="post" action="/admin/discoms/{{ discom.id }}/deactivate" class="dialog-actions">
           {{ csrf_field() }}
-          {{ button("Cancel", "secondary", type="button", commandfor="deactivate-" ~ discom.id, command="close") }}
-          {{ button("Deactivate", "danger") }}
+          {{ button("Cancel", "secondary", type="button", commandfor="deactivate-" ~ discom.id, command="close", icon_name="close") }}
+          {{ button("Deactivate", "danger", icon_name="power") }}
         </form>
         {% endcall %}
         {% endif %}
@@ -90,8 +90,8 @@
   {{ csrf_field() }}
   {{ discom_fields("add-") }}
   <div class="dialog-actions">
-    {{ button("Cancel", "secondary", type="button", commandfor="add-discom", command="close") }}
-    {{ button("Add Discom") }}
+    {{ button("Cancel", "secondary", type="button", commandfor="add-discom", command="close", icon_name="close") }}
+    {{ button("Add Discom", icon_name="plus") }}
   </div>
 </form>
 {% endcall %}
@@ -106,8 +106,8 @@
     <p id="import-file-help" class="field-help">{{ _("Saved as CSV UTF-8, up to 100 KB.") }}</p>
   </div>
   <div class="dialog-actions">
-    {{ button("Cancel", "secondary", type="button", commandfor="import-discoms", command="close") }}
-    {{ button("Check the file") }}
+    {{ button("Cancel", "secondary", type="button", commandfor="import-discoms", command="close", icon_name="close") }}
+    {{ button("Check the file", icon_name="check") }}
   </div>
 </form>
 {% endcall %}

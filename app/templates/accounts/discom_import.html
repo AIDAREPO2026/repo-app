@@ -41,8 +41,8 @@
   {# The file travels back unchanged and is checked again when saved. #}
   <textarea name="csv_text" hidden>{{ csv_text }}</textarea>
   {% if to_add %}
-  {{ button(_("Add 1 Discom") if to_add == 1 else _("Add %(count)s Discoms", count=to_add)) }}
+  {{ button(_("Add 1 Discom") if to_add == 1 else _("Add %(count)s Discoms", count=to_add), icon_name="plus") }}
   {% endif %}
-  {{ link_button("Back to Discoms", "/admin/discoms") }}
+  {{ link_button("Back to Discoms", "/admin/discoms", icon_name="arrow-left") }}
 </form>
 {% endblock %}

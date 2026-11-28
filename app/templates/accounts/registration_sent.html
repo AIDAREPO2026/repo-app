@@ -5,5 +5,5 @@
 {# Spec security: the same message whether or not the email domain matched the Discom. #}
 {{ alert(_("Your request has been sent to ITPED for verification."), "success") }}
 <p class="mt-4 text-sm text-muted">{{ _("ITPED will email your official address once the login is ready to use.") }}</p>
-<div class="mt-6">{{ link_button("Go to sign in", "/login") }}</div>
+<div class="mt-6">{{ link_button("Go to sign in", "/login", icon_name="sign-in") }}</div>
 {% endblock %}

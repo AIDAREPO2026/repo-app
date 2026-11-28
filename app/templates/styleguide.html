@@ -62,12 +62,12 @@
 
     {% call card("Buttons") %}
     <div class="mt-4 flex flex-wrap items-center gap-3">
-      {{ button("Primary", type="button") }}
-      {{ button("Secondary", "secondary", type="button") }}
-      {{ button("Danger", "danger", type="button") }}
-      {{ button("Link", "link", type="button") }}
-      {{ button("Small", "secondary", type="button", size="sm") }}
-      {{ link_button("Link as button", "#" ~ scheme ~ "-heading") }}
+      {{ button("Primary", type="button", icon_name="check") }}
+      {{ button("Secondary", "secondary", type="button", icon_name="edit") }}
+      {{ button("Danger", "danger", type="button", icon_name="user-minus") }}
+      {{ button("Link", "link", type="button", icon_name="arrow-right") }}
+      {{ button("Small", "secondary", type="button", size="sm", icon_name="plus") }}
+      {{ link_button("Link as button", "#" ~ scheme ~ "-heading", icon_name="arrow-right") }}
     </div>
     {% endcall %}
 
@@ -99,8 +99,8 @@
         {{ item_card("#" ~ scheme ~ "-heading", "Smart meter rollout playbook", "Lessons from three Discoms on planning and procurement.", ["PDF", "12 pages"]) }}
         {% call card("Modal and drawer", "Both open from their button and close back to it.") %}
         <div class="mt-4 flex flex-wrap gap-3">
-          {{ button("Open modal", "secondary", type="button", commandfor=scheme ~ "-modal", command="show-modal") }}
-          {{ button("Open drawer", "secondary", type="button", commandfor=scheme ~ "-drawer", command="show-modal") }}
+          {{ button("Open modal", "secondary", type="button", commandfor=scheme ~ "-modal", command="show-modal", icon_name="plus") }}
+          {{ button("Open drawer", "secondary", type="button", commandfor=scheme ~ "-drawer", command="show-modal", icon_name="sidebar") }}
         </div>
         {% endcall %}
       </div>
@@ -126,8 +126,8 @@
   {% call modal(scheme ~ "-modal", "Deactivate this account?") %}
   <p class="text-muted">{{ _("Their sessions end at once. You can create a replacement afterwards.") }}</p>
   <div class="dialog-actions">
-    {{ button("Cancel", "secondary", type="button", commandfor=scheme ~ "-modal", command="close") }}
-    {{ button("Deactivate", "danger", type="button", commandfor=scheme ~ "-modal", command="close") }}
+    {{ button("Cancel", "secondary", type="button", commandfor=scheme ~ "-modal", command="close", icon_name="close") }}
+    {{ button("Deactivate", "danger", type="button", commandfor=scheme ~ "-modal", command="close", icon_name="power") }}
   </div>
   {% endcall %}
   {% call drawer(scheme ~ "-drawer", "Filters") %}

@@ -19,7 +19,7 @@
 {% endmacro %}
 
 {% block page_actions %}
-  {{ button("Add account", type="button", commandfor="add-account", command="show-modal") }}
+  {{ button("Add account", type="button", commandfor="add-account", command="show-modal", icon_name="plus") }}
 {% endblock %}
 
 {% block content %}
@@ -57,7 +57,7 @@
       <td>
         {% if can_change %}
         <div class="flex justify-end">
-          {{ button("Manage", "secondary", type="button", size="sm", commandfor="manage-" ~ account.id, command="show-modal") }}
+          {{ button("Manage", "secondary", type="button", size="sm", commandfor="manage-" ~ account.id, command="show-modal", icon_name="edit", icon_only=true) }}
         </div>
 
         {% call drawer("manage-" ~ account.id, account.full_name) %}
@@ -68,14 +68,14 @@
           {% if account.password_hash is none %}
           <form method="post" action="/admin/accounts/{{ account.id }}/set-password-link">
             {{ csrf_field() }}
-            {{ button("Send a new set-password link", "secondary", size="sm") }}
+            {{ button("Send a new set-password link", "secondary", size="sm", icon_name="mail") }}
           </form>
           {% endif %}
           {% if account.login_type == "reviewer" %}
           <form method="post" action="/admin/accounts/{{ account.id }}/reviewer-role">
             {{ csrf_field() }}
             <input type="hidden" name="is_alternate" value="{{ 'false' if account.is_alternate else 'true' }}">
-            {{ button("Make primary" if account.is_alternate else "Make alternate", "secondary", size="sm") }}
+            {{ button("Make primary" if account.is_alternate else "Make alternate", "secondary", size="sm", icon_name="swap") }}
           </form>
           {% endif %}
         </div>
@@ -86,7 +86,7 @@
         <p class="mb-4 text-sm text-muted">{{ _("Reset it if the person has lost their phone or cannot get codes. Their sessions end, and they set it up again at their next sign-in.") }}</p>
         <form method="post" action="/admin/accounts/{{ account.id }}/reset-mfa">
           {{ csrf_field() }}
-          {{ button("Reset two-step sign-in", "secondary") }}
+          {{ button("Reset two-step sign-in", "secondary", icon_name="refresh") }}
         </form>
         {% endif %}
 
@@ -95,20 +95,20 @@
         <form method="post" action="/admin/accounts/{{ account.id }}/reassign">
           {{ csrf_field() }}
           {{ person_fields("reassign-" ~ account.id ~ "-") }}
-          {{ button("Deactivate and replace", "danger") }}
+          {{ button("Deactivate and replace", "danger", icon_name="swap") }}
         </form>
 
         <h3 class="section-title mt-8">{{ _("Deactivate") }}</h3>
         <p class="mb-4 text-sm text-muted">{{ _("Use this when the person leaves and nobody takes over the role yet.") }}</p>
-        {{ button("Deactivate account", "danger", type="button", commandfor="deactivate-" ~ account.id, command="show-modal") }}
+        {{ button("Deactivate account", "danger", type="button", commandfor="deactivate-" ~ account.id, command="show-modal", icon_name="user-minus") }}
         {% endcall %}
 
         {% call modal("deactivate-" ~ account.id, "Deactivate this account?") %}
         <p class="text-sm text-muted">{{ _("%(name)s can no longer sign in, and every session they have open ends at once. This cannot be undone; create a new account to give them access again.", name=account.full_name) }}</p>
         <form method="post" action="/admin/accounts/{{ account.id }}/deactivate" class="dialog-actions">
           {{ csrf_field() }}
-          {{ button("Cancel", "secondary", type="button", commandfor="deactivate-" ~ account.id, command="close") }}
-          {{ button("Deactivate", "danger") }}
+          {{ button("Cancel", "secondary", type="button", commandfor="deactivate-" ~ account.id, command="close", icon_name="close") }}
+          {{ button("Deactivate", "danger", icon_name="power") }}
         </form>
         {% endcall %}
         {% endif %}
@@ -141,8 +141,8 @@
   </label>
   {{ person_fields("add-") }}
   <div class="dialog-actions">
-    {{ button("Cancel", "secondary", type="button", commandfor="add-account", command="close") }}
-    {{ button("Add account") }}
+    {{ button("Cancel", "secondary", type="button", commandfor="add-account", command="close", icon_name="close") }}
+    {{ button("Add account", icon_name="plus") }}
   </div>
 </form>
 {% endcall %}

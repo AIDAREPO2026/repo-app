@@ -22,18 +22,18 @@
   {{ csrf_field() }}
   {% set code_help = "The code from your authenticator app." if login.mfa_method == "totp" else "The code from your latest email. Ask for one below." %}
   {{ field("code", "6-digit code", autocomplete="one-time-code", required=true, inputmode="numeric", maxlength=6, help=code_help, error=_(error) if error else "") }}
-  {{ button("Turn off two-step sign-in", "secondary") }}
+  {{ button("Turn off two-step sign-in", "secondary", icon_name="power") }}
 </form>
 {% if login.mfa_method == "email" %}
 <form method="post" action="/account/security/send-code" class="mt-3">
   {{ csrf_field() }}
-  {{ button("Email me a code", "link") }}
+  {{ button("Email me a code", "link", icon_name="mail") }}
 </form>
 {% endif %}
 {% else %}
 <form method="post" action="/account/security/mfa-on" class="mt-5">
   {{ csrf_field() }}
-  {{ button("Turn on two-step sign-in") }}
+  {{ button("Turn on two-step sign-in", icon_name="shield") }}
 </form>
 {% endif %}
 {% else %}

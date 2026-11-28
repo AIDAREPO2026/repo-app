@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros/ui.html" import welcome, card, figure, page_items, badge, empty_state with context %}
+{% from "macros/ui.html" import welcome, card, figure, link_button, page_items, badge, empty_state with context %}
 {% set login = request.state.login %}
 {% set name = login.full_name or login.user_id %}
 {% block content %}
@@ -25,7 +25,7 @@
         {{ _("Two-step sign-in") }}
         {% if login.mfa_method %}{{ badge("On", "success") }}{% else %}{{ badge("Off", "warning") }}{% endif %}
       </p>
-      <a href="/account/security" class="btn btn-secondary btn-sm">{{ _("Review security") }}</a>
+      {{ link_button("Review security", "/account/security", size="sm", icon_name="shield") }}
     </div>
     {% endcall %}
   </div>

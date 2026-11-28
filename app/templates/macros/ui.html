@@ -12,13 +12,23 @@
 
 {#
   A button. variant: primary, secondary, danger or link. size: "" or "sm".
+  Every button names its icon (macros/icons.html). icon_only keeps just the drawing, for
+  actions repeated on each row and for closing; the label still names it.
   To open or close a dialog, pass commandfor (the dialog id) and command
   ("show-modal" or "close"), so the dialog opens from, and returns to, this control.
 #}
-{% macro button(label, variant="primary", type="submit", size="", block=false, name="", value="", commandfor="", command="") %}
-<button type="{{ type }}" class="btn btn-{{ variant }}{% if size %} btn-{{ size }}{% endif %}{% if block %} btn-block{% endif %}"
+{% macro button(label, variant="primary", type="submit", size="", block=false, name="", value="", commandfor="", command="", icon_name="", icon_only=false) %}
+<button type="{{ type }}" class="btn btn-{{ variant }}{% if size %} btn-{{ size }}{% endif %}{% if block %} btn-block{% endif %}{% if icon_only %} btn-icon{% endif %}"
+  {%- if icon_only %} aria-label="{{ _(label) }}" title="{{ _(label) }}"{% endif %}
   {%- if name %} name="{{ name }}" value="{{ value }}"{% endif %}
-  {%- if commandfor %} commandfor="{{ commandfor }}" command="{{ command }}"{% endif %}>{{ _(label) }}</button>
+  {%- if commandfor %} commandfor="{{ commandfor }}" command="{{ command }}"{% endif %}>{{ button_content(label, icon_name, icon_only) }}</button>
+{% endmacro %}
+
+{# The icon and words inside a button. With icon_only the button's aria-label names it. #}
+{% macro button_content(label, icon_name="", icon_only=false) %}
+{%- from "macros/icons.html" import icon -%}
+{%- if icon_name %}{{ icon(icon_name) }}{% endif -%}
+{%- if not icon_only %}{{ _(label) }}{% endif -%}
 {% endmacro %}
 
 {#
@@ -70,8 +80,8 @@
 {% endmacro %}
 
 {# A link that looks like a button. #}
-{% macro link_button(label, href, variant="secondary", size="") %}
-<a href="{{ href }}" class="btn btn-{{ variant }}{% if size %} btn-{{ size }}{% endif %}">{{ _(label) }}</a>
+{% macro link_button(label, href, variant="secondary", size="", icon_name="") %}
+<a href="{{ href }}" class="btn btn-{{ variant }}{% if size %} btn-{{ size }}{% endif %}">{{ button_content(label, icon_name) }}</a>
 {% endmacro %}
 
 {#
@@ -226,7 +236,7 @@
 <dialog id="{{ id }}" class="modal" aria-labelledby="{{ id }}-title" closedby="any">
   <div class="dialog-header">
     <h2 id="{{ id }}-title" class="section-title mb-0">{{ _(title) }}</h2>
-    {{ button("Close", "secondary", type="button", size="sm", commandfor=id, command="close") }}
+    {{ button("Close", "secondary", type="button", size="sm", commandfor=id, command="close", icon_name="close", icon_only=true) }}
   </div>
   {{ caller() }}
 </dialog>
@@ -237,7 +247,7 @@
 <dialog id="{{ id }}" class="drawer" aria-labelledby="{{ id }}-title" closedby="any">
   <div class="dialog-header">
     <h2 id="{{ id }}-title" class="section-title mb-0">{{ _(title) }}</h2>
-    {{ button("Close", "secondary", type="button", size="sm", commandfor=id, command="close") }}
+    {{ button("Close", "secondary", type="button", size="sm", commandfor=id, command="close", icon_name="close", icon_only=true) }}
   </div>
   {{ caller() }}
 </dialog>

@@ -7,7 +7,7 @@
   <p class="badge mb-4">{{ _("Error code: %(code)s", code=status_code) }}</p>
   <h1 class="page-title">{{ _(title) }}</h1>
   <p class="mt-3 text-muted">{{ _(message) }}</p>
-  <div class="mt-6">{{ link_button("Back to the portal", "/login") }}</div>
+  <div class="mt-6">{{ link_button("Back to the portal", "/login", icon_name="arrow-left") }}</div>
   {% endcall %}
 </div>
 {% endblock %}

@@ -93,3 +93,14 @@ def test_p1_ui_02_controls_shrink_only_while_pressed() -> None:
     for selectors, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css):
         if "transform: scale(var(--aida-press-scale" in body and "from" not in selectors:
             assert all(":active" in part for part in selectors.split(",")), selectors.strip()
+
+
+def test_p1_ui_02_every_button_has_an_icon() -> None:
+    calls = [
+        (template.name, call)
+        for template in TEMPLATES
+        for call in re.findall(r"\{\{ (?:link_)?button\(.*?\) \}\}", template.read_text())
+    ]
+
+    assert calls
+    assert [item for item in calls if "icon_name=" not in item[1]] == []
