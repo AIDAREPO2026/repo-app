@@ -66,7 +66,7 @@
 
 @layer base {
   html {
-    background: var(--aida-canvas);
+    background: var(--aida-canvas-wash) no-repeat, var(--aida-canvas);
     color: var(--aida-text);
     font-family: var(--aida-font);
     -webkit-font-smoothing: antialiased;

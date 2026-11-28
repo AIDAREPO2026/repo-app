@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% from "macros/ui.html" import page_header, card, empty_state, stat_card, action_card with context %}
+{% from "macros/ui.html" import hero, card, empty_state, stat_card, action_card with context %}
 {% set name = (request.state.login.full_name or request.state.login.user_id) %}
 {% block content %}
-{{ page_header(_("Welcome, %(name)s", name=name), today.strftime("%A %-d %B %Y"), eyebrow=title) }}
+{{ hero(_("Welcome, %(name)s", name=name), today.strftime("%A %-d %B %Y"), eyebrow=title) }}
 
 {% if overview is not none %}
 <div class="grid gap-4 sm:grid-cols-3">
   {{ stat_card("Active Discoms", overview.active_discoms, "building", "On the master list and able to register.") }}
-  {{ stat_card("Pending requests", overview.pending_requests, "inbox", "Discom logins waiting for ITPED to verify.") }}
-  {{ stat_card("ITPED accounts", overview.itped_accounts, "users", "Active Admins, Reviewers and the Approver.") }}
+  {{ stat_card("Pending requests", overview.pending_requests, "inbox", "Discom logins waiting for ITPED to verify.", tone="warning") }}
+  {{ stat_card("ITPED accounts", overview.itped_accounts, "users", "Active Admins, Reviewers and the Approver.", tone="success") }}
 </div>
 
 <h2 class="section-title mt-8">{{ _("Manage") }}</h2>

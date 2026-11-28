@@ -40,6 +40,9 @@ PAIRS = [
     ("chrome-label", "chrome", TEXT),
     ("chrome-strong", "chrome-active", TEXT),
     *[("chrome-focus", fill, UI) for fill in ("chrome", "chrome-active")],
+    # The dashboard welcome banner: its text on every stop of the gradient.
+    *[("hero-text", stop, TEXT) for stop in ("hero-start", "hero-middle", "hero-end")],
+    *[("hero-muted", stop, TEXT) for stop in ("hero-start", "hero-middle", "hero-end")],
 ]
 
 
