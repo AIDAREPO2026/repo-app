@@ -1135,6 +1135,7 @@
   }
 
   .select-option {
+    position: relative;
     padding: var(--aida-space-2) var(--aida-space-3);
     border-radius: var(--aida-radius-sm);
     font-size: var(--aida-text-sm);
@@ -1911,6 +1912,34 @@
     height: 0.875rem;
   }
 
+  /* ---------- One sliding highlight for menus and select lists (glide.js) ---------- */
+
+  .menu-glider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: var(--aida-radius-sm);
+    background: var(--aida-accent-subtle);
+    pointer-events: none;
+    transition: transform var(--aida-duration-base) var(--aida-ease-settle);
+  }
+
+  .menu-glider[hidden] {
+    display: none;
+  }
+
+  /* Items sit above the highlight and leave the colour to it. */
+  .menu.has-glider .menu-item {
+    position: relative;
+  }
+
+  .menu.has-glider .menu-item:hover,
+  .menu.has-glider .select-option:hover,
+  .menu.has-glider .select-option.is-active,
+  .menu.has-glider .select-option[aria-selected="true"] {
+    background: transparent;
+  }
+
   /* ---------- Selected rows, their actions and the row menu ---------- */
 
   .table .row-select {
@@ -2017,27 +2046,8 @@
     background: transparent;
   }
 
-  /* Above the highlight, which slides underneath. */
-  .row-menu .menu-item {
-    position: relative;
-  }
-
   .row-menu .menu-item:focus {
     outline: none;
-  }
-
-  .menu-glider {
-    position: absolute;
-    top: 0;
-    right: var(--aida-space-2);
-    left: var(--aida-space-2);
-    border-radius: var(--aida-radius-sm);
-    background: var(--aida-accent-subtle);
-    transition: transform var(--aida-duration-base) var(--aida-ease-settle);
-  }
-
-  .row-menu.is-opening .menu-glider {
-    transition-duration: 0s;
   }
 
   .row-menu .menu-item:focus .menu-icon {

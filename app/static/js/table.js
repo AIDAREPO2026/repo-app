@@ -112,12 +112,9 @@ function openRowMenu(table, row, event) {
   // The keyboard's menu key has no pointer, so the menu opens under the row.
   const bounds = row.getBoundingClientRect();
   placeMenu(menu, event.clientX || bounds.left + 48, event.clientY || bounds.bottom);
-  // The highlight starts on the first item without sliding there from the last place.
-  menu.classList.add("is-opening");
   const first = menu.querySelector("button:not([hidden])");
   first.focus();
   glideTo(menu, first); // Focus may already be there, which sends no focusin.
-  requestAnimationFrame(() => requestAnimationFrame(() => menu.classList.remove("is-opening")));
 }
 
 function onMenuClick(table, event) {
@@ -131,18 +128,8 @@ function onMenuClick(table, event) {
   if (item.matches("[data-row-select]")) setSelected(table, [row], !row.querySelector(".row-select input").checked);
 }
 
-// Slide the highlight under an item. offsetTop is measured from the menu itself.
-function glideTo(menu, item) {
-  const glider = menu.querySelector(".menu-glider");
-  glider.style.transform = `translateY(${item.offsetTop}px)`;
-  glider.style.height = `${item.offsetHeight}px`;
-}
-
 // The pointer and the arrow keys move the same highlight, as in a desktop menu.
 function followFocus(menu) {
-  menu.addEventListener("focusin", (event) => {
-    if (event.target.matches("button")) glideTo(menu, event.target);
-  });
   menu.addEventListener("pointerover", (event) => event.target.closest("button")?.focus());
   menu.addEventListener("keydown", (event) => {
     const step = { ArrowDown: 1, ArrowUp: -1 }[event.key];

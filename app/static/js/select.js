@@ -81,12 +81,21 @@ function setActive(state, index) {
   for (const item of items) item.classList.remove("is-active");
   state.active = items.length ? Math.max(0, Math.min(index, items.length - 1)) : -1;
   if (state.active < 0) {
+    state.popup.querySelector(":scope > .menu-glider")?.setAttribute("hidden", "");
     keyboardTarget.removeAttribute("aria-activedescendant");
     return;
   }
   items[state.active].classList.add("is-active");
   items[state.active].scrollIntoView({ block: "nearest" });
   keyboardTarget.setAttribute("aria-activedescendant", items[state.active].id);
+  highlight(state);
+}
+
+// Slide the highlight under the active option (glide.js). Before the list is on screen
+// there is nothing to measure.
+function highlight(state) {
+  const item = state.list.children[state.active];
+  if (item && state.popup.matches(":popover-open")) glideTo(state.popup, item, state.list);
 }
 
 // Options already in the page: show those holding the text.
@@ -200,11 +209,20 @@ function enhance(field) {
     if (event.newState !== "open") return;
     (state.search || state.list).focus();
     state.list.children[state.active]?.scrollIntoView({ block: "nearest" });
+    highlight(state);
     loadNextIfNearEnd(state);
   });
   state.popup.addEventListener("keydown", (event) => onKey(state, event));
   state.list.addEventListener("click", (event) => choose(state, event.target.closest("[role=option]")));
-  state.list.addEventListener("scroll", () => loadNextIfNearEnd(state));
+  state.list.addEventListener("pointermove", (event) => {
+    const item = event.target.closest("[role=option]");
+    const index = [...state.list.children].indexOf(item);
+    if (index >= 0 && index !== state.active) setActive(state, index);
+  });
+  state.list.addEventListener("scroll", () => {
+    highlight(state);
+    loadNextIfNearEnd(state);
+  });
   state.search?.addEventListener("input", () => {
     if (!state.remote) {
       showLocal(state);
