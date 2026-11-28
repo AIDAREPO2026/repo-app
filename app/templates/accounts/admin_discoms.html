@@ -22,7 +22,7 @@
 {{ page_header("Discoms") }}
 
 {% if discoms %}
-{% call data_table("Discoms", discoms|length, search="Search Discoms") %}
+{% call data_table("Discoms", discoms|length, search="Search Discoms", columns=[_("Discom"), _("Email domain"), _("Status")], copy_label="Copy email domain", file="discoms") %}
   <thead>
     <tr>
       <th scope="col">{{ _("Discom") }}</th>
@@ -34,7 +34,7 @@
   <tbody>
     {% for discom in discoms %}
     {% set active = discom.status == "active" %}
-    <tr>
+    <tr data-export='{{ [discom.name, discom.email_domain, _("Active") if active else _("Inactive")]|tojson }}' data-copy="{{ discom.email_domain }}">
       <td class="font-semibold">{{ discom.name }}</td>
       <td class="font-mono text-xs">{{ discom.email_domain }}</td>
       <td>{% if active %}{{ badge("Active", "success") }}{% else %}{{ badge("Inactive") }}{% endif %}</td>

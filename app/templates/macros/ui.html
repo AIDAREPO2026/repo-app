@@ -128,15 +128,38 @@
 {% if lead %}<p class="page-lead page-intro">{{ _(lead) }}</p>{% endif %}
 {% endmacro %}
 
+{# The parts of a selectable table that static/js/table.js drives: the bar of actions for the
+   ticked rows, the menu a right click on a row opens, and the toast it reports with. #}
+{% macro row_actions(copy_label) %}
+{% from "macros/icons.html" import icon %}
+{# A manual popover, so it centres on the page and not inside the glass card. #}
+<div class="selection-bar" popover="manual" role="toolbar" aria-label="{{ _('Selected rows') }}">
+  <p class="selection-count" role="status"><span data-selected-count>0</span> {{ _("selected") }}</p>
+  <button type="button" class="btn btn-secondary btn-sm" data-bulk-copy>{{ icon("copy") }}{{ _(copy_label) }}</button>
+  <button type="button" class="btn btn-secondary btn-sm" data-bulk-export>{{ icon("download") }}{{ _("Export CSV") }}</button>
+  <button type="button" class="icon-button" data-bulk-clear aria-label="{{ _('Clear selection') }}" title="{{ _('Clear selection') }}">{{ icon("close") }}</button>
+</div>
+<div class="menu row-menu" popover role="group" aria-label="{{ _('Row actions') }}">
+  <button type="button" class="menu-item" data-row-open><span class="menu-icon">{{ icon("edit") }}</span><span class="menu-text">{{ _("Manage") }}</span></button>
+  <button type="button" class="menu-item" data-row-copy><span class="menu-icon">{{ icon("copy") }}</span><span class="menu-text">{{ _(copy_label) }}</span></button>
+  <button type="button" class="menu-item" data-row-select><span class="menu-icon">{{ icon("check") }}</span><span class="menu-text" data-row-select-label></span></button>
+</div>
+<template>{{ toast("", "success") }}</template>
+{% endmacro %}
+
 {#
   A list of records: an optional search box, a table whose header stays while the rows
   scroll, and a row count. On wide screens it fills the height left on the screen. The caller
   gives the <thead> and <tbody>. label names the table; search is the search box's label,
   and without one there is no box. static/js/shell.js does the filtering.
 #}
-{% macro data_table(label, total, search="") %}
+{% macro data_table(label, total, search="", columns=[], copy_label="Copy", file="records") %}
 {% from "macros/icons.html" import icon %}
-<section class="card card-flush data-table">
+<section class="card card-flush data-table"
+  {%- if columns %} data-columns='{{ columns|tojson }}' data-file="{{ file }}"
+  data-select-all="{{ _('Select all rows shown') }}" data-select-row="{{ _('Select') }}"
+  data-tick="{{ _('Select row') }}" data-untick="{{ _('Deselect row') }}"
+  data-copied="{{ _('Copied to the clipboard.') }}" data-copy-failed="{{ _('Copying is not allowed here.') }}"{% endif %}>
   {% if search %}
   <div class="data-toolbar" data-needs-script hidden>
     <div class="find-field">
@@ -150,6 +173,7 @@
     <table class="table">{{ caller() }}</table>
   </div>
   <p class="data-footer" role="status">{{ _("Rows shown:") }} <span data-shown>{{ total }}</span> / {{ total }}</p>
+  {% if columns %}{{ row_actions(copy_label) }}{% endif %}
 </section>
 {% endmacro %}
 

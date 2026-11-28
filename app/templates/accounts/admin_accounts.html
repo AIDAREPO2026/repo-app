@@ -26,7 +26,7 @@
 {{ page_header("Accounts") }}
 
 {% if accounts %}
-{% call data_table("Accounts", accounts|length, search="Search accounts") %}
+{% call data_table("Accounts", accounts|length, search="Search accounts", columns=[_("Person"), _("Email"), _("User ID"), _("Role")], copy_label="Copy email", file="accounts") %}
   <thead>
     <tr>
       <th scope="col">{{ _("Person") }}</th>
@@ -39,7 +39,7 @@
     {% for account in accounts %}
     {% set is_self = account.id == admin_id %}
     {% set can_change = account.status == "active" and not is_self %}
-    <tr>
+    <tr data-export='{{ [account.full_name, account.email, account.user_id, _(role_names[account.login_type])]|tojson }}' data-copy="{{ account.email }}">
       <td>
         <div class="flex items-center gap-3">
           <span class="avatar" aria-hidden="true">{{ account.full_name[:1]|upper }}</span>

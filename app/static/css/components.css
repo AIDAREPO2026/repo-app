@@ -592,7 +592,7 @@
 
   /* Browsers without anchor positioning get the menu in the middle of the screen. */
   @supports not (position-area: bottom) {
-    .menu {
+    .menu:not(.row-menu) {
       inset: 0;
       margin: auto;
       height: fit-content;
@@ -1831,6 +1831,71 @@
     .app-main:has(.data-table) {
       padding-bottom: var(--aida-space-3);
     }
+  }
+
+  /* ---------- Selected rows, their actions and the row menu ---------- */
+
+  .table .row-select {
+    width: 1%;
+    padding-inline: var(--aida-space-4) 0;
+  }
+
+  .row-select input {
+    display: block;
+    width: 1.125rem;
+    height: 1.125rem;
+    accent-color: var(--aida-accent);
+    cursor: pointer;
+  }
+
+  .table tbody tr.is-selected {
+    background: var(--aida-accent-subtle);
+  }
+
+  /* Floats at the bottom centre while rows are ticked. */
+  .selection-bar {
+    position: fixed;
+    inset: auto 0 var(--aida-space-5);
+    align-items: center;
+    gap: var(--aida-space-2);
+    width: max-content;
+    max-width: calc(100vw - 2rem);
+    margin: 0 auto;
+    padding: var(--aida-space-2) var(--aida-space-2) var(--aida-space-2) var(--aida-space-4);
+    flex-wrap: wrap;
+    border: 1px solid var(--aida-border);
+    border-radius: var(--aida-radius-lg);
+    background: var(--aida-surface);
+    box-shadow: var(--aida-shadow-2);
+    animation: aida-toast-in var(--aida-duration-slow) var(--aida-ease-settle);
+  }
+
+  .selection-bar:popover-open {
+    display: flex;
+  }
+
+  .selection-count {
+    margin-right: var(--aida-space-2);
+    font-size: var(--aida-text-sm);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Toasts sit above the bar rather than over it. */
+  body:has(.selection-bar:popover-open) .toasts {
+    bottom: 6rem;
+  }
+
+  /* Opened at the pointer: table.js sets left and top. */
+  .menu.row-menu {
+    position-area: none;
+    position-try-fallbacks: none;
+    inset: auto;
+    margin: 0;
+  }
+
+  .row-menu [hidden] {
+    display: none;
   }
 
   /* ---------- Modal and drawer: native <dialog>, opened by the control that names it ---------- */

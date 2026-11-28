@@ -68,7 +68,7 @@ Before writing a helper, search the codebase. These shared functions must be use
 | Render a button, card, badge, modal or other UI element | `templates/macros/ui.html` and the tokens in `static/css/tokens.css` | `P1-UI-02` |
 | Offer the light or dark theme | `theme_switcher()` in `templates/macros/ui.html` (works through `static/js/shell.js`) | `P1-UI-02` |
 | Open a menu from a button | `menu_panel()` and `page_items()` in `templates/macros/ui.html`, opened with `popovertarget` | `P1-UI-02` |
-| List records in a table | `data_table()` in `templates/macros/ui.html` (search, fixed header, fits the screen height, row count) | `P1-UI-02` |
+| List records in a table | `data_table()` in `templates/macros/ui.html` (search, fixed header, fits the screen height, row count). With `columns`, and `data-export` and `data-copy` on each row, it adds checkboxes, copy and CSV export, and a row menu (`static/js/table.js`) | `P1-UI-02` |
 | Put a page's actions beside the breadcrumbs | `{% block page_actions %}` in a page that extends `templates/base.html` (see `accounts/admin_discoms.html`) | `P1-UI-02` |
 | Render a sign-in, registration or other page shown before signing in | Extend `templates/layouts/auth.html` and start with `auth_heading()` | `P1-UI-02` |
 

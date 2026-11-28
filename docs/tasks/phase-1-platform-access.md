@@ -113,6 +113,7 @@ The Admin audit search screen is built in `P3-UI-01`.
 - Every button has an icon. Closing a dialog and per-row actions show the icon alone, with an accessible name.
 - A select component over the native select: search above 10 options, options from a server address with search and infinite scroll, and a list that opens where there is room.
 - Toasts for the result of an action, rising at the bottom centre: success and note close after 5 seconds and pause under the pointer or focus; warning and error stay until closed.
+- Selectable tables: checkboxes, a bar of actions for the ticked rows (copy, CSV export) and a right-click row menu. Actions that change records are not part of this task.
 - A data table component: search, a header that stays while rows scroll, a height that fits the screen on wide screens, and a row count.
 - A translucent top bar with `backdrop-filter` and a solid fallback.
 - A theme button on every page that switches between light and dark in one click, remembered in the browser. Light is the default.

@@ -128,3 +128,18 @@ def test_p1_ui_02_only_success_and_note_toasts_close_themselves() -> None:
     assert html.count('class="toast toast-') == 2
     assert html.count("toast-timer") == 1  # the error stays until closed
     assert 'role="status"' in html
+
+
+def test_p1_ui_02_selectable_table_has_an_action_bar_and_row_menu() -> None:
+    template = templates.env.from_string(
+        '{% from "macros/ui.html" import data_table %}'
+        '{% call data_table("Discoms", 1, columns=["Discom"], copy_label="Copy domain") %}<tbody></tbody>'
+        "{% endcall %}"
+    )
+
+    html = template.render()
+
+    assert "data-columns='[\"Discom\"]'" in html
+    assert " data-select=" not in html  # that attribute belongs to the custom select (select.js)
+    assert 'class="selection-bar"' in html
+    assert 'class="menu row-menu" popover' in html
