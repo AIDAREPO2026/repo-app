@@ -73,7 +73,7 @@ def test_fr_1_6_master_list_crud(sign_in: SignIn, engine: Engine) -> None:
 
     added = client.post(
         "/admin/discoms",
-        data={"name": " Grid Discom ", "email_domain": f"@{domain.upper()}"},
+        data={"name": " Grid Discom ", "email_domain": f"@{domain.upper()}", "checked": "true"},
         follow_redirects=False,
     )
     assert added.headers["location"] == "/admin/discoms?done=added"
@@ -108,10 +108,12 @@ def test_fr_1_6_duplicate_domain_refused(sign_in: SignIn, engine: Engine) -> Non
     listed = saved_discom(engine)
 
     same_domain = client.post(
-        "/admin/discoms", data={"name": f"Other {unique()}", "email_domain": listed.email_domain}
+        "/admin/discoms",
+        data={"name": f"Other {unique()}", "email_domain": listed.email_domain, "checked": "true"},
     )
     same_name = client.post(
-        "/admin/discoms", data={"name": listed.name.upper(), "email_domain": f"{unique()}.discom.example"}
+        "/admin/discoms",
+        data={"name": listed.name.upper(), "email_domain": f"{unique()}.discom.example", "checked": "true"},
     )
     other = saved_discom(engine)
     edit_to_taken = client.post(
@@ -248,7 +250,9 @@ def test_fr_1_6_public_mail_domain_refused_on_add_edit_and_import(sign_in: SignI
     client = csrf_client(APP)
     listed = saved_discom(engine)
 
-    added = client.post("/admin/discoms", data={"name": f"Free {unique()}", "email_domain": "@GMail.com"})
+    added = client.post(
+        "/admin/discoms", data={"name": f"Free {unique()}", "email_domain": "@GMail.com", "checked": "true"}
+    )
     edited = client.post(
         f"/admin/discoms/{listed.id}/edit", data={"name": listed.name, "email_domain": "yahoo.co.in"}
     )
@@ -275,3 +279,18 @@ def test_fr_1_6_add_form_suggests_names_not_already_listed(sign_in: SignIn, engi
     assert 'list="add-name-list"' in page
     assert f'<option value="{second}">' in page
     assert f'<option value="{first}">' not in page
+
+
+def test_fr_1_6_add_refused_until_the_details_are_confirmed(sign_in: SignIn, engine: Engine) -> None:
+    sign_in(APP, "admin")
+    domain = f"{unique()}.discom.example"
+
+    response = csrf_client(APP).post(
+        "/admin/discoms", data={"name": f"Unchecked {unique()}", "email_domain": domain}
+    )
+
+    assert response.status_code == 400
+    assert "Tick the box to confirm" in response.text
+    assert discom_by_domain(engine, domain) is None
+    assert "not verified" in response.text
+    assert 'name="checked" type="checkbox" value="true" required' in response.text

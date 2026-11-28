@@ -26,6 +26,7 @@ from app.accounts.guards import (
 )
 from app.accounts.models import Login, Organisation
 from app.accounts.schemas import (
+    DiscomAddForm,
     DiscomForm,
     DiscomImportForm,
     MfaCodeForm,
@@ -653,6 +654,7 @@ def styleguide(request: Request, login: Annotated[Login | None, Depends(current_
 
 
 DISCOMS_PATH = "/admin/discoms"
+UNCHECKED_DISCOM = "Tick the box to confirm you have checked the name and email domain."
 DISCOM_DONE_MESSAGES = {
     "added": "Discom added.",
     "edited": "Discom updated.",
@@ -719,11 +721,14 @@ def discoms_page(
 
 @router.post(DISCOMS_PATH)
 def discom_add(
-    request: Request, db: DbSession, admin: AdminLogin, form: Annotated[DiscomForm, Form()]
+    request: Request, db: DbSession, admin: AdminLogin, form: Annotated[DiscomAddForm, Form()]
 ) -> Response:
     """Add a Discom."""
 
     def change(actor: Actor) -> None:
+        # D-11: the domain decides who may register, so the Admin confirms it was checked.
+        if not form.checked:
+            raise AccountRuleError(UNCHECKED_DISCOM)
         add_discom(db, actor, form)
 
     return run_discom_change(request, db, admin, change, "added")
