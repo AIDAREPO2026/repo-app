@@ -41,6 +41,7 @@ from app.accounts.schemas import (
 from app.accounts.service import (
     AccountRuleError,
     add_discom,
+    admin_overview,
     after_sign_in_path,
     app_enrolment_details,
     create_privileged_account,
@@ -81,6 +82,7 @@ from app.core.sessions import (
     set_cookie,
 )
 from app.core.templates import templates
+from app.core.time import to_ist, utc_now
 
 router = APIRouter(tags=["accounts"])
 
@@ -329,12 +331,14 @@ def sign_out_submit(
     return response
 
 
-def render_dashboard(request: Request, login: Login) -> HTMLResponse:
-    """Render the empty dashboard shell for the login's own type."""
+def render_dashboard(request: Request, login: Login, overview: dict[str, int] | None = None) -> HTMLResponse:
+    """Render the dashboard for the login's own type, with the Admin's figures when given."""
     context = {
         "title": DASHBOARD_TITLES[login.login_type],
         "nav": nav_for(login.login_type),
         "breadcrumbs": breadcrumbs(login.login_type),
+        "today": to_ist(utc_now()),
+        "overview": overview,
     }
     return templates.TemplateResponse(request, "accounts/dashboard.html", context)
 
@@ -350,10 +354,10 @@ def member_dashboard(
 
 @router.get("/dashboard/admin", response_class=HTMLResponse)
 def admin_dashboard(
-    request: Request, login: Annotated[Login, Depends(require_login_type("admin"))]
+    request: Request, db: DbSession, login: Annotated[Login, Depends(require_login_type("admin"))]
 ) -> HTMLResponse:
-    """Render the Admin dashboard shell."""
-    return render_dashboard(request, login)
+    """Render the Admin dashboard, with the figures an Admin acts on."""
+    return render_dashboard(request, login, admin_overview(db))
 
 
 @router.get("/dashboard/reviewer", response_class=HTMLResponse)

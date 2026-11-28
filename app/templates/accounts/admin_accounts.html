@@ -19,7 +19,7 @@
 {% endmacro %}
 
 {% block content %}
-{% call page_header("Accounts", "Named Admin, Reviewer and Approver accounts. Each belongs to one person with their own email.") %}
+{% call page_header("Accounts", "Named Admin, Reviewer and Approver accounts. Each belongs to one person with their own email.", eyebrow="Administration") %}
   {{ button("Add account", type="button", commandfor="add-account", command="show-modal") }}
 {% endcall %}
 

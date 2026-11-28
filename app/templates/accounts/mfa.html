@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "layouts/auth.html" %}
 {% from "macros/forms.html" import field, csrf_field with context %}
 {% from "macros/ui.html" import button with context %}
 {#
@@ -10,18 +10,16 @@
 {% macro next_field() %}<input type="hidden" name="next" value="{{ next }}">{% endmacro %}
 
 {% block content %}
-<div class="page-narrow mx-auto pt-4 sm:pt-10">
-  <div class="mb-6 text-center">
-    <h1 class="page-title">{{ _("Set up two-step sign-in") if enrolling else _("Confirm it is you") }}</h1>
-    <p class="mt-2 text-muted">
-      {% if choosing %}{{ _("Each sign-in needs your password and a 6-digit code. Choose how you want to get the codes.") }}
-      {% elif method == "email" %}{{ _("We have emailed you a 6-digit code. It works once, for 10 minutes.") }}
-      {% elif enrolling %}{{ _("Scan the QR code with an authenticator app, then enter the code it shows.") }}
-      {% else %}{{ _("Enter the 6-digit code from your authenticator app.") }}{% endif %}
-    </p>
-  </div>
-
-  <div class="card">
+<header class="auth-heading">
+  <h1 class="auth-heading-title">{{ _("Set up two-step sign-in") if enrolling else _("Confirm it is you") }}</h1>
+  <p class="auth-heading-lead">
+    {% if choosing %}{{ _("Each sign-in needs your password and a 6-digit code. Choose how you want to get the codes.") }}
+    {% elif method == "email" %}{{ _("We have emailed you a 6-digit code. It works once, for 10 minutes.") }}
+    {% elif enrolling %}{{ _("Scan the QR code with an authenticator app, then enter the code it shows.") }}
+    {% else %}{{ _("Enter the 6-digit code from your authenticator app.") }}{% endif %}
+  </p>
+</header>
+  <div>
     {% if choosing %}
     <div class="grid gap-3">
       <form method="post" action="/mfa/setup">
@@ -60,9 +58,8 @@
     {% endif %}
   </div>
 
-  <form method="post" action="/mfa/cancel" class="mt-4 text-center">
+  <form method="post" action="/mfa/cancel" class="mt-6 text-center">
     {{ csrf_field() }}
     {{ button("Cancel and sign out", "link") }}
   </form>
-</div>
 {% endblock %}

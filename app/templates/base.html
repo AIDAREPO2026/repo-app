@@ -18,7 +18,7 @@
   {% if login %}
   {# Signed in: an app shell with the menu in a sidebar, or in a drawer on small screens. #}
   <div class="app-shell">
-    <aside class="sidebar" aria-label="{{ _('Sidebar') }}">
+    <aside class="sidebar chrome" aria-label="{{ _('Sidebar') }}">
       <div class="sidebar-brand">{{ brand() }}</div>
       <div class="sidebar-nav">{{ nav_menu(nav) }}</div>
       {{ account_panel(login) }}
@@ -30,10 +30,10 @@
         {{ brand() }}
       </div>
     </header>
-    <dialog id="menu-drawer" class="drawer drawer-left" aria-label="{{ _('Menu') }}" closedby="any">
+    <dialog id="menu-drawer" class="drawer drawer-left chrome" aria-label="{{ _('Menu') }}" closedby="any">
       <div class="dialog-header">
         {{ brand() }}
-        <button type="button" class="btn btn-secondary btn-sm" commandfor="menu-drawer" command="close">{{ _("Close") }}</button>
+        <button type="button" class="icon-button" commandfor="menu-drawer" command="close" aria-label="{{ _('Close menu') }}">{{ icon("close") }}</button>
       </div>
       <div class="flex-1">{{ nav_menu(nav, "Menu") }}</div>
       {{ account_panel(login) }}
@@ -51,7 +51,8 @@
     </div>
   </div>
   {% else %}
-  {# Visitors: a simple top bar. #}
+  {# Visitors: a top bar over the page. The sign-in pages replace it with layouts/auth.html. #}
+  {% block visitor_shell %}
   <div class="flex min-h-screen flex-col">
     <header class="topbar">
       <div class="page topbar-inner">{{ brand() }}{{ top_nav(nav) }}</div>
@@ -62,6 +63,7 @@
     </main>
     {{ site_footer() }}
   </div>
+  {% endblock %}
   {% endif %}
 </body>
 </html>

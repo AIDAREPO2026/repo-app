@@ -1,15 +1,9 @@
-{% extends "base.html" %}
-{% from "macros/ui.html" import alert, link_button with context %}
+{% extends "layouts/auth.html" %}
+{% from "macros/ui.html" import alert, auth_heading, link_button with context %}
 {% block content %}
-<div class="page-narrow mx-auto pt-4 sm:pt-10">
-  <div class="mb-6 text-center">
-    <h1 class="page-title">{{ _("Request sent") }}</h1>
-  </div>
-  <div class="card">
-    {# Spec security: the same message whether or not the email domain matched the Discom. #}
-    {{ alert(_("Your request has been sent to ITPED for verification."), "success") }}
-    <p class="mt-4 text-sm text-muted">{{ _("ITPED will email your official address once the login is ready to use.") }}</p>
-    <div class="mt-6">{{ link_button("Go to sign in", "/login") }}</div>
-  </div>
-</div>
+{{ auth_heading("Request sent") }}
+{# Spec security: the same message whether or not the email domain matched the Discom. #}
+{{ alert(_("Your request has been sent to ITPED for verification."), "success") }}
+<p class="mt-4 text-sm text-muted">{{ _("ITPED will email your official address once the login is ready to use.") }}</p>
+<div class="mt-6">{{ link_button("Go to sign in", "/login") }}</div>
 {% endblock %}

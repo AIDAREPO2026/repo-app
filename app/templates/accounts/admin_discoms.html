@@ -14,7 +14,7 @@
 {% endmacro %}
 
 {% block content %}
-{% call page_header("Discoms", "The recognised Discoms. Only an active Discom can register, and only from its own email domain.") %}
+{% call page_header("Discoms", "The recognised Discoms. Only an active Discom can register, and only from its own email domain.", eyebrow="Administration") %}
   {{ button("Import CSV", "secondary", type="button", commandfor="import-discoms", command="show-modal") }}
   {{ button("Add Discom", type="button", commandfor="add-discom", command="show-modal") }}
 {% endcall %}

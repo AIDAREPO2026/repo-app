@@ -12,22 +12,24 @@ class NavLink(NamedTuple):
     label: str
     path: str
     icon: str = "grid"
+    # The menu section it sits under. The sidebar prints the name where a section starts.
+    group: str = "Overview"
 
 
 # Visitors and error pages see the public menu. Later tasks add entries here, not in templates.
 PUBLIC_NAV: list[NavLink] = []
 
 # P1-UI-02: privileged logins review the design system; Members never see it.
-STYLE_GUIDE = NavLink("Style guide", "/_styleguide", "swatch")
+STYLE_GUIDE = NavLink("Style guide", "/_styleguide", "swatch", "Resources")
 # P1-ACC-10: every login can see its MFA settings.
-SECURITY = NavLink("Security", "/account/security", "shield")
+SECURITY = NavLink("Security", "/account/security", "shield", "Your account")
 
 NAV_BY_LOGIN_TYPE: dict[str, list[NavLink]] = {
     "member": [NavLink("Dashboard", "/dashboard/member"), SECURITY],
     "admin": [
         NavLink("Dashboard", "/dashboard/admin"),
-        NavLink("Accounts", "/admin/accounts", "users"),
-        NavLink("Discoms", "/admin/discoms", "building"),
+        NavLink("Accounts", "/admin/accounts", "users", "Administration"),
+        NavLink("Discoms", "/admin/discoms", "building", "Administration"),
         SECURITY,
         STYLE_GUIDE,
     ],

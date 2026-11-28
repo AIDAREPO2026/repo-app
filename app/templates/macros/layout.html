@@ -9,22 +9,29 @@
 
 {% macro brand() %}
 <a href="/" class="brand">
-  <span class="brand-mark" aria-hidden="true">A</span>
-  <span>AIDA <span class="brand-sub">Digital Resource Repository</span></span>
+  <img src="{{ url_for('static', path='img/aida-logo.png') }}" class="brand-logo" width="139" height="62"
+       alt="AIDA">
+  <span class="brand-name">{{ _("Digital Resource Repository") }}<span class="brand-sub">{{ _("All India Discoms Association") }}</span></span>
 </a>
 {% endmacro %}
 
-{# The menu for the login type. label names the landmark, so two menus on a page stay distinct. #}
+{# The menu for the login type, in its sections. label names the landmark, so two menus on a
+   page stay distinct. #}
 {% macro nav_menu(nav, label="Main") %}
 <nav aria-label="{{ _(label) }}">
+  {% for link in nav %}
+  {# Links come in section order, so a new section starts whenever the group changes. #}
+  {% if loop.changed(link.group) %}
+  {% if not loop.first %}</ul>{% endif %}
+  <p class="side-section">{{ _(link.group) }}</p>
   <ul class="side-nav">
-    {% for link in nav %}
+  {% endif %}
     <li>
       <a href="{{ link.path }}" class="side-link"
          {% if request.url.path == link.path %}aria-current="page"{% endif %}>{{ icon(link.icon) }}<span>{{ _(link.label) }}</span></a>
     </li>
-    {% endfor %}
-  </ul>
+  {% if loop.last %}</ul>{% endif %}
+  {% endfor %}
 </nav>
 {% endmacro %}
 
@@ -43,7 +50,10 @@
 
 {% macro site_footer() %}
 <footer class="footer">
-  <div class="page py-5">{{ _("Digital Resource Repository for DISCOMs, maintained by ITPED.") }}</div>
+  <div class="page footer-inner">
+    <p>{{ _("Digital Resource Repository for DISCOMs, maintained by ITPED.") }}</p>
+    <p>{{ _("All India Discoms Association") }}</p>
+  </div>
 </footer>
 {% endmacro %}
 

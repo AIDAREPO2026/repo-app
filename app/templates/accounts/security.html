@@ -3,7 +3,7 @@
 {% from "macros/ui.html" import page_header, card, badge, button with context %}
 {% set method_names = {"totp": "Authenticator app", "email": "Code by email"} %}
 {% block content %}
-{{ page_header("Security", "How you sign in to the portal.") }}
+{{ page_header("Security", "How you sign in to the portal.", eyebrow="Your account") }}
 
 {% call card("Two-step sign-in") %}
 <div class="mt-3 flex flex-wrap items-center gap-3">
