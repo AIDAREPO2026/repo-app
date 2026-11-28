@@ -1115,6 +1115,53 @@
     transition: transform var(--aida-duration-fast) var(--aida-ease-enter);
   }
 
+  /* ---------- Hiding and showing the sidebar ---------- */
+
+  /* Named only while it moves, so page-to-page transitions stay a plain cross-fade. */
+  .sidebar-moving .sidebar {
+    view-transition-name: sidebar;
+  }
+
+  .sidebar-moving .app-main {
+    view-transition-name: app-main;
+  }
+
+  ::view-transition-group(app-main) {
+    animation-duration: var(--aida-duration-slow);
+    animation-timing-function: var(--aida-ease-spring);
+  }
+
+  /* Keep the content's own size while its box changes, or the text would stretch. */
+  ::view-transition-old(app-main),
+  ::view-transition-new(app-main) {
+    height: 100%;
+    object-fit: none;
+    object-position: left top;
+  }
+
+  /* The sidebar leaves to the left and comes back the same way. */
+  ::view-transition-old(sidebar):only-child {
+    animation: aida-sidebar-out var(--aida-duration-base) var(--aida-ease-exit) both;
+  }
+
+  ::view-transition-new(sidebar):only-child {
+    animation: aida-sidebar-in var(--aida-duration-slow) var(--aida-ease-spring) both;
+  }
+
+  @keyframes aida-sidebar-out {
+    to {
+      opacity: 0;
+      transform: translateX(calc(-1 * var(--aida-drawer-offset)));
+    }
+  }
+
+  @keyframes aida-sidebar-in {
+    from {
+      opacity: 0;
+      transform: translateX(calc(-1 * var(--aida-drawer-offset)));
+    }
+  }
+
   /* ---------- Badges ---------- */
 
   .badge {

@@ -38,6 +38,18 @@ function applySidebar(state) {
   }
 }
 
+// The browser snapshots the page before and after, and components.css springs between the
+// two. Browsers without view transitions just switch.
+function moveSidebar(state) {
+  if (!document.startViewTransition) {
+    applySidebar(state);
+    return;
+  }
+  root.classList.add("sidebar-moving");
+  const transition = document.startViewTransition(() => applySidebar(state));
+  transition.finished.finally(() => root.classList.remove("sidebar-moving"));
+}
+
 // Show only the menu entries whose name holds the text, opening the sections they are in.
 function findPage(box) {
   const text = box.value.trim().toLowerCase();
@@ -76,7 +88,7 @@ document.addEventListener("click", (event) => {
   if (event.target.closest("[data-sidebar-toggle]")) {
     const state = root.classList.contains("sidebar-hidden") ? "shown" : "hidden";
     save(SIDEBAR_KEY, state);
-    applySidebar(state);
+    moveSidebar(state);
   }
 });
 
