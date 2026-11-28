@@ -6,10 +6,11 @@ The sign-in page is served with a small table added to it, so the test needs no 
 from pathlib import Path
 
 import pytest
-from playwright.sync_api import Page, Route, expect
+from playwright.sync_api import Page, expect
 
 from app.core.templates import templates
 from tests.e2e.axe import blocking_violations
+from tests.e2e.pages import open_login_with
 
 TABLE = templates.env.from_string(
     '{% from "macros/ui.html" import data_table %}'
@@ -24,15 +25,9 @@ TABLE = templates.env.from_string(
 
 @pytest.fixture
 def table(page: Page) -> Page:
-    def add_table(route: Route) -> None:
-        response = route.fetch()
-        extra = TABLE.render() + '<div class="toasts" role="status"></div></main>'
-        route.fulfill(response=response, body=response.text().replace("</main>", extra))
-
-    page.route("**/login", add_table)
     errors: list[str] = []
     page.on("pageerror", lambda error: errors.append(str(error)))
-    page.goto("/login")
+    open_login_with(page, TABLE.render() + '<div class="toasts" role="status"></div>')
     page.wait_for_load_state()
     assert errors == []  # the table's attributes must not wake another script
     return page

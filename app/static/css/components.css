@@ -18,7 +18,8 @@
   }
 
 
-  .page-title {
+  .page-title,
+  .auth-heading-title {
     font-size: var(--aida-text-xl);
     line-height: var(--aida-text-xl-leading);
     letter-spacing: var(--aida-text-xl-tracking);
@@ -139,7 +140,6 @@
 
   .nav-link:active {
     background: var(--aida-surface-pressed);
-    transform: scale(var(--aida-press-scale));
   }
 
   .nav-link[aria-current="page"] {
@@ -347,7 +347,6 @@
 
   .side-link:active {
     background: var(--aida-surface-pressed);
-    transform: scale(var(--aida-press-scale));
   }
 
   /* The current page: a soft fill and a heavier weight, so colour is not the only sign. */
@@ -401,7 +400,6 @@
     padding: var(--aida-space-1);
     border: 1px solid var(--aida-border);
     border-radius: var(--aida-radius-lg);
-    background: var(--aida-surface-glass);
     box-shadow: var(--aida-shadow-1);
   }
 
@@ -551,7 +549,6 @@
 
   .icon-button:active {
     background: var(--aida-surface-pressed);
-    transform: scale(var(--aida-press-scale));
   }
 
   /* The theme button shows the drawing for the choice in use. */
@@ -956,10 +953,6 @@
 
   /* A figure on a dashboard: what it counts, the number, and where to act on it. */
 
-  .item-card:active {
-    transform: scale(var(--aida-press-scale));
-  }
-
   .item-meta {
     display: flex;
     flex-wrap: wrap;
@@ -1196,12 +1189,6 @@
     font: inherit;
     font-weight: 600;
     cursor: pointer;
-  }
-
-  .check input {
-    width: 1.125rem;
-    height: 1.125rem;
-    accent-color: var(--aida-accent);
   }
 
   .input:not(.find-input),
@@ -1455,24 +1442,20 @@
 
   /* ---------- Alerts and flash messages ---------- */
 
-  /* The tone sets the icon tile and, on toasts, the timer bar. */
-  .alert-info,
-  .toast-info {
+  /* The tone sets the icon tile. */
+  .alert-info {
     --tone: var(--aida-info);
   }
 
-  .alert-success,
-  .toast-success {
+  .alert-success {
     --tone: var(--aida-success);
   }
 
-  .alert-warning,
-  .toast-warning {
+  .alert-warning {
     --tone: var(--aida-warning);
   }
 
-  .alert-danger,
-  .toast-danger {
+  .alert-danger {
     --tone: var(--aida-danger);
   }
 
@@ -2235,10 +2218,6 @@
     color: var(--aida-text);
   }
 
-  .page-link:active {
-    transform: scale(var(--aida-press-scale));
-  }
-
   .page-link[aria-current="page"] {
     background: var(--aida-accent);
     color: var(--aida-accent-contrast);
@@ -2352,13 +2331,6 @@
 
   .auth-heading {
     margin-bottom: var(--aida-space-6);
-  }
-
-  .auth-heading-title {
-    font-size: var(--aida-text-xl);
-    line-height: var(--aida-text-xl-leading);
-    letter-spacing: var(--aida-text-xl-tracking);
-    font-weight: 700;
   }
 
   .auth-heading-lead {

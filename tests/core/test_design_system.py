@@ -33,6 +33,50 @@ def test_p1_ui_02_templates_use_only_design_tokens(template: Path) -> None:
     assert ONE_OFF_CLASS.findall(html) == []
 
 
+def css_rules() -> list[tuple[str, str, list[str]]]:
+    """Return every rule in components.css as (surrounding at-rules, selectors, declarations)."""
+    css = re.sub(r"/\*.*?\*/", "", COMPONENTS_CSS, flags=re.S)
+    rules: list[tuple[str, str, list[str]]] = []
+    open_blocks: list[tuple[str, list[str]]] = []
+    text = ""
+    for part in re.split(r"([{};])", css):
+        if part == "{":
+            open_blocks.append((" ".join(text.split()), []))
+        elif part == ";" and open_blocks:
+            open_blocks[-1][1].append(" ".join(text.split()))
+        elif part == "}":
+            selectors, declarations = open_blocks.pop()
+            around = " ".join(head for head, _ in open_blocks if not head.startswith("@layer"))
+            if declarations and "@keyframes" not in around:
+                rules.append((around, selectors, declarations))
+        text = "" if part in "{};" else part
+    return rules
+
+
+def test_p1_ui_02_no_style_is_written_twice() -> None:
+    seen: set[tuple[str, str, str]] = set()
+    twice = []
+    for around, selectors, declarations in css_rules():
+        for selector in selectors.split(","):
+            for declaration in declarations:
+                key = (around, selector.strip(), declaration)
+                if key in seen:
+                    twice.append(key)
+                seen.add(key)
+
+    assert twice == [], "the same declaration is set twice for one selector"
+
+
+def test_p1_ui_02_no_two_rules_share_a_whole_block() -> None:
+    blocks: dict[tuple[str, tuple[str, ...]], list[str]] = {}
+    for around, selectors, declarations in css_rules():
+        if len(declarations) >= 4:
+            blocks.setdefault((around, tuple(sorted(declarations))), []).append(selectors)
+
+    copies = [names for names in blocks.values() if len(names) > 1]
+    assert copies == [], "join these selectors into one rule"
+
+
 def test_p1_ui_02_components_animate_only_transform_and_opacity() -> None:
     allowed = {"transform", "opacity", "overlay", "display"}
     for declaration in re.findall(r"transition:\s*([^;]+);", COMPONENTS_CSS):

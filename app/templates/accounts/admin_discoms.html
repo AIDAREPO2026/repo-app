@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "macros/forms.html" import field, csrf_field with context %}
-{% from "macros/ui.html" import page_header, button, card, badge, modal, drawer, empty_state, data_table with context %}
+{% from "macros/ui.html" import page_header, button, card, badge, modal, drawer, empty_state, data_table, dialog_actions with context %}
 {#
   The Discom master list (FR-1.6). Registration emails must use a listed, active Discom's
   domain (D-11). Discoms are deactivated, never deleted (SRS 6.3).
@@ -69,8 +69,7 @@
         <p class="text-sm text-muted">{{ _("%(name)s can no longer register, and its Member login is signed out at once. You can reactivate it later.", name=discom.name) }}</p>
         <form method="post" action="/admin/discoms/{{ discom.id }}/deactivate" class="dialog-actions">
           {{ csrf_field() }}
-          {{ button("Cancel", "secondary", type="button", commandfor="deactivate-" ~ discom.id, command="close", icon_name="close") }}
-          {{ button("Deactivate", "danger", icon_name="power") }}
+          {{ dialog_actions("deactivate-" ~ discom.id, "Deactivate", "power", "danger") }}
         </form>
         {% endcall %}
         {% endif %}
@@ -90,8 +89,7 @@
   {{ csrf_field() }}
   {{ discom_fields("add-") }}
   <div class="dialog-actions">
-    {{ button("Cancel", "secondary", type="button", commandfor="add-discom", command="close", icon_name="close") }}
-    {{ button("Add Discom", icon_name="plus") }}
+    {{ dialog_actions("add-discom", "Add Discom", "plus") }}
   </div>
 </form>
 {% endcall %}
@@ -106,8 +104,7 @@
     <p id="import-file-help" class="field-help">{{ _("Saved as CSV UTF-8, up to 100 KB.") }}</p>
   </div>
   <div class="dialog-actions">
-    {{ button("Cancel", "secondary", type="button", commandfor="import-discoms", command="close", icon_name="close") }}
-    {{ button("Check the file", icon_name="check") }}
+    {{ dialog_actions("import-discoms", "Check the file", "check") }}
   </div>
 </form>
 {% endcall %}

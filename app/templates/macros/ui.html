@@ -269,6 +269,12 @@
 </div>
 {% endmacro %}
 
+{# The foot of a dialog: Cancel, which closes dialog id, and the button that submits. #}
+{% macro dialog_actions(id, label, icon_name, variant="primary") %}
+{{ button("Cancel", "secondary", type="button", commandfor=id, command="close", icon_name="close") }}
+{{ button(label, variant, icon_name=icon_name) }}
+{% endmacro %}
+
 {# A modal dialog. Open it with button(..., commandfor=id, command="show-modal"). #}
 {% macro modal(id, title) %}
 <dialog id="{{ id }}" class="modal" aria-labelledby="{{ id }}-title" closedby="any">

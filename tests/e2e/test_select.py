@@ -11,6 +11,7 @@ import pytest
 from playwright.sync_api import Page, Route, expect
 
 from tests.e2e.axe import blocking_violations
+from tests.e2e.pages import open_login_with
 
 
 def native(field_id: str, options: int, source: str = "") -> str:
@@ -41,13 +42,8 @@ def answer_options(route: Route) -> None:
 def form(page: Page) -> Page:
     extra = native("short", 3) + native("long", 15) + native("remote", 0, "/fake-options")
 
-    def add_selects(route: Route) -> None:
-        response = route.fetch()
-        route.fulfill(response=response, body=response.text().replace("</main>", extra + "</main>"))
-
-    page.route("**/login", add_selects)
     page.route("**/fake-options?*", answer_options)
-    page.goto("/login")
+    open_login_with(page, extra)
     return page
 
 

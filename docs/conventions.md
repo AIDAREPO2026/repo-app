@@ -33,6 +33,7 @@ A task is Done when:
 - [ ] The pull request is reviewed and merged, with two reviewers for security-sensitive areas
 - [ ] The change is deployed to staging and checked there
 - [ ] Any doc this task affects is updated in the same pull request
+- [ ] The diff was checked for duplicated code, and anything left is listed in the pull request
 - [ ] Every state change it adds writes an audit event
 - [ ] The task's journal file (`docs/journal/<CODE>.md`) says Done, with its log and decisions complete
 - [ ] The shared planning tracker shows the task as Done, and its totals match the task index
@@ -88,6 +89,9 @@ Do not use `--no-verify`, force-push a shared branch or merge your own pull requ
 - Comments explain the reason, not the action, and cite the requirement, for example `# FR-13.3: teasers must never expose the file name`.
 
 **Reuse, never copy**
+
+- **Never write the same code twice.** This covers Python, templates, JavaScript, styles and tests. Search before writing; the second time a piece of logic or markup is needed, move it to one shared place (a function, a macro, a helper) in the same change. Override a style by editing its rule, not by adding a second rule further down.
+- **Check for it before calling a task finished.** Read the whole diff for copies and near-copies, fix them, and list in the pull request any you leave and why. `tests/core/test_design_system.py` catches repeated styles; the rest is checked by reading.
 
 Before writing a helper, search the codebase. These shared functions must be used instead of reimplemented:
 

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "macros/forms.html" import field, select, csrf_field with context %}
-{% from "macros/ui.html" import page_header, button, card, badge, modal, drawer, empty_state, data_table with context %}
+{% from "macros/ui.html" import page_header, button, card, badge, modal, drawer, empty_state, data_table, dialog_actions with context %}
 {% set role_names = {"admin": "Admin", "reviewer": "Reviewer", "approver": "Approver"} %}
 {% set user_id_help = "4 to 50 lowercase letters, numbers, dots, dashes or underscores." %}
 {% set user_id_pattern = "[a-z0-9._\\-]{4,50}" %}
@@ -107,8 +107,7 @@
         <p class="text-sm text-muted">{{ _("%(name)s can no longer sign in, and every session they have open ends at once. This cannot be undone; create a new account to give them access again.", name=account.full_name) }}</p>
         <form method="post" action="/admin/accounts/{{ account.id }}/deactivate" class="dialog-actions">
           {{ csrf_field() }}
-          {{ button("Cancel", "secondary", type="button", commandfor="deactivate-" ~ account.id, command="close", icon_name="close") }}
-          {{ button("Deactivate", "danger", icon_name="power") }}
+          {{ dialog_actions("deactivate-" ~ account.id, "Deactivate", "power", "danger") }}
         </form>
         {% endcall %}
         {% endif %}
@@ -134,8 +133,7 @@
   </label>
   {{ person_fields("add-") }}
   <div class="dialog-actions">
-    {{ button("Cancel", "secondary", type="button", commandfor="add-account", command="close", icon_name="close") }}
-    {{ button("Add account", icon_name="plus") }}
+    {{ dialog_actions("add-account", "Add account", "plus") }}
   </div>
 </form>
 {% endcall %}

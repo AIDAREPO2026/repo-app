@@ -5,7 +5,9 @@ The sign-in page is served with a toast added to it, so the test needs no login.
 
 import re
 
-from playwright.sync_api import Page, Route, expect
+from playwright.sync_api import Page, expect
+
+from tests.e2e.pages import open_login_with
 
 TOAST = (
     '<div class="toasts" role="status"><div class="toast toast-success">'
@@ -15,17 +17,8 @@ TOAST = (
 )
 
 
-def with_toast(page: Page) -> None:
-    def add_toast(route: Route) -> None:
-        response = route.fetch()
-        route.fulfill(response=response, body=response.text().replace("</body>", TOAST + "</body>"))
-
-    page.route("**/login", add_toast)
-    page.goto("/login")
-
-
 def test_p1_ui_02_a_toast_closes_from_its_button(page: Page) -> None:
-    with_toast(page)
+    open_login_with(page, TOAST, before="</body>")
 
     page.get_by_role("button", name="Dismiss notification").click()
 
@@ -33,7 +26,7 @@ def test_p1_ui_02_a_toast_closes_from_its_button(page: Page) -> None:
 
 
 def test_p1_ui_02_a_success_toast_closes_by_itself(page: Page) -> None:
-    with_toast(page)
+    open_login_with(page, TOAST, before="</body>")
 
     expect(page.locator(".toast")).to_have_count(1)
     expect(page.locator(".toast")).to_have_count(0, timeout=8_000)
