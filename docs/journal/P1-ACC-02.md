@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Merged #31 on the user's approval. The task stays Done. |
 | 2026-11-28 | Raghvendra Singh | Reported by the user: the registration list still offered Discoms that already had a login or request. They are now left out. Branch `fix/p1-acc-02-hide-taken-discoms`. |
 | 2026-11-28 | Raghvendra Singh | Merged #29 and #30 on the user's approval. Status Done; tracker row set to Done. |
 | 2026-11-28 | Raghvendra Singh | Reserved IDs gained a category filter and a Removed tab with restore (#30). |
