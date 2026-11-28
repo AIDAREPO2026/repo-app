@@ -70,6 +70,12 @@ class SetPasswordForm(BaseModel):
     confirm_password: str = Field(min_length=1, max_length=1024)
 
 
+class SignInPolicyForm(BaseModel):
+    """What happens when a Member signs in on a sixth device (FR-2.3, D-10)."""
+
+    policy: Literal["block", "end_oldest"]
+
+
 class ForgotPasswordForm(BaseModel):
     """Who wants a reset link: a User ID or the account's email (FR-1.5)."""
 

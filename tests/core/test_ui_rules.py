@@ -100,6 +100,7 @@ OFFERED_CHOICES = {
     ("admin_discoms.html", "suggestion"): "Discoms not yet added; it only fills the form",
     ("admin_reserved_ids.html", "category"): "fixed list, every value accepted",
     ("admin_reserved_ids.html", "where"): "fixed list, every value accepted",
+    ("admin_sign_in_rules.html", "policy"): "fixed list, every value accepted",
     ("ui.html", "group"): "only filters the rows of a table",
 }
 

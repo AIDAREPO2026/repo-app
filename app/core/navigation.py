@@ -30,15 +30,18 @@ PUBLIC_NAV: list[NavLink] = []
 STYLE_GUIDE = NavLink("Style guide", "/_styleguide", "swatch", "Resources", "Design tokens and components")
 # P1-ACC-10: every login can see its MFA settings.
 SECURITY = NavLink("Security", "/account/security", "shield", "Your account", "Two-step sign-in settings")
+# P1-ACC-07: a Discom's login is shared, so it can see and end where it is signed in.
+DEVICES = NavLink("Signed-in devices", "/account/devices", "phone", "Your account", "Where you are signed in")
 
 NAV_BY_LOGIN_TYPE: dict[str, list[NavLink]] = {
-    "member": [_dashboard("member"), SECURITY],
+    "member": [_dashboard("member"), DEVICES, SECURITY],
     "admin": [
         _dashboard("admin"),
         NavLink("Registrations", "/admin/registrations", "inbox", "Administration", "Discoms waiting"),
         NavLink("Accounts", "/admin/accounts", "users", "Administration", "ITPED staff logins"),
         NavLink("Discoms", "/admin/discoms", "building", "Administration", "Recognised Discoms"),
         NavLink("Reserved IDs", "/admin/reserved-ids", "lock", "Administration", "Words no User ID may use"),
+        NavLink("Sign-in rules", "/admin/sign-in-rules", "sign-in", "Administration", "Device limit"),
         SECURITY,
         STYLE_GUIDE,
     ],

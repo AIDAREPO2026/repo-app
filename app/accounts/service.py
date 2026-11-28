@@ -62,6 +62,7 @@ from app.core.constants import (
     LINK_TOKEN_MINUTES,
     LOCKOUT_ATTEMPTS,
     LOCKOUT_MINUTES,
+    MEMBER_MAX_SESSIONS,
     PUBLIC_EMAIL_DOMAINS,
     RESERVED_ANYWHERE_MIN,
     RESERVED_WORD_MAX,
@@ -70,7 +71,16 @@ from app.core.constants import (
     RESET_LINK_WAIT_SECONDS,
 )
 from app.core.email import send_email
-from app.core.sessions import clear_session_cookie, client_ip, end_session, start_session, user_agent
+from app.core.sessions import (
+    SESSION_COOKIE,
+    clear_session_cookie,
+    client_ip,
+    end_session,
+    hash_token,
+    signed_in_sessions,
+    start_session,
+    user_agent,
+)
 from app.core.settings_store import get_setting, set_setting
 from app.core.time import utc_now
 
@@ -83,16 +93,72 @@ def sign_in(db: Session, user_id: str, password: str, request: Request, response
     """Check the User ID and password and, if they are right, start a new session on the response.
 
     A login that needs a second factor gets a session that can reach only the code page,
-    and an emailed code if that is its method (FR-2.8).
+    and an emailed code if that is its method (FR-2.8). Raises DeviceLimitReached when a
+    Member login has no device free.
     """
     login = authenticate(db, user_id, password, client_ip(request), user_agent(request))
     if login is None:
         return None
     pending = needs_mfa(login)
+    # Applied before a code is asked for too, so nobody enters one only to be refused. The
+    # oldest device is ended only when the new session is really about to start.
+    _apply_device_limit(db, login, request, starting=not pending)
     start_session(db, login, request, response, mfa_pending=pending)
     if pending and login.mfa_method == "email":
         send_email_code(db, login)
     return login
+
+
+def _apply_device_limit(db: Session, login: Login, request: Request, starting: bool) -> None:
+    """Keep a Member login on at most five devices, by the Admin's policy (FR-2.3, D-10).
+
+    The caller holds the row lock on the login (see _lock_login), so sign-ins arriving
+    together are counted one after another and cannot get past the limit.
+    """
+    if login.login_type != "member":
+        return
+    # This browser's own session is replaced by signing in again, so it takes no new place.
+    own = hash_token(request.cookies.get(SESSION_COOKIE, ""))
+    others = [item for item in signed_in_sessions(db, login) if item.token_hash != own]
+    surplus = len(others) - MEMBER_MAX_SESSIONS + 1
+    if surplus <= 0:
+        return
+    if get_setting(db, "sixth_session_policy") == "block":
+        # A shared Member login has no session here to say who tried (SRS 2.3).
+        actor = Actor(kind="anonymous", ip=client_ip(request), user_agent=user_agent(request))
+        details = {"reason": "device_limit"}
+        record(db, actor, "accounts.login", "login", str(login.id), "denied", details)
+        raise DeviceLimitReached(DEVICE_LIMIT_REFUSED)
+    if not starting:
+        return
+    for oldest in others[:surplus]:
+        end_session(db, oldest, login, "replaced", client_ip(request))
+
+
+def signed_in_devices(db: Session, login: Login) -> list[UserSession]:
+    """Return the sessions this login is signed in on, oldest first."""
+    return signed_in_sessions(db, login)
+
+
+def set_sign_in_policy(db: Session, policy: str, actor: Actor) -> None:
+    """Save what a sixth device gets; the setting change is audited (FR-2.3, D-10)."""
+    set_setting(db, "sixth_session_policy", policy, actor)
+
+
+def sign_out_device(db: Session, login: Login, actor: Actor, session_id: uuid.UUID) -> bool:
+    """End one of this login's own sessions. Return False when it is not one of them."""
+    user_session = db.get(UserSession, session_id)
+    if user_session is None or user_session.login_id != login.id:
+        return False
+    # Already ended, such as by a second click: nothing is left to do.
+    if user_session.ended_at is None:
+        end_session(db, user_session, login, "logout", actor.ip, by=actor)
+    return True
+
+
+def sign_in_policy(db: Session) -> str:
+    """Return what happens when a sixth device signs in: "block" or "end_oldest"."""
+    return str(get_setting(db, "sixth_session_policy"))
 
 
 def sign_out(db: Session, login: Login, request: Request, response: Response) -> None:
@@ -252,9 +318,9 @@ def finish_mfa(
 ) -> str:
     """Check a second-factor code and, if it is right, swap the half-signed-in session for a full one.
 
-    Returns "ok", "wrong" or "locked". A wrong code counts towards the same 15-minute lockout
-    as a wrong password, which is what limits guessing. At enrolment the code also confirms
-    the chosen method.
+    Returns "ok", "wrong", "locked" or "full" (no device free). A wrong code counts towards
+    the same 15-minute lockout as a wrong password, which is what limits guessing. At
+    enrolment the code also confirms the chosen method.
     """
     locked = _lock_login(db, login.user_id)
     if locked is None or locked.status != "active" or is_locked(locked):
@@ -264,6 +330,10 @@ def finish_mfa(
     result = _check_code(db, login, method, code, request)
     if result != "ok":
         return result
+    try:
+        _apply_device_limit(db, login, request, starting=True)
+    except DeviceLimitReached:
+        return "full"
     if login.mfa_method is None:
         _enrol(db, login, method, request)
     start_session(db, login, request, response)
@@ -392,6 +462,16 @@ def _clear_mfa(login: Login) -> None:
 
 class AccountRuleError(ValueError):
     """An account change that breaks a rule. The message is shown to the Admin as it is."""
+
+
+class DeviceLimitReached(AccountRuleError):
+    """A sixth device tried to sign in to a Member login under the "block" policy."""
+
+
+DEVICE_LIMIT_REFUSED = (
+    f"This Discom login is already signed in on {MEMBER_MAX_SESSIONS} devices. "
+    "Sign out on another device or contact ITPED."
+)
 
 
 PUBLIC_DOMAIN_REFUSED = (

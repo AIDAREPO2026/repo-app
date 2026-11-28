@@ -133,15 +133,46 @@ def start_session(
     return user_session
 
 
-def end_session(db: Session, user_session: UserSession, login: Login, reason: str, ip: str | None) -> None:
-    """End a session now, so its token stops working on the next request, and audit it."""
+def signed_in_sessions(db: Session, login: Login) -> list[UserSession]:
+    """Return the login's signed-in sessions, oldest first, ending any left idle on the way.
+
+    A closed browser never comes back to be ended, so counting without this would let
+    abandoned sessions hold a Discom's places for good (FR-2.3).
+    """
+    query = (
+        select(UserSession)
+        .where(UserSession.login_id == login.id, UserSession.ended_at.is_(None))
+        .where(UserSession.mfa_pending.is_(False))
+        .order_by(UserSession.created_at)
+    )
+    signed_in = []
+    for user_session in db.scalars(query):
+        if _is_idle(user_session):
+            end_session(db, user_session, login, "idle", str(user_session.ip))
+        else:
+            signed_in.append(user_session)
+    return signed_in
+
+
+def end_session(
+    db: Session,
+    user_session: UserSession,
+    login: Login,
+    reason: str,
+    ip: str | None,
+    by: Actor | None = None,
+) -> None:
+    """End a session now, so its token stops working on the next request, and audit it.
+
+    by names who ended it when that is not the session itself, such as another device.
+    """
     user_session.ended_at = utc_now()
     user_session.end_reason = reason
     db.flush()
     action = "accounts.logout" if reason == "logout" else "accounts.session_end"
     record(
         db,
-        _actor(login, user_session, ip),
+        by or _actor(login, user_session, ip),
         action,
         "session",
         str(user_session.id),

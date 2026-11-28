@@ -12,6 +12,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPExcepti
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from sqlalchemy.orm import Session
 
+from app.accounts.device_names import device_name
 from app.accounts.discom_csv import DiscomCsvError, ImportRow
 from app.accounts.discom_names import DISCOM_SUGGESTIONS
 from app.accounts.guards import (
@@ -43,10 +44,13 @@ from app.accounts.schemas import (
     ReviewerRoleForm,
     SetPasswordForm,
     SignInForm,
+    SignInPolicyForm,
 )
 from app.accounts.service import (
+    DEVICE_LIMIT_REFUSED,
     WRONG_REGISTRATION_CODE,
     AccountRuleError,
+    DeviceLimitReached,
     add_discom,
     admin_overview,
     after_sign_in_path,
@@ -85,8 +89,12 @@ from app.accounts.service import (
     set_discom_active,
     set_password_from_link,
     set_reviewer_role,
+    set_sign_in_policy,
     sign_in,
+    sign_in_policy,
     sign_out,
+    sign_out_device,
+    signed_in_devices,
     start_app_enrolment,
     start_registration,
     suggest_user_ids,
@@ -98,7 +106,7 @@ from app.accounts.service import (
 from app.accounts.user_id_rules import CATEGORIES
 from app.audit.service import Actor
 from app.core import captcha
-from app.core.constants import LOGIN_TYPES
+from app.core.constants import LOGIN_TYPES, MEMBER_MAX_SESSIONS
 from app.core.db import DbSession
 from app.core.navigation import Crumb, breadcrumbs, nav_for
 from app.core.sessions import (
@@ -139,7 +147,10 @@ def render_visitor_form(
     return response
 
 
-SIGN_IN_DONE_MESSAGES = {"password": "Password saved. Sign in with it."}
+SIGN_IN_DONE_MESSAGES = {
+    "password": "Password saved. Sign in with it.",
+    "devices_full": DEVICE_LIMIT_REFUSED,
+}
 
 
 def render_sign_in(
@@ -173,7 +184,10 @@ def sign_in_page(
 def sign_in_submit(request: Request, db: DbSession, form: Annotated[SignInForm, Form()]) -> Response:
     """Sign in and go on, or show the form again with the one generic error."""
     response = RedirectResponse("/", status_code=303)
-    login = sign_in(db, form.user_id, form.password, request, response)
+    try:
+        login = sign_in(db, form.user_id, form.password, request, response)
+    except DeviceLimitReached as refusal:
+        return render_sign_in(request, form.next, str(refusal), form.user_id)
     if login is None:
         return render_sign_in(request, form.next, SIGN_IN_FAILED, form.user_id)
     if needs_mfa(login):
@@ -270,6 +284,10 @@ def mfa_submit(
     result = finish_mfa(db, login, form.method, form.code, request, response)
     if result == "ok":
         return response
+    if result == "full":
+        refused = RedirectResponse(LOGIN_PATH + "?done=devices_full", status_code=303)
+        sign_out(db, pending, request, refused)
+        return refused
     if result == "locked":
         locked_out = RedirectResponse(LOGIN_PATH, status_code=303)
         clear_session_cookie(locked_out)
@@ -418,7 +436,7 @@ def approver_dashboard(
 
 ACCOUNTS_PATH = "/admin/accounts"
 # Changes that take access away show amber, so they never look like an ordinary success.
-CAUTION_DONE = {"deactivated", "mfa_reset", "removed", "declined"}
+CAUTION_DONE = {"deactivated", "mfa_reset", "removed", "declined", "devices_full", "device_signed_out"}
 
 
 def done_message(done: str, texts: dict[str, str]) -> list[tuple[str, str]]:
@@ -1003,6 +1021,63 @@ def reserved_ids_restore(
 
     done_url = f"{RESERVED_PATH}?done=restored&view=removed"
     return run_admin_change(request, db, admin, change, done_url, render_reserved)
+
+
+# FR-2.3: where a Discom sees the devices its shared login is signed in on.
+DEVICES_PATH = "/account/devices"
+DEVICE_DONE_MESSAGES = {"device_signed_out": "Device signed out."}
+
+
+@router.get(DEVICES_PATH, response_class=HTMLResponse)
+def devices_page(request: Request, db: DbSession, member: MemberLogin, done: str = "") -> HTMLResponse:
+    """List the Member login's signed-in devices."""
+    context = {
+        "title": "Signed-in devices",
+        "nav": nav_for("member"),
+        "breadcrumbs": breadcrumbs("member", Crumb("Signed-in devices")),
+        "devices": signed_in_devices(db, member),
+        "device_name": device_name,
+        "current_session_id": request.state.session_id,
+        "limit": MEMBER_MAX_SESSIONS,
+        "messages": page_messages("", done, DEVICE_DONE_MESSAGES),
+    }
+    return templates.TemplateResponse(request, "accounts/devices.html", context)
+
+
+@router.post(DEVICES_PATH + "/{session_id}/sign-out")
+def device_sign_out(request: Request, db: DbSession, member: MemberLogin, session_id: uuid.UUID) -> Response:
+    """Sign one of the login's own devices out, this one included."""
+    if not sign_out_device(db, member, actor_for(request, member), session_id):
+        # Another login's session is never confirmed to exist.
+        raise HTTPException(status_code=404)
+    if session_id == request.state.session_id:
+        response = RedirectResponse(LOGIN_PATH, status_code=303)
+        clear_session_cookie(response)
+        return response
+    return RedirectResponse(DEVICES_PATH + "?done=device_signed_out", status_code=303)
+
+
+# FR-2.3, D-10: Admin decides what a sixth device gets.
+SIGN_IN_RULES_PATH = "/admin/sign-in-rules"
+SIGN_IN_RULES_DONE_MESSAGES = {"saved": "Sign-in rule saved. It applies from the next sign-in."}
+
+
+@router.get(SIGN_IN_RULES_PATH, response_class=HTMLResponse)
+def sign_in_rules_page(request: Request, db: DbSession, admin: AdminLogin, done: str = "") -> HTMLResponse:
+    """Show the sixth-device policy."""
+    context = {"policy": sign_in_policy(db), "limit": MEMBER_MAX_SESSIONS}
+    messages = page_messages("", done, SIGN_IN_RULES_DONE_MESSAGES)
+    template = "accounts/admin_sign_in_rules.html"
+    return render_admin_page(request, template, "Sign-in rules", messages, 200, context)
+
+
+@router.post(SIGN_IN_RULES_PATH)
+def sign_in_rules_save(
+    request: Request, db: DbSession, admin: AdminLogin, form: Annotated[SignInPolicyForm, Form()]
+) -> Response:
+    """Save the sixth-device policy."""
+    set_sign_in_policy(db, form.policy, actor_for(request, admin))
+    return RedirectResponse(SIGN_IN_RULES_PATH + "?done=saved", status_code=303)
 
 
 REGISTRATIONS_PATH = "/admin/registrations"
