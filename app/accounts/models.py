@@ -22,16 +22,38 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import BYTEA, INET, UUID, ExcludeConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.constants import LOGIN_TYPES
 from app.core.db import Base, one_of
 
+ORGANISATION_STATUSES = ("active", "inactive")
 LOGIN_STATUSES = ("pending", "active", "declined", "deactivated")
 SESSION_END_REASONS = ("logout", "idle", "replaced", "admin", "password_reset", "locked")
 ATTEMPT_REASONS = ("ok", "unknown_user", "bad_password", "locked", "inactive", "mfa_failed")
 TOKEN_PURPOSES = ("set_password", "reset_password", "mfa_email_code", "confirm_extra_email")
 MFA_METHODS = ("totp", "email")
+
+
+class Organisation(Base):
+    """A recognised Discom, which registration is checked against (FR-1.6, SRS 6.1)."""
+
+    __tablename__ = "organisation"
+    __table_args__ = (
+        CheckConstraint(one_of("status", ORGANISATION_STATUSES), name="status"),
+        CheckConstraint("email_domain = lower(email_domain)", name="email_domain_lowercase"),
+        # Case-insensitive, so "North Discom" and "north discom" count as the same Discom.
+        Index("uq_organisation_name", text("lower(name)"), unique=True),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String(200))
+    # D-11: registration emails must use this domain.
+    email_domain: Mapped[str] = mapped_column(String(253), unique=True)
+    # Never deleted (SRS 6.3): an inactive Discom cannot register, and its Member cannot sign in.
+    status: Mapped[str] = mapped_column(Text, server_default="active")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class Login(Base):
@@ -95,8 +117,8 @@ class Login(Base):
     # Null until a new privileged account sets its password (P1-ACC-09).
     password_hash: Mapped[str | None] = mapped_column(Text)
     login_type: Mapped[str] = mapped_column(Text)
-    # Becomes a foreign key to organisation once that table exists (P1-ACC-01).
-    organisation_id: Mapped[uuid.UUID | None] = mapped_column(UUID)
+    organisation_id: Mapped[uuid.UUID | None] = mapped_column(UUID, ForeignKey("organisation.id"))
+    organisation: Mapped[Organisation | None] = relationship()
     full_name: Mapped[str | None] = mapped_column(String(200))
     is_alternate: Mapped[bool] = mapped_column(Boolean, server_default="false")
     status: Mapped[str] = mapped_column(Text, server_default="pending")
