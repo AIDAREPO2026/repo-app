@@ -32,7 +32,7 @@
      heavy and hides the difference between page and card). */
   --aida-canvas: light-dark(#f3f6fa, #16181c);
   --aida-surface: light-dark(#ffffff, #1f2227);
-  --aida-surface-sunken: light-dark(#e8eef5, #272a31);
+  --aida-surface-sunken: light-dark(#eef2f7, #272a31);
   --aida-surface-hover: light-dark(#edf2f8, #2c3038);
   --aida-surface-pressed: light-dark(#dde6f0, #353a43);
   /* A faint wash of the logo blue and amber across the top of the page. Decorative only:
@@ -47,12 +47,12 @@
 
   /* Text, navy rather than black. Every pair meets WCAG AA (4.5:1) on canvas, surface,
      sunken and hover surfaces; tests/core/test_tokens_contrast.py checks it. */
-  --aida-text: light-dark(#0f1b2d, #e9ebee);
+  --aida-text: light-dark(#26344a, #e9ebee);
   --aida-text-muted: light-dark(#4a5a70, #a9afba);
   --aida-text-on-accent: light-dark(#ffffff, #0d1521);
 
   /* Borders. The strong border outlines form fields, so it keeps 3:1 (WCAG 1.4.11). */
-  --aida-border: light-dark(#d2dbe6, #31353d);
+  --aida-border: light-dark(#e2e8f0, #31353d);
   --aida-border-strong: light-dark(#7d8ca1, #757d8b);
 
   /* Accent: the logo blue, a shade deeper by day so white button text and links pass AA,
@@ -115,13 +115,13 @@
   /* Shadow depths: resting cards, and things that float (menus, modals). By night
      shadows go darker, and raised surfaces get a faint lit top edge, so cards still
      separate from the page. */
-  --aida-shadow-color: light-dark(rgb(15 27 45 / 0.07), rgb(4 8 16 / 0.35));
+  --aida-shadow-color: light-dark(rgb(15 27 45 / 0.04), rgb(4 8 16 / 0.25));
   --aida-edge-light: light-dark(rgb(255 255 255 / 0), rgb(255 255 255 / 0.06));
   --aida-shadow-0: 0 1px 2px var(--aida-shadow-color);
   --aida-shadow-1: inset 0 1px 0 var(--aida-edge-light), 0 1px 2px var(--aida-shadow-color), 0 2px 6px var(--aida-shadow-color);
-  --aida-shadow-2: inset 0 1px 0 var(--aida-edge-light), 0 14px 34px light-dark(rgb(15 27 45 / 0.14), rgb(4 8 16 / 0.5)), 0 2px 6px var(--aida-shadow-color);
+  --aida-shadow-2: inset 0 1px 0 var(--aida-edge-light), 0 14px 34px light-dark(rgb(15 27 45 / 0.09), rgb(4 8 16 / 0.4)), 0 2px 6px var(--aida-shadow-color);
   /* The soft blue glow under a primary button. */
-  --aida-accent-glow: 0 4px 14px color-mix(in srgb, var(--aida-accent) 28%, transparent);
+  --aida-accent-glow: 0 0 0 transparent;
 
   /* Type: the system font, sizes in rem. Large sizes get tighter tracking and leading;
      body text has none (apple-design §15). */
@@ -170,14 +170,14 @@
      blur has something to show. Solid for reduced transparency and more contrast. */
   --aida-surface-glass: light-dark(rgb(255 255 255 / 0.66), rgb(33 36 42 / 0.66));
   --aida-backdrop:
-    radial-gradient(48rem 30rem at 100% 0%, color-mix(in srgb, var(--aida-brand-blue) 16%, transparent), transparent 70%),
-    radial-gradient(40rem 28rem at 0% 100%, color-mix(in srgb, var(--aida-brand-amber) 10%, transparent), transparent 70%),
-    radial-gradient(36rem 24rem at 35% 0%, color-mix(in srgb, var(--aida-brand-blue) 8%, transparent), transparent 70%);
+    radial-gradient(48rem 30rem at 100% 0%, color-mix(in srgb, var(--aida-brand-blue) 7%, transparent), transparent 70%),
+    radial-gradient(40rem 28rem at 0% 100%, color-mix(in srgb, var(--aida-brand-amber) 4%, transparent), transparent 70%),
+    radial-gradient(36rem 24rem at 35% 0%, color-mix(in srgb, var(--aida-brand-blue) 3%, transparent), transparent 70%);
 
   /* Translucent glass, used by the top bar and modal scrims. */
   --aida-glass: light-dark(rgb(255 255 255 / 0.72), rgb(28 30 35 / 0.72));
   --aida-glass-filter: blur(20px) saturate(180%);
-  --aida-scrim: rgb(6 12 22 / 0.45);
+  --aida-scrim: rgb(6 12 22 / 0.3);
   --aida-scrim-filter: blur(4px);
 }
 
