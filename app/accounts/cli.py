@@ -1,11 +1,13 @@
-"""Server-only account commands (P1-ACC-09, P1-ACC-10).
+"""Server-only account commands (P1-ACC-09, P1-ACC-10, P1-ACC-01).
 
     python -m app.accounts.cli create-admin --user-id itped.admin --full-name "A Person" --email a@itped.in
     python -m app.accounts.cli reset-mfa --user-id itped.admin
+    python -m app.accounts.cli seed-test-discoms
 
 create-admin makes an Admin with a password typed at the prompt, for the first Admin or to
 recover when no Admin can sign in. reset-mfa removes a login's second factor, for when the
-only Admin has lost their phone. Both need the server's database settings, so they only run there.
+only Admin has lost their phone. seed-test-discoms adds three fictional Discoms, in development
+and staging only. All need the server's database settings, so they only run there.
 """
 
 import argparse
@@ -15,7 +17,7 @@ import sys
 from pydantic import ValidationError
 
 from app.accounts.schemas import PrivilegedAccountForm
-from app.accounts.service import AccountRuleError, create_first_admin, reset_mfa_on_server
+from app.accounts.service import AccountRuleError, create_first_admin, reset_mfa_on_server, seed_test_discoms
 from app.core.config import load_config
 from app.core.db import make_session_factory
 
@@ -25,6 +27,8 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.command == "reset-mfa":
         return reset_mfa(args.user_id)
+    if args.command == "seed-test-discoms":
+        return seed_discoms()
     return create_admin(args)
 
 
@@ -66,6 +70,20 @@ def reset_mfa(user_id: str) -> int:
     return 0
 
 
+def seed_discoms() -> int:
+    """Add the three fictional test Discoms where they are missing, refusing in production."""
+    config = load_config()
+    with make_session_factory(config.database_url)() as db:
+        try:
+            added = seed_test_discoms(db, config.app_env)
+        except AccountRuleError as error:
+            print(error, file=sys.stderr)
+            return 1
+        db.commit()
+    print(f"Test Discoms added: {added}.")
+    return 0
+
+
 def _parser() -> argparse.ArgumentParser:
     """Describe the commands and their options."""
     parser = argparse.ArgumentParser(prog="python -m app.accounts.cli")
@@ -76,6 +94,7 @@ def _parser() -> argparse.ArgumentParser:
     create.add_argument("--email", required=True)
     reset = commands.add_parser("reset-mfa", help="Remove a login's second factor")
     reset.add_argument("--user-id", required=True)
+    commands.add_parser("seed-test-discoms", help="Add three fictional Discoms (not in production)")
     return parser
 
 
