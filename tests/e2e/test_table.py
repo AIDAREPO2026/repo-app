@@ -73,5 +73,12 @@ def test_p1_ui_02_right_click_opens_the_row_menu_inside_the_window(table: Page) 
     assert box and window
     assert box["x"] + box["width"] <= window["width"] and box["y"] + box["height"] <= window["height"]
 
+    # One highlight: the arrow keys move it, and so does the pointer.
+    table.keyboard.press("ArrowDown")
+    expect(menu.get_by_role("button", name="Select row")).to_be_focused()
+    menu.get_by_role("button", name="Copy domain").hover()
+    expect(menu.get_by_role("button", name="Copy domain")).to_be_focused()
+    assert box["width"] <= 220 and box["height"] <= 130  # compact
+
     menu.get_by_role("button", name="Select row").click()
     expect(table.get_by_role("checkbox", name="Select North")).to_be_checked()

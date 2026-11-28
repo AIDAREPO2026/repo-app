@@ -126,7 +126,21 @@ function onMenuClick(table, event) {
   if (item.matches("[data-row-select]")) setSelected(table, [row], !row.querySelector(".row-select input").checked);
 }
 
+// The pointer and the arrow keys move the same highlight, as in a desktop menu.
+function followFocus(menu) {
+  menu.addEventListener("pointerover", (event) => event.target.closest("button")?.focus());
+  menu.addEventListener("keydown", (event) => {
+    const step = { ArrowDown: 1, ArrowUp: -1 }[event.key];
+    if (!step) return;
+    event.preventDefault();
+    const items = [...menu.querySelectorAll("button:not([hidden])")];
+    const next = (items.indexOf(document.activeElement) + step + items.length) % items.length;
+    items[next].focus();
+  });
+}
+
 function enhanceTable(table) {
+  followFocus(table.querySelector(".row-menu"));
   addCheckboxes(table);
   table.addEventListener("contextmenu", (event) => {
     const row = event.target.closest("tbody tr[data-export]");

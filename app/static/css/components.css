@@ -1963,6 +1963,60 @@
     display: none;
   }
 
+  /* Compact, like the menus of a desktop app: small rows, bare icons, nothing that moves
+     once it is open. It fades in from the pointer's corner. */
+  .menu.row-menu {
+    min-width: 10rem;
+    padding: var(--aida-space-1);
+    border-radius: var(--aida-radius-md);
+    transform-origin: top left;
+  }
+
+  .menu.row-menu:popover-open {
+    animation: aida-row-menu-in var(--aida-duration-press) var(--aida-ease-settle);
+  }
+
+  @keyframes aida-row-menu-in {
+    from {
+      opacity: 0;
+      transform: scale(var(--aida-press-scale));
+    }
+  }
+
+  .row-menu .menu-item,
+  .row-menu .menu-item:active {
+    gap: var(--aida-space-2);
+    padding: 0.375rem var(--aida-space-2);
+    border-radius: var(--aida-radius-sm);
+    font-weight: 500;
+    transform: none;
+  }
+
+  .row-menu .menu-icon {
+    width: 1rem;
+    height: 1rem;
+    background: transparent;
+    color: var(--aida-text-muted);
+  }
+
+  /* One highlight, which follows the pointer or the arrow keys (table.js moves focus). */
+  .row-menu .menu-item:hover {
+    background: transparent;
+  }
+
+  .row-menu .menu-item:focus {
+    background: var(--aida-accent-subtle);
+    outline: none;
+  }
+
+  /* More contrast and forced colours need a real ring, not only a tint. */
+  @media (prefers-contrast: more), (forced-colors: active) {
+    .row-menu .menu-item:focus {
+      outline: 2px solid var(--aida-focus-ring);
+      outline-offset: -2px;
+    }
+  }
+
   /* ---------- Modal and drawer: native <dialog>, opened by the control that names it ---------- */
 
   .modal,
