@@ -1,12 +1,10 @@
-import uuid
-
 import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.accounts.models import Login
 from app.core.constants import LOGIN_TYPES
-from tests.accounts.conftest import build_login
+from tests.accounts.conftest import build_login, build_organisation
 
 
 def save(db: Session, login: Login) -> None:
@@ -24,19 +22,19 @@ def test_fr_2_1_only_four_login_types(db: Session) -> None:
 
 
 def test_fr_2_2_one_member_login_per_discom(db: Session) -> None:
-    discom = uuid.uuid4()
-    save(db, build_login("member", status="active", organisation_id=discom))
+    discom = build_organisation()
+    save(db, build_login("member", status="active", organisation=discom))
 
     with pytest.raises(IntegrityError, match="uq_login_one_member_per_organisation"):
-        save(db, build_login("member", status="pending", organisation_id=discom))
+        save(db, build_login("member", status="pending", organisation=discom))
 
 
 def test_fr_2_2_declined_login_frees_the_discom(db: Session) -> None:
-    discom = uuid.uuid4()
-    save(db, build_login("member", status="declined", organisation_id=discom))
-    save(db, build_login("member", status="deactivated", organisation_id=discom))
+    discom = build_organisation()
+    save(db, build_login("member", status="declined", organisation=discom))
+    save(db, build_login("member", status="deactivated", organisation=discom))
 
-    save(db, build_login("member", status="pending", organisation_id=discom))
+    save(db, build_login("member", status="pending", organisation=discom))
 
 
 @pytest.mark.parametrize(
