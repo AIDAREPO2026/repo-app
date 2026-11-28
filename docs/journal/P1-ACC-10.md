@@ -2,10 +2,10 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In progress |
+| Status | In review |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p1-acc-10-mfa` |
-| Pull request | Not opened |
+| Pull request | #17 |
 | Started | 2026-11-28 |
 | Finished | Not finished |
 
@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Opened #17 with the `security` label, and set the tracker row to In review. |
 | 2026-11-28 | Raghvendra Singh | Built MFA: migration 0008 (MFA columns on `login`, the `locked` session end reason), `app/accounts/mfa.py` (Fernet, TOTP, QR code), email codes in `app.accounts.tokens`, the code page with enrolment, the Security page, Member on and off, and Admin reset in the Accounts drawer. `FERNET_KEY` is now checked at startup. 17 new tests; 219 unit tests and 14 e2e tests pass, and Ruff, mypy, `alembic check`, the 0008 downgrade and `pip-audit` are clean. Checked by hand in the browser: enrolment with an app, a wrong code refused, the right code accepted, and the Security page. |
 | 2026-11-28 | Raghvendra Singh | Started the task. |
 
