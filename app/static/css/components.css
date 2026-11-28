@@ -332,6 +332,15 @@
     border-top: 1px solid var(--aida-border);
   }
 
+  /* An enrolment QR code (P1-ACC-10). Always dark on white, which scanners need in dark mode too. */
+  .qr-code {
+    width: 12rem;
+    height: 12rem;
+    padding: var(--aida-space-2);
+    border-radius: var(--aida-radius-md);
+    background: var(--aida-surface-scan);
+  }
+
   .avatar {
     display: grid;
     flex: none;

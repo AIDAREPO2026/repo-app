@@ -19,16 +19,19 @@ PUBLIC_NAV: list[NavLink] = []
 
 # P1-UI-02: privileged logins review the design system; Members never see it.
 STYLE_GUIDE = NavLink("Style guide", "/_styleguide", "swatch")
+# P1-ACC-10: every login can see its MFA settings.
+SECURITY = NavLink("Security", "/account/security", "shield")
 
 NAV_BY_LOGIN_TYPE: dict[str, list[NavLink]] = {
-    "member": [NavLink("Dashboard", "/dashboard/member")],
+    "member": [NavLink("Dashboard", "/dashboard/member"), SECURITY],
     "admin": [
         NavLink("Dashboard", "/dashboard/admin"),
         NavLink("Accounts", "/admin/accounts", "users"),
+        SECURITY,
         STYLE_GUIDE,
     ],
-    "reviewer": [NavLink("Dashboard", "/dashboard/reviewer"), STYLE_GUIDE],
-    "approver": [NavLink("Dashboard", "/dashboard/approver"), STYLE_GUIDE],
+    "reviewer": [NavLink("Dashboard", "/dashboard/reviewer"), SECURITY, STYLE_GUIDE],
+    "approver": [NavLink("Dashboard", "/dashboard/approver"), SECURITY, STYLE_GUIDE],
 }
 
 

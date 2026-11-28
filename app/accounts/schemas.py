@@ -49,3 +49,25 @@ class SetPasswordForm(BaseModel):
 
     password: str = Field(min_length=1, max_length=1024)
     confirm_password: str = Field(min_length=1, max_length=1024)
+
+
+class MfaSetupForm(BaseModel):
+    """The second-factor method chosen at enrolment (FR-2.8)."""
+
+    method: Literal["totp", "email"]
+    next: str = Field(default="", max_length=2000)
+
+
+class MfaCodeForm(BaseModel):
+    """A code from an authenticator app or an email. Any wrong shape is simply a wrong code."""
+
+    code: str = Field(min_length=1, max_length=12)
+    # Only used at enrolment; an enrolled login's own method always wins.
+    method: Literal["totp", "email"] = "totp"
+    next: str = Field(default="", max_length=2000)
+
+
+class NextForm(BaseModel):
+    """A form whose only field is where to go afterwards."""
+
+    next: str = Field(default="", max_length=2000)

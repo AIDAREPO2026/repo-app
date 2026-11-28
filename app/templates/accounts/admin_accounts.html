@@ -81,6 +81,15 @@
         </div>
         {% endif %}
 
+        {% if account.mfa_method %}
+        <h3 class="section-title mt-8">{{ _("Two-step sign-in") }}</h3>
+        <p class="mb-4 text-sm text-muted">{{ _("Reset it if the person has lost their phone or cannot get codes. Their sessions end, and they set it up again at their next sign-in.") }}</p>
+        <form method="post" action="/admin/accounts/{{ account.id }}/reset-mfa">
+          {{ csrf_field() }}
+          {{ button("Reset two-step sign-in", "secondary") }}
+        </form>
+        {% endif %}
+
         <h3 class="section-title mt-8">{{ _("Reassign this role") }}</h3>
         <p class="mb-5 text-sm text-muted">{{ _("%(name)s is deactivated and their sessions end. The new person gets the same role and a link to set their password.", name=account.full_name) }}</p>
         <form method="post" action="/admin/accounts/{{ account.id }}/reassign">

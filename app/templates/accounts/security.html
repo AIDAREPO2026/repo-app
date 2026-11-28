@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "macros/forms.html" import csrf_field with context %}
+{% from "macros/ui.html" import page_header, card, badge, button with context %}
+{% set method_names = {"totp": "Authenticator app", "email": "Code by email"} %}
+{% block content %}
+{{ page_header("Security", "How you sign in to the portal.") }}
+
+{% call card("Two-step sign-in") %}
+<div class="mt-3 flex flex-wrap items-center gap-3">
+  {% if login.mfa_method %}
+  {{ badge("On", "success") }}
+  <span class="text-sm">{{ _(method_names[login.mfa_method]) }}</span>
+  {% else %}
+  {{ badge("Off") }}
+  {% endif %}
+</div>
+
+{% if login.login_type == "member" %}
+<p class="card-text mt-4">{{ _("With two-step sign-in, each sign-in needs your password and a 6-digit code, so a stolen password alone is not enough.") }}</p>
+<form method="post" action="/account/security/{{ 'mfa-off' if login.mfa_method else 'mfa-on' }}" class="mt-5">
+  {{ csrf_field() }}
+  {% if login.mfa_method %}
+  {{ button("Turn off two-step sign-in", "secondary") }}
+  {% else %}
+  {{ button("Turn on two-step sign-in") }}
+  {% endif %}
+</form>
+{% else %}
+<p class="card-text mt-4">{{ _("Two-step sign-in is required for Admin, Reviewer and Approver accounts. If you lose your phone or cannot get codes, ask another ITPED Admin to reset it.") }}</p>
+{% endif %}
+{% endcall %}
+{% endblock %}

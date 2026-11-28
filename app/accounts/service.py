@@ -10,12 +10,21 @@ from fastapi import Request, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.accounts.guards import actor_for
+from app.accounts.mfa import (
+    decrypt_secret,
+    encrypt_secret,
+    matching_totp_step,
+    new_totp_secret,
+    provisioning_uri,
+    qr_code_data_uri,
+)
 from app.accounts.models import Login, LoginAttempt, LoginToken, UserSession
 from app.accounts.passwords import check_password_policy, hash_password, verify_password
 from app.accounts.schemas import PersonForm, PrivilegedAccountForm
-from app.accounts.tokens import issue_link_token, mark_used, usable_token
+from app.accounts.tokens import issue_email_code, issue_link_token, mark_used, usable_token, use_email_code
 from app.audit.service import SYSTEM, Actor, record
-from app.core.constants import LINK_TOKEN_MINUTES, LOCKOUT_ATTEMPTS, LOCKOUT_MINUTES
+from app.core.constants import EMAIL_CODE_MINUTES, LINK_TOKEN_MINUTES, LOCKOUT_ATTEMPTS, LOCKOUT_MINUTES
 from app.core.email import send_email
 from app.core.sessions import clear_session_cookie, client_ip, end_session, start_session, user_agent
 from app.core.time import utc_now
@@ -26,10 +35,18 @@ UNKNOWN_USER_HASH = hash_password("no account has this password")
 
 
 def sign_in(db: Session, user_id: str, password: str, request: Request, response: Response) -> Login | None:
-    """Check the User ID and password and, if they are right, start a new session on the response."""
+    """Check the User ID and password and, if they are right, start a new session on the response.
+
+    A login that needs a second factor gets a session that can reach only the code page,
+    and an emailed code if that is its method (FR-2.8).
+    """
     login = authenticate(db, user_id, password, client_ip(request), user_agent(request))
-    if login is not None:
-        start_session(db, login, request, response)
+    if login is None:
+        return None
+    pending = needs_mfa(login)
+    start_session(db, login, request, response, mfa_pending=pending)
+    if pending and login.mfa_method == "email":
+        send_email_code(db, login)
     return login
 
 
@@ -84,13 +101,15 @@ def is_locked(login: Login) -> bool:
     return login.locked_until is not None and login.locked_until > utc_now()
 
 
-def record_failed_attempt(db: Session, login: Login, ip: str, user_agent: str) -> None:
-    """Count a wrong password, and lock the login for 15 minutes on the 5th in a row (FR-1.7).
+def record_failed_attempt(
+    db: Session, login: Login, ip: str, user_agent: str, reason: str = "bad_password"
+) -> None:
+    """Count a wrong password or code, and lock the login for 15 minutes on the 5th in a row (FR-1.7).
 
     The caller must hold the row lock on the login (see _lock_login), so parallel
     attempts are counted one after another and cannot get around the limit.
     """
-    _log_attempt(db, login.user_id, login, ip, user_agent, "bad_password")
+    _log_attempt(db, login.user_id, login, ip, user_agent, reason)
     login.failed_count += 1
     if login.failed_count < LOCKOUT_ATTEMPTS:
         return
@@ -141,6 +160,141 @@ def _log_attempt(
     )
     db.add(attempt)
     db.flush()
+
+
+def needs_mfa(login: Login) -> bool:
+    """Return True when a login must give a second factor: always for privileged logins (FR-2.8)."""
+    return login.login_type != "member" or login.mfa_method is not None
+
+
+def send_email_code(db: Session, login: Login) -> None:
+    """Email a new sign-in code, replacing any earlier one."""
+    code = issue_email_code(db, login)
+    context = {"full_name": login.full_name or login.user_id, "code": code, "minutes": EMAIL_CODE_MINUTES}
+    send_email(login.email, "Your AIDA portal sign-in code", "email/mfa_code.txt", context)
+
+
+def start_app_enrolment(db: Session, login: Login) -> None:
+    """Give a login that has no second factor yet a new authenticator secret to confirm with a code."""
+    if login.mfa_method is not None:
+        raise AccountRuleError("This account already has a second factor.")
+    login.mfa_totp_secret = encrypt_secret(new_totp_secret())
+    db.flush()
+
+
+def app_enrolment_details(login: Login) -> tuple[str, str] | None:
+    """Return the QR code and the key to type in, for an authenticator enrolment that has started."""
+    if login.mfa_method is not None or login.mfa_totp_secret is None:
+        return None
+    secret = decrypt_secret(login.mfa_totp_secret)
+    return qr_code_data_uri(provisioning_uri(secret, login.user_id)), secret
+
+
+def finish_mfa(
+    db: Session, login: Login, method: str, code: str, request: Request, response: Response
+) -> str:
+    """Check a second-factor code and, if it is right, swap the half-signed-in session for a full one.
+
+    Returns "ok", "wrong" or "locked". A wrong code counts towards the same 15-minute lockout
+    as a wrong password, which is what limits guessing. At enrolment the code also confirms
+    the chosen method.
+    """
+    locked = _lock_login(db, login.user_id)
+    if locked is None or locked.status != "active" or is_locked(locked):
+        return "locked"
+    login = locked
+    method = login.mfa_method or method
+    if not _code_is_right(db, login, method, code.strip()):
+        return _refuse_code(db, login, request)
+    if login.mfa_method is None:
+        _enrol(db, login, method, request)
+    login.failed_count = 0
+    start_session(db, login, request, response)
+    return "ok"
+
+
+def reset_mfa(db: Session, actor: Actor, admin: Login, target: Login) -> None:
+    """Remove a login's second factor and end its sessions, so it enrols again at its next sign-in.
+
+    An Admin cannot reset their own, so a lost phone needs a second Admin to agree (FR-2.8).
+    """
+    if target.id == admin.id:
+        raise AccountRuleError("You cannot reset your own MFA. Ask another Admin.")
+    _clear_mfa(target)
+    db.flush()
+    end_all_sessions(db, target, actor.ip)
+    record(db, actor, "accounts.mfa_reset", "login", str(target.id), "success")
+
+
+def turn_on_member_mfa(db: Session, login: Login, request: Request) -> None:
+    """Send a Member's session back to the code page, where they choose and confirm a method."""
+    if login.login_type != "member" or login.mfa_method is not None:
+        raise AccountRuleError("MFA is already on for this account.")
+    user_session = db.get_one(UserSession, request.state.session_id)
+    user_session.mfa_pending = True
+    db.flush()
+
+
+def turn_off_member_mfa(db: Session, actor: Actor, login: Login) -> None:
+    """Turn a Member's second factor off. Privileged logins must keep theirs (FR-2.8)."""
+    if login.login_type != "member":
+        raise AccountRuleError("MFA is required for Admin, Reviewer and Approver accounts.")
+    member = db.get_one(Login, login.id)
+    _clear_mfa(member)
+    db.flush()
+    record(db, actor, "accounts.mfa_off", "login", str(member.id), "success")
+
+
+def _code_is_right(db: Session, login: Login, method: str, code: str) -> bool:
+    """Check a code against the login's emailed code or authenticator secret, using it up if right."""
+    if method == "email":
+        return use_email_code(db, login, code)
+    if method != "totp" or login.mfa_totp_secret is None:
+        return False
+    step = matching_totp_step(decrypt_secret(login.mfa_totp_secret), code, login.mfa_totp_last_step)
+    if step is None:
+        return False
+    login.mfa_totp_last_step = step
+    return True
+
+
+def _refuse_code(db: Session, login: Login, request: Request) -> str:
+    """Count and audit a wrong code, and end the half-signed-in session if the login is now locked."""
+    ip = client_ip(request)
+    record_failed_attempt(db, login, ip, user_agent(request), reason="mfa_failed")
+    record(db, actor_for(request, login), "accounts.mfa", "login", str(login.id), "failure")
+    if not is_locked(login):
+        return "wrong"
+    user_session = db.get_one(UserSession, request.state.session_id)
+    end_session(db, user_session, login, "locked", ip)
+    return "locked"
+
+
+def _enrol(db: Session, login: Login, method: str, request: Request) -> None:
+    """Record the method a login has just confirmed with its first code."""
+    login.mfa_method = method
+    login.mfa_enrolled_at = utc_now()
+    if method == "email":
+        login.mfa_totp_secret = None
+    db.flush()
+    record(
+        db,
+        actor_for(request, login),
+        "accounts.mfa_enrol",
+        "login",
+        str(login.id),
+        "success",
+        {"method": method},
+    )
+
+
+def _clear_mfa(login: Login) -> None:
+    """Remove every second-factor setting from a login."""
+    login.mfa_method = None
+    login.mfa_totp_secret = None
+    login.mfa_totp_last_step = None
+    login.mfa_enrolled_at = None
+    login.updated_at = utc_now()
 
 
 class AccountRuleError(ValueError):
