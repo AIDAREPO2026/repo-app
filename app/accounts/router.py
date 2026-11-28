@@ -13,6 +13,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from sqlalchemy.orm import Session
 
 from app.accounts.discom_csv import DiscomCsvError, ImportRow
+from app.accounts.discom_names import DISCOM_SUGGESTIONS
 from app.accounts.guards import (
     LOGIN_PATH,
     MFA_PATH,
@@ -25,6 +26,7 @@ from app.accounts.guards import (
 )
 from app.accounts.models import Login, Organisation
 from app.accounts.schemas import (
+    DiscomAddForm,
     DiscomForm,
     DiscomImportForm,
     MfaCodeForm,
@@ -652,6 +654,7 @@ def styleguide(request: Request, login: Annotated[Login | None, Depends(current_
 
 
 DISCOMS_PATH = "/admin/discoms"
+UNCHECKED_DISCOM = "Tick the box to confirm you have checked the name and email domain."
 DISCOM_DONE_MESSAGES = {
     "added": "Discom added.",
     "edited": "Discom updated.",
@@ -678,11 +681,19 @@ def render_discoms(
     messages += done_message(done, DISCOM_DONE_MESSAGES)
     if added is not None:
         messages.append(("success", f"Discoms added from the file: {added}."))
+    listed = discoms(db)
+    listed_names = {discom.name.lower() for discom in listed}
     context = {
         "title": "Discoms",
         "nav": nav_for("admin"),
         "breadcrumbs": breadcrumbs("admin", Crumb("Discoms")),
-        "discoms": discoms(db),
+        "discoms": listed,
+        # The value carries both fields to the script that fills them (static/js/shell.js).
+        "suggestions": [
+            (f"{name}|{domain}", name)
+            for name, domain in DISCOM_SUGGESTIONS
+            if name.lower() not in listed_names
+        ],
         "messages": messages,
     }
     return templates.TemplateResponse(
@@ -715,11 +726,14 @@ def discoms_page(
 
 @router.post(DISCOMS_PATH)
 def discom_add(
-    request: Request, db: DbSession, admin: AdminLogin, form: Annotated[DiscomForm, Form()]
+    request: Request, db: DbSession, admin: AdminLogin, form: Annotated[DiscomAddForm, Form()]
 ) -> Response:
     """Add a Discom."""
 
     def change(actor: Actor) -> None:
+        # D-11: the domain decides who may register, so the Admin confirms it was checked.
+        if not form.checked:
+            raise AccountRuleError(UNCHECKED_DISCOM)
         add_discom(db, actor, form)
 
     return run_discom_change(request, db, admin, change, "added")

@@ -98,6 +98,18 @@ function forgetResult() {
   window.history.replaceState(null, "", url);
 }
 
+// A Discom picked from the draft list ("name|domain") fills the two fields under it. The
+// Admin's confirmation is cleared, because it was given for different details.
+function fillDiscom(holder, value) {
+  const [name, domain] = value.split("|");
+  const form = holder.closest("form");
+  const prefix = holder.dataset.fillDiscom;
+  form.querySelector(`#${prefix}name`).value = name;
+  form.querySelector(`#${prefix}email_domain`).value = domain || "";
+  const confirmation = form.querySelector('[name="checked"]');
+  if (confirmation) confirmation.checked = false;
+}
+
 function applyAll() {
   applyTheme(read(THEME_KEY, "light"));
   applySidebar(read(SIDEBAR_KEY, "shown"));
@@ -127,6 +139,13 @@ document.addEventListener("click", (event) => {
     save(SIDEBAR_KEY, state);
     moveSidebar(state);
   }
+});
+
+document.addEventListener("change", (event) => {
+  // Only the select itself: the dropdown's search box, inside the same holder, also fires
+  // "change" and would overwrite the pick with the text typed.
+  const holder = event.target.closest("[data-fill-discom]");
+  if (holder && event.target.matches("select") && event.target.value) fillDiscom(holder, event.target.value);
 });
 
 // A toast's bar running out closes it.

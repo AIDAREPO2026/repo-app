@@ -106,6 +106,13 @@ class DiscomForm(BaseModel):
         return value.strip().lower().removeprefix("@")
 
 
+class DiscomAddForm(DiscomForm):
+    """The Add Discom form: a Discom, and the Admin's word that its details were checked."""
+
+    # Not required here, so an unticked box gets a message on the page instead of a bare 422.
+    checked: bool = False
+
+
 class DiscomImportForm(BaseModel):
     """The CSV text carried from the import preview to the save step."""
 

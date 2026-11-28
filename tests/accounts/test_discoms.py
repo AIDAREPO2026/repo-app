@@ -9,11 +9,13 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.accounts.discom_names import DISCOM_SUGGESTIONS
 from app.accounts.models import LoginAttempt, Organisation, UserSession
 from app.accounts.passwords import hash_password
 from app.accounts.router import SIGN_IN_FAILED
 from app.accounts.service import TEST_DISCOMS, AccountRuleError, seed_test_discoms
 from app.audit.models import AuditEvent
+from app.core.constants import PUBLIC_EMAIL_DOMAINS
 from app.main import create_app
 from tests.accounts.conftest import (
     CLIENT,
@@ -72,7 +74,7 @@ def test_fr_1_6_master_list_crud(sign_in: SignIn, engine: Engine) -> None:
 
     added = client.post(
         "/admin/discoms",
-        data={"name": " Grid Discom ", "email_domain": f"@{domain.upper()}"},
+        data={"name": " Grid Discom ", "email_domain": f"@{domain.upper()}", "checked": "true"},
         follow_redirects=False,
     )
     assert added.headers["location"] == "/admin/discoms?done=added"
@@ -107,10 +109,12 @@ def test_fr_1_6_duplicate_domain_refused(sign_in: SignIn, engine: Engine) -> Non
     listed = saved_discom(engine)
 
     same_domain = client.post(
-        "/admin/discoms", data={"name": f"Other {unique()}", "email_domain": listed.email_domain}
+        "/admin/discoms",
+        data={"name": f"Other {unique()}", "email_domain": listed.email_domain, "checked": "true"},
     )
     same_name = client.post(
-        "/admin/discoms", data={"name": listed.name.upper(), "email_domain": f"{unique()}.discom.example"}
+        "/admin/discoms",
+        data={"name": listed.name.upper(), "email_domain": f"{unique()}.discom.example", "checked": "true"},
     )
     other = saved_discom(engine)
     edit_to_taken = client.post(
@@ -247,7 +251,9 @@ def test_fr_1_6_public_mail_domain_refused_on_add_edit_and_import(sign_in: SignI
     client = csrf_client(APP)
     listed = saved_discom(engine)
 
-    added = client.post("/admin/discoms", data={"name": f"Free {unique()}", "email_domain": "@GMail.com"})
+    added = client.post(
+        "/admin/discoms", data={"name": f"Free {unique()}", "email_domain": "@GMail.com", "checked": "true"}
+    )
     edited = client.post(
         f"/admin/discoms/{listed.id}/edit", data={"name": listed.name, "email_domain": "yahoo.co.in"}
     )
@@ -260,3 +266,40 @@ def test_fr_1_6_public_mail_domain_refused_on_add_edit_and_import(sign_in: SignI
     assert stored_discom(engine, listed.id).email_domain == listed.email_domain
     assert "Anyone can get an address" in preview.text
     assert "Will be added" not in preview.text
+
+
+def test_fr_1_6_add_form_offers_discoms_not_already_listed(sign_in: SignIn, engine: Engine) -> None:
+    sign_in(APP, "admin")
+    first, _ = DISCOM_SUGGESTIONS[0]
+    second, second_domain = DISCOM_SUGGESTIONS[1]
+    with Session(engine) as session:
+        session.add(Organisation(name=first, email_domain=f"{unique()}.discom.example"))
+        session.commit()
+
+    page = csrf_client(APP).get("/admin/discoms").text
+
+    assert 'data-fill-discom="add-"' in page
+    assert f'<option value="{second}|{second_domain}"' in page
+    assert f'<option value="{first}|' not in page
+
+
+def test_fr_1_6_draft_list_never_offers_an_unusable_domain() -> None:
+    domains = [domain for _, domain in DISCOM_SUGGESTIONS if domain]
+
+    assert not set(domains) & PUBLIC_EMAIL_DOMAINS
+    assert len(domains) == len(set(domains))  # a shared domain cannot tell Discoms apart
+
+
+def test_fr_1_6_add_refused_until_the_details_are_confirmed(sign_in: SignIn, engine: Engine) -> None:
+    sign_in(APP, "admin")
+    domain = f"{unique()}.discom.example"
+
+    response = csrf_client(APP).post(
+        "/admin/discoms", data={"name": f"Unchecked {unique()}", "email_domain": domain}
+    )
+
+    assert response.status_code == 400
+    assert "Tick the box to confirm" in response.text
+    assert discom_by_domain(engine, domain) is None
+    assert "not verified" in response.text
+    assert 'name="checked" type="checkbox" value="true" required' in response.text

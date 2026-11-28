@@ -16,6 +16,7 @@ def assert_highlight_under(page: Page, popup: str, item: Locator) -> None:
 
 def test_p1_ui_02_select_highlight_follows_keys_and_pointer(form: Page) -> None:  # noqa: F811
     form.get_by_role("button", name="long").click()
+    expect(form.get_by_role("combobox", name="Search")).to_be_focused()
     form.keyboard.press("ArrowDown")
     form.keyboard.press("ArrowDown")
     assert_highlight_under(form, "#long-popup", form.get_by_role("option", name="Discom 3", exact=True))

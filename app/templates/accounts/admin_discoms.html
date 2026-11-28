@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% from "macros/forms.html" import field, csrf_field with context %}
-{% from "macros/ui.html" import page_header, button, card, badge, modal, drawer, empty_state, data_table, dialog_actions with context %}
+{% from "macros/forms.html" import field, select, csrf_field with context %}
+{% from "macros/ui.html" import page_header, button, card, badge, alert, modal, drawer, empty_state, data_table, dialog_actions with context %}
 {#
   The Discom master list (FR-1.6). Registration emails must use a listed, active Discom's
   domain (D-11). Discoms are deactivated, never deleted (SRS 6.3).
@@ -87,7 +87,19 @@
 {% call modal("add-discom", "Add a Discom") %}
 <form method="post" action="/admin/discoms">
   {{ csrf_field() }}
+  <div class="mb-4">
+    {{ alert(_("The list is a draft and is not verified. Check the name and email domain with the Discom: anyone with an email on that domain can ask for its login."), "warning") }}
+  </div>
+  {# Picking one fills the fields below, which stay editable for a Discom not in the list. #}
+  <div data-fill-discom="add-">
+    {{ select("suggestion", "Find the Discom", suggestions, id="add-suggestion", placeholder="Search the draft list",
+              help="Fills the name and, where one was found, the email domain.") }}
+  </div>
   {{ discom_fields("add-") }}
+  <label class="check">
+    <input name="checked" type="checkbox" value="true" required>
+    {{ _("I have checked this name and email domain with the Discom.") }}
+  </label>
   <div class="dialog-actions">
     {{ dialog_actions("add-discom", "Add Discom", "plus") }}
   </div>
