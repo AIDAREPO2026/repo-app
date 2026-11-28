@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros/forms.html" import field, csrf_field with context %}
+{% from "macros/forms.html" import field, select, csrf_field with context %}
 {% from "macros/ui.html" import page_header, button, card, badge, alert, modal, drawer, empty_state, data_table, dialog_actions with context %}
 {#
   The Discom master list (FR-1.6). Registration emails must use a listed, active Discom's
@@ -8,8 +8,8 @@
 {% set domain_help = "The part after @ in staff emails, such as discom.co.in." %}
 {% set domain_pattern = "([A-Za-z0-9]([A-Za-z0-9\\-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]{2,63}" %}
 
-{% macro discom_fields(prefix, discom=none, suggestions=[]) %}
-{{ field("name", "Discom name", value=discom.name if discom else "", required=true, autocomplete="off", maxlength=200, id=prefix ~ "name", suggestions=suggestions) }}
+{% macro discom_fields(prefix, discom=none) %}
+{{ field("name", "Discom name", value=discom.name if discom else "", required=true, autocomplete="off", maxlength=200, id=prefix ~ "name") }}
 {{ field("email_domain", "Email domain", value=discom.email_domain if discom else "", required=true, autocomplete="off", maxlength=253, pattern=domain_pattern, help=domain_help, id=prefix ~ "email_domain") }}
 {% endmacro %}
 
@@ -88,9 +88,14 @@
 <form method="post" action="/admin/discoms">
   {{ csrf_field() }}
   <div class="mb-4">
-    {{ alert(_("The suggested names are not verified. Check the name and email domain with the Discom: anyone with an email on that domain can ask for its login."), "warning") }}
+    {{ alert(_("The list is a draft and is not verified. Check the name and email domain with the Discom: anyone with an email on that domain can ask for its login."), "warning") }}
   </div>
-  {{ discom_fields("add-", suggestions=name_suggestions) }}
+  {# Picking one fills the fields below, which stay editable for a Discom not in the list. #}
+  <div data-fill-discom="add-">
+    {{ select("suggestion", "Find the Discom", suggestions, id="add-suggestion", placeholder="Search the draft list",
+              help="Fills the name and, where one was found, the email domain.") }}
+  </div>
+  {{ discom_fields("add-") }}
   <label class="check">
     <input name="checked" type="checkbox" value="true" required>
     {{ _("I have checked this name and email domain with the Discom.") }}

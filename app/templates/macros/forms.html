@@ -10,7 +10,7 @@
   id defaults to the name. Pass one when the same form appears more than once on a page,
   such as a form in each row of a table, so every id stays unique.
 #}
-{% macro field(name, label, type="text", value="", help="", error="", required=false, autocomplete="", id="", pattern="", maxlength="", inputmode="", suggestions=[]) %}
+{% macro field(name, label, type="text", value="", help="", error="", required=false, autocomplete="", id="", pattern="", maxlength="", inputmode="") %}
 {% set field_id = id or name %}
 {% set described_by = [] %}
 {% if help %}{% set described_by = described_by + [field_id ~ "-help"] %}{% endif %}
@@ -23,11 +23,8 @@
          {% if pattern %}pattern="{{ pattern }}"{% endif %}
          {% if maxlength %}maxlength="{{ maxlength }}"{% endif %}
          {% if inputmode %}inputmode="{{ inputmode }}"{% endif %}
-         {% if suggestions %}list="{{ field_id }}-list"{% endif %}
          {% if described_by %}aria-describedby="{{ described_by|join(' ') }}"{% endif %}
          {% if error %}aria-invalid="true"{% endif %}>
-  {# The browser's own suggestion list: typing anything else stays allowed. #}
-  {% if suggestions %}<datalist id="{{ field_id }}-list">{% for text in suggestions %}<option value="{{ text }}"></option>{% endfor %}</datalist>{% endif %}
   {% if help %}<p id="{{ field_id }}-help" class="field-help">{{ _(help) }}</p>{% endif %}
   {% if error %}<p id="{{ field_id }}-error" class="field-error">{{ error }}</p>{% endif %}
 </div>
