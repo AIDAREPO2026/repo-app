@@ -5,7 +5,7 @@
 | Status | In review |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p1-acc-07-device-limit` |
-| Pull request | Not opened |
+| Pull request | [#35](https://github.com/AIDAREPO2026/repo-app/pull/35) |
 | Started | 2026-11-28 |
 | Finished | Not finished |
 
