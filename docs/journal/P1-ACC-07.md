@@ -2,12 +2,12 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In review |
+| Status | Done |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p1-acc-07-device-limit` |
 | Pull request | [#35](https://github.com/AIDAREPO2026/repo-app/pull/35) |
 | Started | 2026-11-28 |
-| Finished | Not finished |
+| Finished | 2026-11-28 |
 
 Spec: [docs/tasks/phase-1-platform-access.md](../tasks/phase-1-platform-access.md#p1-acc-07--enforce-the-5-device-limit-with-the-sixth-session-policy)
 
@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Merged #35 on the user's approval. Status Done; tracker row set to Done. No second review or staging check is recorded. |
 | 2026-11-28 | Raghvendra Singh | Built the limit, the Signed-in devices page and the Sign-in rules screen. Checked in a browser, and checked that the parallel test fails without the row lock. Next: review. |
 | 2026-11-28 | Raghvendra Singh | Started the task. |
 
