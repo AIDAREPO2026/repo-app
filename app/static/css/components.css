@@ -1077,6 +1077,23 @@
     accent-color: var(--aida-accent);
   }
 
+  .input:not(.find-input),
+  .input[type="file"]::file-selector-button {
+    border-color: var(--aida-field-border);
+  }
+
+  .input:not(.find-input):hover:not(:disabled) {
+    border-color: var(--aida-border-strong);
+  }
+
+  .input:not(.find-input):focus-visible {
+    border-color: var(--aida-focus-ring);
+  }
+
+  .input:not(.find-input)[aria-invalid="true"] {
+    border-color: var(--aida-danger);
+  }
+
   /* A dialog's heading and its buttons are set off by hairlines. */
   .dialog-header {
     padding-bottom: var(--aida-space-3);

@@ -115,11 +115,11 @@
   /* Shadow depths: resting cards, and things that float (menus, modals). By night
      shadows go darker, and raised surfaces get a faint lit top edge, so cards still
      separate from the page. */
-  --aida-shadow-color: light-dark(rgb(15 27 45 / 0.04), rgb(4 8 16 / 0.25));
+  --aida-shadow-color: light-dark(rgb(15 27 45 / 0.08), rgb(4 8 16 / 0.38));
   --aida-edge-light: light-dark(rgb(255 255 255 / 0), rgb(255 255 255 / 0.06));
   --aida-shadow-0: 0 1px 2px var(--aida-shadow-color);
-  --aida-shadow-1: inset 0 1px 0 var(--aida-edge-light), 0 1px 2px var(--aida-shadow-color), 0 2px 6px var(--aida-shadow-color);
-  --aida-shadow-2: inset 0 1px 0 var(--aida-edge-light), 0 14px 34px light-dark(rgb(15 27 45 / 0.09), rgb(4 8 16 / 0.4)), 0 2px 6px var(--aida-shadow-color);
+  --aida-shadow-1: inset 0 1px 0 var(--aida-edge-light), 0 1px 3px var(--aida-shadow-color), 0 6px 18px var(--aida-shadow-color);
+  --aida-shadow-2: inset 0 1px 0 var(--aida-edge-light), 0 14px 34px light-dark(rgb(15 27 45 / 0.16), rgb(4 8 16 / 0.55)), 0 2px 6px var(--aida-shadow-color);
   /* The soft blue glow under a primary button. */
   --aida-accent-glow: 0 0 0 transparent;
 
@@ -174,6 +174,10 @@
     radial-gradient(40rem 28rem at 0% 100%, color-mix(in srgb, var(--aida-brand-amber) 4%, transparent), transparent 70%),
     radial-gradient(36rem 24rem at 35% 0%, color-mix(in srgb, var(--aida-brand-blue) 3%, transparent), transparent 70%);
 
+  /* The outline of form fields, lighter than --aida-border-strong. A field is also known by
+     its label above and its tinted fill; more contrast brings the strong outline back. */
+  --aida-field-border: light-dark(#cdd7e3, #3d434f);
+
   /* Translucent glass, used by the top bar and modal scrims. */
   --aida-glass: light-dark(rgb(255 255 255 / 0.72), rgb(28 30 35 / 0.72));
   --aida-glass-filter: blur(20px) saturate(180%);
@@ -223,6 +227,7 @@
     --aida-border: light-dark(#56667c, #9aa8bb);
     --aida-border-strong: light-dark(#0f1b2d, #edf2f8);
     --aida-text-muted: light-dark(#2c3a4e, #d2dbe6);
+    --aida-field-border: var(--aida-border-strong);
     --aida-glass: var(--aida-surface);
     --aida-surface-glass: var(--aida-surface);
     --aida-glass-filter: none;
