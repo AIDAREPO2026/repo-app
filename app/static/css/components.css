@@ -1119,6 +1119,64 @@
     border-top: 1px solid var(--aida-border);
   }
 
+  /* ---------- Micro-interactions: the icon answers the pointer ---------- */
+
+  /* Only for a real pointer, and never when the person asks for less motion. Pressing is
+     handled by the spring rules above. */
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .btn .icon,
+    .side-link .icon,
+    .menu-icon,
+    .icon-button .icon,
+    .account-button .avatar,
+    .figure-label .icon,
+    .crumb-button .icon:first-child,
+    .crumb-caret {
+      transition: transform var(--aida-duration-slow) var(--aida-ease-spring);
+    }
+
+    /* Buttons and clickable figures rise a touch. */
+    .btn:not(:disabled):hover:not(:active) {
+      transform: translateY(-1px);
+    }
+
+    .btn:hover .icon,
+    .side-link:hover .icon,
+    .menu-item:hover .menu-icon,
+    .icon-button:hover .icon,
+    .crumb-button:hover .icon:first-child {
+      transform: scale(1.15);
+    }
+
+    .account-button:hover .avatar {
+      transform: scale(1.08);
+    }
+
+    /* Drawings that suggest a direction move that way. */
+    a.figure:hover .figure-label .icon {
+      transform: translateX(0.25rem);
+    }
+
+    .crumb-button:hover .crumb-caret {
+      transform: translateY(2px);
+    }
+
+    .dialog-header .btn-icon:hover .icon {
+      transform: rotate(90deg);
+    }
+
+    .theme-button:hover .icon {
+      transform: rotate(30deg) scale(1.1);
+    }
+
+    /* While the button is held, the drawing settles back with it. */
+    .btn:active .icon,
+    .side-link:active .icon,
+    .icon-button:active .icon {
+      transform: scale(0.9);
+    }
+  }
+
   /* ---------- Hiding and showing the sidebar ---------- */
 
   /* Named only while it moves, so page-to-page transitions stay a plain cross-fade. */
