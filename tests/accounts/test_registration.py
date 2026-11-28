@@ -189,3 +189,18 @@ def test_p1_acc_02_privacy_notice_shown(engine: Engine) -> None:
     assert "What we collect" in page
     assert active.name in page
     assert inactive.name not in page
+
+
+def test_fr_1_6_registration_refused_for_a_discom_listed_with_a_public_domain(engine: Engine) -> None:
+    # Listed straight in the database, as one saved before public domains were blocked would be.
+    discom = build_organisation()
+    discom.email_domain = "rediffmail.com"
+    saved(engine, discom)
+    client = csrf_client(APP)
+
+    response = register(client, request_form(discom, solved_captcha(client)))
+
+    # The same answer as a good request, so the form does not say why (D-11).
+    assert response.headers["location"] == "/register/sent"
+    assert member_logins(engine, discom) == []
+    assert registration_audits(engine, discom)[0]["reason"] == "email_domain"

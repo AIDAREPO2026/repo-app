@@ -21,6 +21,39 @@ STORAGE_CRITICAL_PERCENT = 85
 # FR-2.1: exactly four login types. Visitors are anonymous and have no login.
 LOGIN_TYPES = ("member", "admin", "reviewer", "approver")
 
+# FR-1.6, D-11: mail services anyone can join. A Discom listed with one of these would let any
+# stranger with an address there ask for its login.
+PUBLIC_EMAIL_DOMAINS = frozenset(
+    {
+        "aol.com",
+        "gmail.com",
+        "gmx.com",
+        "googlemail.com",
+        "hotmail.co.uk",
+        "hotmail.com",
+        "icloud.com",
+        "live.com",
+        "live.in",
+        "mail.com",
+        "me.com",
+        "msn.com",
+        "outlook.com",
+        "outlook.in",
+        "proton.me",
+        "protonmail.com",
+        "rediffmail.com",
+        "rocketmail.com",
+        "yahoo.co.in",
+        "yahoo.co.uk",
+        "yahoo.com",
+        "yahoo.in",
+        "yandex.com",
+        "ymail.com",
+        "zoho.com",
+        "zohomail.in",
+    }
+)
+
 # Security.md: set-password and reset links are single-use and expire after 60 minutes.
 LINK_TOKEN_MINUTES = 60
 

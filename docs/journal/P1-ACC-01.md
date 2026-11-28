@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Security follow-up, found while researching Discom domains: public mail services such as gmail.com could be listed. They are now refused on add, edit and import, and at registration. Branch `fix/p1-acc-01-free-email-domains`. |
 | 2026-11-28 | Raghvendra Singh | Merged #18 on the user's approval and set the tracker row to Done. |
 | 2026-11-28 | Raghvendra Singh | Built the `organisation` table (migration 0009), the Admin Discoms screen (list, add, edit, deactivate, reactivate), the CSV import with a preview, the `seed-test-discoms` command and the inactive-Discom sign-in rule. Checked locally in the browser; unit and e2e tests pass. Opened #18 and set the tracker row to In review. Next: review. |
 | 2026-11-28 | Raghvendra Singh | Started the task. |
@@ -27,6 +28,7 @@ Anything decided while building that the spec does not say, and any change from 
 
 | Date | Decision or deviation | Reason | Agreed by |
 | --- | --- | --- | --- |
+| 2026-11-28 | A fixed list of public mail domains (`PUBLIC_EMAIL_DOMAINS`) cannot be used for a Discom, and registration refuses them even if one is already listed. Broad government domains such as `nic.in` are not blocked; that is part of D-11 for ITPED | Anyone could get an address and ask for that Discom's login. Several Discoms publish only Gmail addresses, so ITPED needs another way to identify them | User; list pending tech lead and security review |
 | 2026-11-28 | Added Reactivate next to Deactivate | Deactivating a Discom by mistake would otherwise need a database fix. Nothing is deleted (SRS 6.3) | Pending tech lead review |
 | 2026-11-28 | Deactivating a Discom ends the open sessions of its Member login, and sign-in refuses it with the usual message, logged with reason `inactive` | The spec says its Member login cannot sign in; ending sessions makes that apply at once, as for a deactivated account | Pending tech lead review |
 | 2026-11-28 | The CSV import preview keeps nothing on the server: the file text goes back in a hidden field and is checked again when saved. Rows with a problem, repeats and Discoms already listed are skipped and shown; the rest are added. Limits: 100 KB and 500 rows, UTF-8, columns `name` and `email_domain` | No temporary table or file to clean up; checking again on save means the preview cannot be tampered with | Pending tech lead review |

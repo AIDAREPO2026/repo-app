@@ -240,3 +240,23 @@ def test_p1_acc_01_seed_test_discoms(engine: Engine) -> None:
 def test_p1_acc_01_seed_refused_in_production(db: Session) -> None:
     with pytest.raises(AccountRuleError, match="not production"):
         seed_test_discoms(db, "production")
+
+
+def test_fr_1_6_public_mail_domain_refused_on_add_edit_and_import(sign_in: SignIn, engine: Engine) -> None:
+    sign_in(APP, "admin")
+    client = csrf_client(APP)
+    listed = saved_discom(engine)
+
+    added = client.post("/admin/discoms", data={"name": f"Free {unique()}", "email_domain": "@GMail.com"})
+    edited = client.post(
+        f"/admin/discoms/{listed.id}/edit", data={"name": listed.name, "email_domain": "yahoo.co.in"}
+    )
+    preview = upload(client, f"name,email_domain\nFree {unique()},outlook.com")
+
+    assert added.status_code == 400
+    assert "Anyone can get an address" in added.text
+    assert discom_by_domain(engine, "gmail.com") is None
+    assert edited.status_code == 400
+    assert stored_discom(engine, listed.id).email_domain == listed.email_domain
+    assert "Anyone can get an address" in preview.text
+    assert "Will be added" not in preview.text

@@ -46,6 +46,7 @@ from app.core.constants import (
     LINK_TOKEN_MINUTES,
     LOCKOUT_ATTEMPTS,
     LOCKOUT_MINUTES,
+    PUBLIC_EMAIL_DOMAINS,
 )
 from app.core.email import send_email
 from app.core.sessions import clear_session_cookie, client_ip, end_session, start_session, user_agent
@@ -371,6 +372,9 @@ class AccountRuleError(ValueError):
     """An account change that breaks a rule. The message is shown to the Admin as it is."""
 
 
+PUBLIC_DOMAIN_REFUSED = (
+    "Anyone can get an address on this email service. Use the domain of the Discom's own staff email."
+)
 LINK_NOT_USABLE = "This link has already been used or has expired. Ask an ITPED Admin to send a new one."
 
 
@@ -629,6 +633,7 @@ def discoms(db: Session) -> list[Organisation]:
 
 def add_discom(db: Session, actor: Actor, form: DiscomForm, via: str = "form") -> Organisation:
     """Add a Discom to the master list, refusing a name or domain already listed (FR-1.6)."""
+    _check_domain_is_not_public(form.email_domain)
     _check_discom_is_unique(db, form)
     discom = Organisation(name=form.name, email_domain=form.email_domain)
     db.add(discom)
@@ -640,6 +645,7 @@ def add_discom(db: Session, actor: Actor, form: DiscomForm, via: str = "form") -
 
 def edit_discom(db: Session, actor: Actor, discom: Organisation, form: DiscomForm) -> None:
     """Change a Discom's name or email domain, keeping both unique."""
+    _check_domain_is_not_public(form.email_domain)
     _check_discom_is_unique(db, form, discom.id)
     before = {"name": discom.name, "email_domain": discom.email_domain}
     discom.name = form.name
@@ -672,6 +678,8 @@ def preview_discom_import(db: Session, csv_text: str) -> list[ImportRow]:
     """
     rows = read_discom_csv(csv_text)
     for row in rows:
+        if not row.problem and row.email_domain in PUBLIC_EMAIL_DOMAINS:
+            row.problem = PUBLIC_DOMAIN_REFUSED
         if not row.problem:
             _compare_with_list(db, row)
     return rows
@@ -700,6 +708,12 @@ def seed_test_discoms(db: Session, app_env: str) -> int:
             add_discom(db, SYSTEM, form, via="seed")
             added += 1
     return added
+
+
+def _check_domain_is_not_public(email_domain: str) -> None:
+    """Refuse a mail service anyone can join, such as gmail.com (D-11)."""
+    if email_domain in PUBLIC_EMAIL_DOMAINS:
+        raise AccountRuleError(PUBLIC_DOMAIN_REFUSED)
 
 
 def _check_discom_is_unique(db: Session, form: DiscomForm, own_id: uuid.UUID | None = None) -> None:
@@ -825,7 +839,9 @@ def _discom_has_member_login(db: Session, discom: Organisation) -> bool:
 def _hidden_registration_problem(db: Session, form: RegistrationForm, discom: Organisation) -> str | None:
     """Return why a well-formed request cannot be accepted, for the audit only, or None."""
     # D-11: the email must be on the Discom's own domain, not a subdomain or a lookalike.
-    if form.email.rpartition("@")[2] != discom.email_domain:
+    # A public domain is refused here too, for a Discom listed before it was blocked.
+    domain = form.email.rpartition("@")[2]
+    if domain != discom.email_domain or domain in PUBLIC_EMAIL_DOMAINS:
         return "email_domain"
     if _user_id_taken(db, form.user_id):
         return "user_id_taken"
