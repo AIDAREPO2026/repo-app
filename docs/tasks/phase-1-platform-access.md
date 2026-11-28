@@ -113,7 +113,7 @@ The Admin audit search screen is built in `P3-UI-01`.
 - Every button has an icon. Closing a dialog and per-row actions show the icon alone, with an accessible name.
 - A data table component: search, a header that stays while rows scroll, a height that fits the screen on wide screens, and a row count.
 - A translucent top bar with `backdrop-filter` and a solid fallback.
-- A theme switcher (System, Light, Dark) on every page, remembered in the browser. Light is the default.
+- A theme button on every page that switches between light and dark in one click, remembered in the browser. Light is the default.
 - Signed-in pages float: a light sidebar with folding sections and a page finder, a row with the breadcrumb pill (menus for pages, and a button that hides the sidebar) and the page actions, then cards on the canvas. The breadcrumbs name the page, so page headings are for screen readers.
 - `prefers-reduced-motion`, `prefers-reduced-transparency` and `prefers-contrast: more` handled once, in the tokens, so no component needs its own check.
 - A style-guide page at `/_styleguide` showing every token and component, in light and dark, for review by ITPED and the designer.

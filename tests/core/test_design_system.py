@@ -65,13 +65,14 @@ def test_p1_ui_02_breadcrumbs_open_menus_and_mark_the_current_page() -> None:
     assert '<span class="crumb-current" aria-current="page">Discoms</span>' in html
 
 
-def test_p1_ui_02_theme_button_offers_three_choices_hidden_without_script() -> None:
+def test_p1_ui_02_theme_button_toggles_and_is_hidden_without_script() -> None:
     macro = templates.env.get_template("macros/ui.html").module.theme_switcher  # type: ignore[attr-defined]
 
     html = str(macro())
 
-    assert re.findall(r'data-theme-choice="(\w+)"', html) == ["system", "light", "dark"]
     assert '<div class="theme-switcher" hidden>' in html
+    assert "data-theme-toggle" in html
+    assert "popovertarget" not in html  # one click changes the theme, with no menu
 
 
 def test_p1_ui_02_data_table_names_its_scroll_area_and_counts_rows() -> None:

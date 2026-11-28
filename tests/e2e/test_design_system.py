@@ -62,10 +62,9 @@ def admin_page(
     context.close()
 
 
-def follow_device_theme(page: Page, scheme: str) -> None:
-    """Choose the System theme and set the device to light or dark."""
-    page.add_init_script("localStorage.setItem('aida-theme', 'system')")
-    page.emulate_media(color_scheme=scheme)
+def choose_theme(page: Page, scheme: str) -> None:
+    """Save the light or dark choice, as the theme button would."""
+    page.add_init_script(f"localStorage.setItem('aida-theme', '{scheme}')")
 
 
 def open_styleguide(page: Page) -> None:
@@ -76,7 +75,7 @@ def open_styleguide(page: Page) -> None:
 @pytest.mark.parametrize("scheme", ["light", "dark"])
 def test_p1_ui_02_axe_light_and_dark(admin_page: Page, scheme: str) -> None:
     page = admin_page
-    follow_device_theme(page, scheme)
+    choose_theme(page, scheme)
     open_styleguide(page)
 
     assert blocking_violations(page) == []
@@ -109,7 +108,7 @@ def token(page: Page, name: str) -> str:
 @pytest.mark.parametrize("scheme", ["light", "dark"])
 def test_p1_ui_02_app_shell_passes_axe(admin_page: Page, scheme: str, path: str) -> None:
     page = admin_page
-    follow_device_theme(page, scheme)
+    choose_theme(page, scheme)
     page.goto(path)
 
     assert page.get_by_role("navigation", name="Main").is_visible()
@@ -133,7 +132,7 @@ def test_p1_ui_02_small_screen_menu_drawer(admin_page: Page) -> None:
 
 @pytest.mark.parametrize("scheme", ["light", "dark"])
 def test_p1_acc_10_code_page_passes_axe(page: Page, scheme: str) -> None:
-    follow_device_theme(page, scheme)
+    choose_theme(page, scheme)
     password_step(page)
 
     assert page.get_by_label("6-digit code").is_visible()

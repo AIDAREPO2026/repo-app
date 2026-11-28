@@ -56,26 +56,20 @@
 {% endmacro %}
 
 {#
-  One button for system, light or dark. static/js/shell.js shows it, ticks the choice and
-  remembers it. id must be unique on the page.
+  One button that switches between light and dark at once. static/js/shell.js shows it,
+  names it after what a click will do, and remembers the choice.
 #}
-{% macro theme_switcher(id="theme-menu") %}
+{% macro theme_switcher() %}
 {% from "macros/icons.html" import icon %}
-{% set choices = [("system", "System", "monitor"), ("light", "Light", "sun"), ("dark", "Dark", "moon")] %}
 <div class="theme-switcher" hidden>
-  <button type="button" class="icon-button theme-button" popovertarget="{{ id }}" aria-label="{{ _('Theme') }}" title="{{ _('Theme') }}">
-    {# One drawing per choice; CSS shows the one in use. #}
-    {% for value, label, icon_name in choices %}<span class="theme-icon theme-icon-{{ value }}">{{ icon(icon_name) }}</span>{% endfor %}
+  <button type="button" class="icon-button theme-button" data-theme-toggle
+          data-to-dark="{{ _('Switch to dark theme') }}" data-to-light="{{ _('Switch to light theme') }}"
+          aria-label="{{ _('Switch to dark theme') }}" title="{{ _('Switch to dark theme') }}">
+    {# The drawing shows where a click goes: a moon by day, a sun by night. The class names
+       the theme in which CSS shows it. #}
+    <span class="theme-icon theme-icon-light">{{ icon("moon") }}</span>
+    <span class="theme-icon theme-icon-dark">{{ icon("sun") }}</span>
   </button>
-  {% call menu_panel(id, "Theme") %}
-  {% for value, label, icon_name in choices %}
-  <button type="button" class="menu-item" data-theme-choice="{{ value }}" aria-pressed="false"
-          popovertarget="{{ id }}" popovertargetaction="hide">
-    <span class="menu-icon">{{ icon(icon_name) }}</span><span class="menu-text">{{ _(label) }}</span>
-    <span class="menu-check">{{ icon("check") }}</span>
-  </button>
-  {% endfor %}
-  {% endcall %}
 </div>
 {% endmacro %}
 

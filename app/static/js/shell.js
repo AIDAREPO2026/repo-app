@@ -20,14 +20,17 @@ function save(key, value) {
   } catch {}
 }
 
-// tokens.css follows the device unless <html> carries .theme-light or .theme-dark.
+// Pages arrive light. tokens.css reads .theme-light or .theme-dark on <html>.
 function applyTheme(theme) {
-  root.classList.toggle("theme-light", theme === "light");
-  root.classList.toggle("theme-dark", theme === "dark");
+  const dark = theme === "dark";
+  root.classList.toggle("theme-light", !dark);
+  root.classList.toggle("theme-dark", dark);
   // Picks the drawing on the theme button (components.css).
-  root.dataset.theme = theme;
-  for (const button of document.querySelectorAll("[data-theme-choice]")) {
-    button.setAttribute("aria-pressed", String(button.dataset.themeChoice === theme));
+  root.dataset.theme = dark ? "dark" : "light";
+  for (const button of document.querySelectorAll("[data-theme-toggle]")) {
+    const label = dark ? button.dataset.toLight : button.dataset.toDark;
+    button.setAttribute("aria-label", label);
+    button.title = label;
   }
 }
 
@@ -94,10 +97,10 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 document.addEventListener("click", (event) => {
-  const choice = event.target.closest("[data-theme-choice]");
-  if (choice) {
-    save(THEME_KEY, choice.dataset.themeChoice);
-    applyTheme(choice.dataset.themeChoice);
+  if (event.target.closest("[data-theme-toggle]")) {
+    const theme = root.classList.contains("theme-dark") ? "light" : "dark";
+    save(THEME_KEY, theme);
+    applyTheme(theme);
   }
   if (event.target.closest("[data-sidebar-toggle]")) {
     const state = root.classList.contains("sidebar-hidden") ? "shown" : "hidden";

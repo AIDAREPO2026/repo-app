@@ -552,8 +552,7 @@
 
   :root:not([data-theme]) .theme-icon-light,
   :root[data-theme="light"] .theme-icon-light,
-  :root[data-theme="dark"] .theme-icon-dark,
-  :root[data-theme="system"] .theme-icon-system {
+  :root[data-theme="dark"] .theme-icon-dark {
     display: inline-flex;
   }
 
@@ -645,8 +644,7 @@
   }
 
   .menu-icon .icon,
-  .menu-item > .icon,
-  .menu-check .icon {
+  .menu-item > .icon {
     width: 1rem;
     height: 1rem;
   }
@@ -663,13 +661,8 @@
     font-weight: 500;
   }
 
-  .menu-item > .icon,
-  .menu-check {
+  .menu-item > .icon {
     color: var(--aida-accent);
-  }
-
-  .menu-item[aria-pressed="false"] .menu-check {
-    visibility: hidden;
   }
 
   .account-button {

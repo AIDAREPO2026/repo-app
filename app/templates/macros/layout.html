@@ -74,7 +74,7 @@
 {% from "macros/ui.html" import menu_panel, theme_switcher with context %}
 {% set name = login.full_name or login.user_id %}
 <div class="account-panel">
-  {{ theme_switcher(id ~ "-theme") }}
+  {{ theme_switcher() }}
   <button type="button" class="account-button" popovertarget="{{ id }}-account">
     <span class="avatar" aria-hidden="true">{{ name[:1]|upper }}</span>
     <span class="account-name">{{ name }}<span class="account-role">{{ _(ROLE_NAMES[login.login_type]) }}</span></span>
