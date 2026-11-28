@@ -16,7 +16,8 @@
   {% set discom_options = [] %}
   {% for discom in discoms %}{% set discom_options = discom_options.append((discom.id, discom.name)) or discom_options %}{% endfor %}
   {{ select("organisation_id", "Discom", discom_options, value=form.organisation_id or "", required=true,
-            placeholder="Choose your Discom", error=errors.get("organisation_id", "")) }}
+            placeholder="Choose your Discom", error=errors.get("organisation_id", ""),
+            help="Not listed? Your Discom may already have a login or a request waiting. Contact ITPED.") }}
 
   {{ field("email", "Official email address", type="email", value=form.email, autocomplete="email", required=true, maxlength=254,
            help="Use an address on your Discom's own email domain.", error=errors.get("email", "")) }}

@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Reported by the user: the registration list still offered Discoms that already had a login or request. They are now left out. Branch `fix/p1-acc-02-hide-taken-discoms`. |
 | 2026-11-28 | Raghvendra Singh | Merged #29 and #30 on the user's approval. Status Done; tracker row set to Done. |
 | 2026-11-28 | Raghvendra Singh | Reserved IDs gained a category filter and a Removed tab with restore (#30). |
 | 2026-11-28 | Raghvendra Singh | Reserved words now have categories; the screen is compact and shows more rows on scroll (#30). `data_table()` gained `compact` and `batch`, a `P1-UI-02` component. |
@@ -32,6 +33,7 @@ Anything decided while building that the spec does not say, and any change from 
 
 | Date | Decision or deviation | Reason | Agreed by |
 | --- | --- | --- | --- |
+| 2026-11-28 | A Discom with a pending or active login is not listed on the public form. The server still refuses it if chosen | One login per Discom (FR-1.6). The form already said so after submitting; listing now shows at a glance which Discoms have a login, which the security review should accept or not | User; security review pending |
 | 2026-11-28 | The reserved words are two settings in `app_setting`, edited on Reserved IDs; format rules are fixed in code. `portal` is reserved, so suggestions use `.office` | The user asked for a list Admin can change; changes are audited like other settings | User; security review pending |
 | 2026-11-28 | A Discom's bracketed code, such as MSEDCL, is kept for that Discom. The server command that creates the first Admin is exempt from the rules | Stops one Discom posing as another; only a server operator can run the command | Pending tech lead review |
 | 2026-11-28 | Registration takes three steps, and a taken User ID is now said on step 3 instead of being silently accepted | A suggestion must be free. Only someone who reads mail on the Discom's domain gets that far, with limited checks, so outsiders learn nothing | User; security review pending |

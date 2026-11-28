@@ -10,7 +10,7 @@ from datetime import timedelta
 
 from fastapi import Request, Response
 from redis import Redis
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.orm import Session
 
 from app.accounts.discom_csv import ImportRow, read_discom_csv
@@ -1015,9 +1015,16 @@ def register_member(
 
 
 def registration_discoms(db: Session) -> list[Organisation]:
-    """Return the active Discoms a visitor can choose on the registration form, by name."""
+    """Return the Discoms a visitor can still register, by name: active, with no login yet.
+
+    A Discom has one portal login (FR-1.6), so one with a pending or active login is left out.
+    It returns if that login is declined or deactivated.
+    """
+    taken = select(Login.organisation_id).where(*_current_member_login())
     query = (
-        select(Organisation).where(Organisation.status == "active").order_by(func.lower(Organisation.name))
+        select(Organisation)
+        .where(Organisation.status == "active", Organisation.id.not_in(taken))
+        .order_by(func.lower(Organisation.name))
     )
     return list(db.scalars(query))
 
@@ -1065,12 +1072,18 @@ def _active_discom(db: Session, organisation_id: str) -> Organisation | None:
 
 def _discom_has_member_login(db: Session, discom: Organisation) -> bool:
     """Return True when the Discom already has a pending or active Member login (FR-1.6)."""
-    query = select(Login.id).where(
-        Login.organisation_id == discom.id,
+    query = select(Login.id).where(Login.organisation_id == discom.id, *_current_member_login())
+    return db.scalar(query) is not None
+
+
+def _current_member_login() -> tuple[ColumnElement[bool], ...]:
+    """Return the conditions for a Member login that holds its Discom's one place."""
+    return (
         Login.login_type == "member",
         Login.status.in_(("pending", "active")),
+        # NOT IN returns nothing if the list holds a NULL.
+        Login.organisation_id.is_not(None),
     )
-    return db.scalar(query) is not None
 
 
 def _email_refusal(db: Session, discom: Organisation, email: str) -> str | None:

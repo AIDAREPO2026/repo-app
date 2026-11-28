@@ -5,6 +5,7 @@ import uuid
 from email.message import EmailMessage
 from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
 from httpx import Response
 from sqlalchemy import select
@@ -319,3 +320,14 @@ def test_fr_1_6_a_discom_listed_with_a_public_domain_gets_no_code(
     assert response.headers["location"] == "/register/code"
     assert outbox == []
     assert audits(engine, "accounts.register_code", discom)[0]["reason"] == "email_domain"
+
+
+@pytest.mark.parametrize(("status", "listed"), [("pending", False), ("active", False), ("deactivated", True)])
+def test_fr_1_6_a_discom_with_a_login_is_not_offered(engine: Engine, status: str, listed: bool) -> None:
+    discom = new_discom(engine)
+    saved(engine, build_login("member", status=status, organisation=discom))
+
+    page = TestClient(APP).get("/register").text
+
+    assert (discom.name in page) is listed
+    assert "Not listed?" in page
