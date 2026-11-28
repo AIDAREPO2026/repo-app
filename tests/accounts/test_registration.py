@@ -41,6 +41,15 @@ def solved_captcha(client: TestClient) -> str:
     return solve(challenge.json())
 
 
+def letters() -> str:
+    """Random letters, so a test ID never trips the reserved words or the shape rules."""
+    return "".join("bfghjkqvxz"[int(c, 16) % 10] for c in uuid.uuid4().hex[:10])
+
+
+def allowed_user_id() -> str:
+    return f"zq.{letters()}"
+
+
 def visitor() -> TestClient:
     """A visitor on HTTPS, so the registration cookie comes back, with a valid CSRF token."""
     client = csrf_client(APP)
@@ -75,7 +84,7 @@ def verify(client: TestClient, discom: Organisation, outbox: list[EmailMessage],
 
 def finish(client: TestClient, **changes: str) -> Response:
     form = {
-        "user_id": f"discom.{uuid.uuid4().hex[:10]}",
+        "user_id": allowed_user_id(),
         "password": PASSWORD,
         "confirm_password": PASSWORD,
     }
@@ -102,7 +111,7 @@ def test_fr_1_1_registration_creates_pending_login(engine: Engine, outbox: list[
     client, discom = visitor(), new_discom(engine)
     email = f"Officer@{discom.email_domain}"
     verify(client, discom, outbox, email=email)
-    user_id = f"discom.{uuid.uuid4().hex[:10]}"
+    user_id = allowed_user_id()
 
     response = finish(client, user_id=user_id)
 
@@ -195,7 +204,7 @@ def test_p1_acc_02_later_steps_need_a_proved_email(engine: Engine, outbox: list[
 
 def test_p1_acc_02_suggestions_and_checks_know_taken_ids(engine: Engine, outbox: list[EmailMessage]) -> None:
     client, discom = visitor(), new_discom(engine)
-    person = f"asha{uuid.uuid4().hex[:6]}"
+    person = f"asha.{letters()}"
     existing = build_login("member")
     existing.user_id = person
     saved(engine, existing)
@@ -214,7 +223,7 @@ def test_p1_acc_02_suggestions_and_checks_know_taken_ids(engine: Engine, outbox:
     assert state(offered[0]) == "free"
     assert state("a b") == "invalid"
     with Session(engine) as session:
-        assert suggest_user_ids(session, "Power (NPCX)", f"{person}@x.example")[0] != person
+        assert suggest_user_ids(session, discom, f"{person}@x.example")[0] != person
 
 
 def test_p1_acc_02_user_id_checks_are_limited(engine: Engine, outbox: list[EmailMessage]) -> None:

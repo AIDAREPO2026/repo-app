@@ -13,6 +13,12 @@ EXPERT_DELETION_WORKING_DAYS = 2  # FR-8.3
 # ask whether a User ID is free this many times.
 REGISTRATION_VERIFIED_MINUTES = 30
 USER_ID_CHECKS = 30
+# P1-ACC-02: limits on the reserved User ID lists an Admin edits.
+RESERVED_WORD_MIN = 2
+RESERVED_WORD_MAX = 30
+# A shorter word refused "anywhere" would refuse most honest IDs.
+RESERVED_ANYWHERE_MIN = 4
+RESERVED_WORDS_LIMIT = 1000
 
 # D-01: images must never exceed 20 MB, whatever Admin sets.
 IMAGE_LIMIT_MAX_MB = 20

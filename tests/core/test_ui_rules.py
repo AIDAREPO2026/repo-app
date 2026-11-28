@@ -30,7 +30,7 @@ def test_p1_ui_02_every_result_in_an_address_is_forgotten_once_shown() -> None:
 
 
 def test_p1_ui_02_changes_that_take_something_away_are_never_a_plain_success() -> None:
-    for texts in (router.DONE_MESSAGES, router.DISCOM_DONE_MESSAGES):
+    for texts in (router.DONE_MESSAGES, router.DISCOM_DONE_MESSAGES, router.RESERVED_DONE_MESSAGES):
         for key in texts:
             if TAKES_AWAY.search(key):
                 assert router.done_message(key, texts)[0][0] == "warning", key

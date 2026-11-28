@@ -46,6 +46,13 @@ class ReviewerRoleForm(BaseModel):
     is_alternate: bool
 
 
+class ReservedWordForm(BaseModel):
+    """A word to reserve, or to free again, and where it applies."""
+
+    word: str = Field(min_length=1, max_length=60)
+    where: Literal["anywhere", "parts"]
+
+
 class SetPasswordForm(BaseModel):
     """The set-password form reached from an emailed link."""
 

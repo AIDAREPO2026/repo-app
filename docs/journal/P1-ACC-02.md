@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Added reserved User IDs with an Admin screen to manage them. Branch `feat/p1-acc-02-reserved-user-ids`, on top of #29. |
 | 2026-11-28 | Raghvendra Singh | Reopened at the user's request: registration now verifies the email before the User ID is chosen, so only free User IDs are suggested. Replaces the browser-only suggestions of #28. Spec updated. Branch `feat/p1-acc-02-verify-email-first`. Opened #29; tracker row set to In review (rev 77). |
 | 2026-11-28 | Raghvendra Singh | Approved by the user and merged as #19. In #20 (`P1-UI-02`) the registration and request-sent pages moved to the AIDA sign-in layout (`layouts/auth.html`) and the sign-in page kept the Register link; 355 unit and 21 e2e tests pass, including axe on `/register` in light and dark. Tracker row set to Done. |
 | 2026-11-28 | Raghvendra Singh | Built the public `/register` form, the `/captcha/challenge` route, the vendored ALTCHA widget (3.7.0, external build) and the registration rules. Checked in the browser: the real widget solves our challenge under the CSP and a request creates a pending Member login. Unit tests (279), e2e and axe pass. Opened #19 and set the tracker row to In review. Next: review. |
@@ -28,6 +29,8 @@ Anything decided while building that the spec does not say, and any change from 
 
 | Date | Decision or deviation | Reason | Agreed by |
 | --- | --- | --- | --- |
+| 2026-11-28 | The reserved words are two settings in `app_setting`, edited on Reserved IDs; format rules are fixed in code. `portal` is reserved, so suggestions use `.office` | The user asked for a list Admin can change; changes are audited like other settings | User; security review pending |
+| 2026-11-28 | A Discom's bracketed code, such as MSEDCL, is kept for that Discom. The server command that creates the first Admin is exempt from the rules | Stops one Discom posing as another; only a server operator can run the command | Pending tech lead review |
 | 2026-11-28 | Registration takes three steps, and a taken User ID is now said on step 3 instead of being silently accepted | A suggestion must be free. Only someone who reads mail on the Discom's domain gets that far, with limited checks, so outsiders learn nothing | User; security review pending |
 | 2026-11-28 | A request in progress lives in Redis (hashed token and code), not the database. No migration | It is not a login yet, and expiry cleans it up | Pending tech lead review |
 | 2026-11-28 | A User ID or email already in use gets the same "sent" page as a good request, with nothing created and the reason in the audit event | The spec allows field errors only for format problems, so the form cannot be used to find existing User IDs. Cost: a Discom that picks a taken User ID gets no login and must contact ITPED, who can see the reason in the audit | Pending tech lead review |

@@ -148,6 +148,8 @@ These values are configurable by Admin through `app_setting` and read with `get_
 | `newly_added_days` | 15 | Yes | FR-6.1 |
 | `storage_reserve_percent` | 10 | Yes (5 to 50; never under 5 GB) | D-14 |
 | `digest_frequency` | `daily` | Yes (`daily` or `weekly`, Phase 5) | FR-6.5 |
+| `reserved_user_id_anywhere` | 12 words | Yes (4 to 30 characters each) | `P1-ACC-02` |
+| `reserved_user_id_parts` | about 140 words | Yes (2 to 30 characters each) | `P1-ACC-02` |
 
 | Constant | Value | Source |
 | --- | --- | --- |

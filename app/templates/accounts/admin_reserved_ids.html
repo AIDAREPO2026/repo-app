@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "macros/forms.html" import field, select, csrf_field with context %}
+{% from "macros/ui.html" import page_header, button, badge, modal, data_table, dialog_actions with context %}
+{# P1-ACC-02: the words nobody may use in a User ID. Existing logins are not affected. #}
+{% set where_names = {"anywhere": "Anywhere in the ID", "parts": "As a whole part"} %}
+
+{% block page_actions %}
+  {{ button("Reserve a word", type="button", commandfor="reserve-word", command="show-modal", icon_name="plus") }}
+{% endblock %}
+
+{% block content %}
+{{ page_header("Reserved IDs") }}
+
+{% call data_table("Reserved words", words|length, search="Search words") %}
+  <thead>
+    <tr>
+      <th scope="col">{{ _("Word") }}</th>
+      <th scope="col">{{ _("Refused") }}</th>
+      <th scope="col"><span class="sr-only">{{ _("Actions") }}</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for word, where in words %}
+    <tr>
+      <td class="font-mono">{{ word }}</td>
+      <td>{{ badge(where_names[where], "warning" if where == "anywhere" else "neutral") }}</td>
+      <td>
+        <form method="post" action="/admin/reserved-ids/remove" class="flex justify-end">
+          {{ csrf_field() }}
+          <input type="hidden" name="word" value="{{ word }}">
+          <input type="hidden" name="where" value="{{ where }}">
+          {{ button("Remove", "secondary", size="sm", icon_name="close", icon_only=true) }}
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+{% endcall %}
+
+{% call modal("reserve-word", "Reserve a word") %}
+<p class="mb-5 text-sm text-muted">{{ _("Capitals, dots, dashes, number tails and look-alike digits are seen through. Existing logins keep their User ID.") }}</p>
+<form method="post" action="/admin/reserved-ids">
+  {{ csrf_field() }}
+  {{ field("word", "Word", required=true, autocomplete="off", maxlength=60, id="reserve-text") }}
+  {{ select("where", "Refuse it", [("parts", _("As a whole part (between . _ -)")), ("anywhere", _("Anywhere in the ID (4 letters or more)"))], value="parts", required=true) }}
+  <div class="dialog-actions">
+    {{ dialog_actions("reserve-word", "Reserve", "lock") }}
+  </div>
+</form>
+{% endcall %}
+{% endblock %}

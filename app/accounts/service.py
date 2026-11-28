@@ -42,6 +42,7 @@ from app.accounts.schemas import (
     PrivilegedAccountForm,
     RegistrationForm,
     RegistrationStartForm,
+    ReservedWordForm,
 )
 from app.accounts.tokens import (
     issue_email_code,
@@ -51,6 +52,7 @@ from app.accounts.tokens import (
     usable_token,
     use_email_code,
 )
+from app.accounts.user_id_rules import is_reserved, plain_word, shape_problem
 from app.audit.service import SYSTEM, Actor, record
 from app.core.constants import (
     EMAIL_CODE_DIGITS,
@@ -60,9 +62,14 @@ from app.core.constants import (
     LOCKOUT_ATTEMPTS,
     LOCKOUT_MINUTES,
     PUBLIC_EMAIL_DOMAINS,
+    RESERVED_ANYWHERE_MIN,
+    RESERVED_WORD_MAX,
+    RESERVED_WORD_MIN,
+    RESERVED_WORDS_LIMIT,
 )
 from app.core.email import send_email
 from app.core.sessions import clear_session_cookie, client_ip, end_session, start_session, user_agent
+from app.core.settings_store import get_setting, set_setting
 from app.core.time import utc_now
 
 # Checked when the User ID is unknown, so an unknown ID takes as long as a wrong password
@@ -415,6 +422,8 @@ def create_privileged_account(db: Session, actor: Actor, form: PrivilegedAccount
     The account is active at once but has no password, so it cannot sign in until the
     person sets one through the link.
     """
+    if shape_problem(form.user_id) or _user_id_reserved(db, form.user_id, None):
+        raise AccountRuleError(USER_ID_NOT_ALLOWED)
     login = _add_privileged_login(db, form, password_hash=None)
     details = {"login_type": login.login_type, "is_alternate": login.is_alternate}
     record(db, actor, "accounts.create", "login", str(login.id), "success", details)
@@ -762,6 +771,7 @@ def _discom_with_domain(db: Session, email_domain: str) -> Organisation | None:
     return db.scalars(select(Organisation).where(Organisation.email_domain == email_domain)).one_or_none()
 
 
+USER_ID_NOT_ALLOWED = "That User ID is not allowed. Choose another."
 WRONG_REGISTRATION_CODE = "That code is not right or has expired. Check the email, or start again."
 CAPTCHA_FAILED = (
     "The check that you are not a robot did not finish. Tick the box, wait for it, then send the form again."
@@ -838,28 +848,86 @@ def user_id_state(db: Session, redis: Redis, token: str, user_id: str) -> str:
     """
     if not count_user_id_check(redis, token):
         return "limit"
-    if not re.fullmatch(USER_ID_PATTERN, user_id):
+    if not re.fullmatch(USER_ID_PATTERN, user_id) or shape_problem(user_id):
         return "invalid"
+    visitor = verified_registration(db, redis, token)
+    if _user_id_reserved(db, user_id, visitor[0] if visitor else None):
+        return "reserved"
     return "taken" if _user_id_taken(db, user_id) else "free"
 
 
-def suggest_user_ids(db: Session, discom_name: str, email: str, wanted: int = 3) -> list[str]:
-    """Return User IDs that are free now, built from the email and the Discom's name."""
+def suggest_user_ids(db: Session, discom: Organisation, email: str, wanted: int = 3) -> list[str]:
+    """Return User IDs that are free and allowed now, built from the email and the Discom's name."""
     person = _user_id_part(email.partition("@")[0])
-    code = _discom_code(discom_name)
-    bases = [person, f"{code}.{person}" if code and person else "", f"{code}.portal" if code else ""]
-    bases = [base for base in bases if base] or ["discom.portal"]
+    code = _discom_code(discom.name)
+    bases = [person, f"{code}.{person}" if code and person else "", f"{code}.office" if code else ""]
+    # The last one always passes, so there is something to offer whatever the email says.
+    bases = [base for base in bases if base] + ["nodal.office"]
     suggestions: list[str] = []
-    # The plain forms first, then the same with a number, until enough free ones are found.
+    # The plain forms first, then the same with a number, until enough are found.
     for number in ["", *range(2, 100)]:
         for base in bases:
             candidate = f"{base}{number}"
-            fits = re.fullmatch(USER_ID_PATTERN, candidate) and candidate not in suggestions
-            if fits and not _user_id_taken(db, candidate):
+            if candidate not in suggestions and _user_id_open(db, candidate, discom):
                 suggestions.append(candidate)
             if len(suggestions) == wanted:
                 return suggestions
     return suggestions
+
+
+def _user_id_open(db: Session, user_id: str, discom: Organisation) -> bool:
+    """Return True for a User ID this Discom could take now."""
+    if not re.fullmatch(USER_ID_PATTERN, user_id) or shape_problem(user_id):
+        return False
+    return not _user_id_reserved(db, user_id, discom) and not _user_id_taken(db, user_id)
+
+
+def reserved_words(db: Session, where: str) -> list[str]:
+    """Return one reserved list: "anywhere" or "parts"."""
+    stored = get_setting(db, f"reserved_user_id_{where}")
+    assert isinstance(stored, list)  # noqa: S101 - the setting's rule allows nothing else
+    return stored
+
+
+def reserve_word(db: Session, actor: Actor, form: ReservedWordForm) -> None:
+    """Add a word nobody may use in a User ID. Existing logins are not affected."""
+    word = plain_word(form.word)
+    smallest = RESERVED_ANYWHERE_MIN if form.where == "anywhere" else RESERVED_WORD_MIN
+    if not re.fullmatch(r"[a-z0-9]+", word) or not smallest <= len(word) <= RESERVED_WORD_MAX:
+        raise AccountRuleError(f"Use {smallest} to {RESERVED_WORD_MAX} letters or numbers.")
+    words = reserved_words(db, form.where)
+    if word in words:
+        raise AccountRuleError("That word is already reserved.")
+    if len(words) >= RESERVED_WORDS_LIMIT:
+        raise AccountRuleError("The list is full. Remove a word first.")
+    set_setting(db, f"reserved_user_id_{form.where}", sorted([*words, word]), actor)
+
+
+def free_word(db: Session, actor: Actor, form: ReservedWordForm) -> None:
+    """Take a word off a reserved list."""
+    words = reserved_words(db, form.where)
+    if form.word not in words:
+        raise AccountRuleError("That word is not on the list.")
+    remaining = [word for word in words if word != form.word]
+    set_setting(db, f"reserved_user_id_{form.where}", remaining, actor)
+
+
+def _user_id_reserved(db: Session, user_id: str, own: Organisation | None) -> bool:
+    """Return True for a reserved word, or another Discom's code. own is the Discom asking."""
+    codes = [
+        plain_word(code)
+        for name, discom_id in db.execute(select(Organisation.name, Organisation.id))
+        if (code := _bracketed_code(name)) and (own is None or discom_id != own.id)
+    ]
+    own_code = plain_word(_bracketed_code(own.name)) if own else ""
+    parts = reserved_words(db, "parts") + [code for code in codes if code != own_code]
+    return is_reserved(user_id, reserved_words(db, "anywhere"), parts)
+
+
+def _bracketed_code(name: str) -> str:
+    """Return the code a Discom writes in brackets, such as MSEDCL, or ""."""
+    bracketed = re.search(r"\(([A-Za-z0-9-]{2,15})\)", name)
+    return bracketed.group(1) if bracketed else ""
 
 
 def _user_id_part(text: str) -> str:
@@ -868,10 +936,9 @@ def _user_id_part(text: str) -> str:
 
 
 def _discom_code(name: str) -> str:
-    """Return a short code for a Discom: the one in brackets, such as (MSEDCL), else its first word."""
-    bracketed = re.search(r"\(([A-Za-z0-9-]{2,15})\)", name)
+    """Return a short code for suggestions: the one in brackets, else the first word."""
     words = name.split()
-    return _user_id_part(bracketed.group(1) if bracketed else (words[0] if words else ""))
+    return _user_id_part(_bracketed_code(name) or (words[0] if words else ""))
 
 
 def register_member(
@@ -890,7 +957,7 @@ def register_member(
     if _discom_has_member_login(db, discom):
         _audit_registration(db, actor, "denied", details | {"reason": "discom_has_login"})
         return {"user_id": DISCOM_TAKEN}
-    problems = _account_problems(db, form)
+    problems = _account_problems(db, form, discom)
     if problems:
         _audit_registration(db, actor, "denied", details | {"reason": "format", "fields": sorted(problems)})
         return problems
@@ -918,11 +985,15 @@ def _start_format_problems(db: Session, form: RegistrationStartForm) -> dict[str
     return problems
 
 
-def _account_problems(db: Session, form: RegistrationForm) -> dict[str, str]:
+def _account_problems(db: Session, form: RegistrationForm, discom: Organisation) -> dict[str, str]:
     """Return the step 3 problems, by field name."""
     problems = {}
     if not re.fullmatch(USER_ID_PATTERN, form.user_id):
         problems["user_id"] = "Use 4 to 50 lowercase letters, numbers, dots, dashes or underscores."
+    elif shape_problem(form.user_id):
+        problems["user_id"] = shape_problem(form.user_id)
+    elif _user_id_reserved(db, form.user_id, discom):
+        problems["user_id"] = USER_ID_NOT_ALLOWED
     elif _user_id_taken(db, form.user_id):
         problems["user_id"] = "That User ID is taken. Choose another."
     password_problems = check_password_policy(form.password, form.user_id)

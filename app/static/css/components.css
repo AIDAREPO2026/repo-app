@@ -1168,6 +1168,8 @@
     color: var(--aida-success);
   }
 
+  .id-state[data-state="reserved"],
+  .id-state[data-state="invalid"],
   .id-state[data-state="taken"] {
     color: var(--aida-danger);
   }
