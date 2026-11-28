@@ -2,12 +2,12 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In review |
+| Status | Done |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p1-acc-01-discom-list` |
 | Pull request | [#18](https://github.com/AIDAREPO2026/repo-app/pull/18) |
 | Started | 2026-11-28 |
-| Finished | Not finished |
+| Finished | 2026-11-28 |
 
 Spec: [docs/tasks/phase-1-platform-access.md](../tasks/phase-1-platform-access.md#p1-acc-01--build-the-discom-master-list-and-admin-screen)
 
