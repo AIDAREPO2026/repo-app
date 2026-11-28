@@ -110,6 +110,58 @@ function fillDiscom(holder, value) {
   if (confirmation) confirmation.checked = false;
 }
 
+// User ID suggestions on the registration page, from the chosen Discom and the email typed.
+// Worked out here only: asking the server whether one is taken would reveal accounts.
+function userIdPart(text) {
+  return text.toLowerCase().replace(/[^a-z0-9._-]/g, "").replace(/^[._-]+|[._-]+$/g, "");
+}
+
+// A short code for a Discom: the one in brackets, such as "(MSEDCL)", else its first word.
+function discomCode(name) {
+  const bracketed = name.match(/\(([A-Za-z0-9-]{2,15})\)/);
+  return userIdPart(bracketed ? bracketed[1] : name.trim().split(/\s+/)[0] || "");
+}
+
+function userIdSuggestions(discom, email) {
+  const person = userIdPart(email.split("@")[0]);
+  const code = discomCode(discom);
+  const ideas = [person, code && person && `${code}.${person}`, code && `${code}.portal`];
+  // The same rule as USER_ID_PATTERN on the server: 4 to 50 characters.
+  return [...new Set(ideas.filter((idea) => idea && idea.length >= 4 && idea.length <= 50))];
+}
+
+function refreshUserIdSuggestions(form) {
+  const holder = form.querySelector("[data-suggest-user-id]");
+  const chosen = form.querySelector('[name="organisation_id"]').selectedOptions[0];
+  const email = form.querySelector('[name="email"]').value;
+  const ideas = userIdSuggestions(chosen?.value ? chosen.textContent : "", email);
+  const list = holder.querySelector(".id-suggestions-list");
+  holder.hidden = ideas.length === 0;
+  // Leaving the email field fires "change" in the middle of a click on a suggestion. Rebuilding
+  // then would remove the button being clicked, so the list changes only when the ideas do.
+  if (list.dataset.ideas === ideas.join(" ")) return;
+  list.dataset.ideas = ideas.join(" ");
+  list.replaceChildren();
+  for (const idea of ideas) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "id-suggestion";
+    button.textContent = idea;
+    button.addEventListener("click", () => {
+      const field = form.querySelector('[name="user_id"]');
+      field.value = idea;
+      field.focus();
+    });
+    list.append(button);
+  }
+}
+
+function refreshFromEvent(event) {
+  if (!event.target.matches?.('[name="organisation_id"], [name="email"]')) return;
+  const form = event.target.form;
+  if (form?.querySelector("[data-suggest-user-id]")) refreshUserIdSuggestions(form);
+}
+
 function applyAll() {
   applyTheme(read(THEME_KEY, "light"));
   applySidebar(read(SIDEBAR_KEY, "shown"));
@@ -147,6 +199,9 @@ document.addEventListener("change", (event) => {
   const holder = event.target.closest("[data-fill-discom]");
   if (holder && event.target.matches("select") && event.target.value) fillDiscom(holder, event.target.value);
 });
+
+document.addEventListener("input", refreshFromEvent);
+document.addEventListener("change", refreshFromEvent);
 
 // A toast's bar running out closes it.
 document.addEventListener("animationend", (event) => {

@@ -1152,6 +1152,47 @@
     font-size: var(--aida-text-xs);
   }
 
+  /* ---------- User ID suggestions on the registration page ---------- */
+
+  .id-suggestions {
+    margin: calc(-1 * var(--aida-space-2)) 0 var(--aida-space-4);
+    padding: var(--aida-space-3);
+    border-radius: var(--aida-radius-md);
+    background: var(--aida-accent-subtle);
+  }
+
+  .id-suggestions[hidden] {
+    display: none;
+  }
+
+  .id-suggestions-label {
+    margin-bottom: var(--aida-space-2);
+    color: var(--aida-text);
+    font-size: var(--aida-text-xs);
+    font-weight: 600;
+  }
+
+  .id-suggestions-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--aida-space-2);
+  }
+
+  .id-suggestion {
+    padding: var(--aida-space-1) var(--aida-space-3);
+    border: 1px solid var(--aida-border);
+    border-radius: var(--aida-radius-full);
+    background: var(--aida-surface);
+    color: var(--aida-accent);
+    font-family: var(--aida-font-mono);
+    font-size: var(--aida-text-xs);
+    cursor: pointer;
+  }
+
+  .id-suggestion:hover {
+    border-color: var(--aida-accent);
+  }
+
   /* ---------- Forms: filled fields that clear to the surface when used ---------- */
 
   .modal .field-label,

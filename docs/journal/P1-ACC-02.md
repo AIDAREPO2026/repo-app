@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | The registration page now suggests User IDs from the chosen Discom and the email typed. Branch `feat/p1-acc-02-user-id-suggestions`. |
 | 2026-11-28 | Raghvendra Singh | Approved by the user and merged as #19. In #20 (`P1-UI-02`) the registration and request-sent pages moved to the AIDA sign-in layout (`layouts/auth.html`) and the sign-in page kept the Register link; 355 unit and 21 e2e tests pass, including axe on `/register` in light and dark. Tracker row set to Done. |
 | 2026-11-28 | Raghvendra Singh | Built the public `/register` form, the `/captcha/challenge` route, the vendored ALTCHA widget (3.7.0, external build) and the registration rules. Checked in the browser: the real widget solves our challenge under the CSP and a request creates a pending Member login. Unit tests (279), e2e and axe pass. Opened #19 and set the tracker row to In review. Next: review. |
 | 2026-11-28 | Raghvendra Singh | Started the task. |
@@ -27,6 +28,7 @@ Anything decided while building that the spec does not say, and any change from 
 
 | Date | Decision or deviation | Reason | Agreed by |
 | --- | --- | --- | --- |
+| 2026-11-28 | Suggestions are worked out in the browser and never checked for availability | Asked for by the user. A check on a public form would reveal which accounts exist | User; pending tech lead review |
 | 2026-11-28 | A User ID or email already in use gets the same "sent" page as a good request, with nothing created and the reason in the audit event | The spec allows field errors only for format problems, so the form cannot be used to find existing User IDs. Cost: a Discom that picks a taken User ID gets no login and must contact ITPED, who can see the reason in the audit | Pending tech lead review |
 | 2026-11-28 | A Discom that already has a pending or active login is told so on the form | Acceptance criterion; Discom names are already public in the list, so this reveals only that a request exists | Pending tech lead review |
 | 2026-11-28 | The schema checks only lengths. Formats are checked by the service after the CAPTCHA, and shown next to each field | The spec wants the CAPTCHA checked before any other processing, and visitors need field errors, not a bare 422 | Pending tech lead review |
