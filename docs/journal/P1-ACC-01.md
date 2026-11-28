@@ -2,10 +2,10 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In progress |
+| Status | In review |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p1-acc-01-discom-list` |
-| Pull request | Not opened |
+| Pull request | [#18](https://github.com/AIDAREPO2026/repo-app/pull/18) |
 | Started | 2026-11-28 |
 | Finished | Not finished |
 
@@ -18,7 +18,7 @@ Newest first. One line per working session: what was done, what is next.
 | Date | Who | Entry |
 | --- | --- | --- |
 | | None | |
-| 2026-11-28 | Raghvendra Singh | Built the `organisation` table (migration 0009), the Admin Discoms screen (list, add, edit, deactivate, reactivate), the CSV import with a preview, the `seed-test-discoms` command and the inactive-Discom sign-in rule. Checked locally in the browser; unit and e2e tests pass. Next: review. |
+| 2026-11-28 | Raghvendra Singh | Built the `organisation` table (migration 0009), the Admin Discoms screen (list, add, edit, deactivate, reactivate), the CSV import with a preview, the `seed-test-discoms` command and the inactive-Discom sign-in rule. Checked locally in the browser; unit and e2e tests pass. Opened #18 and set the tracker row to In review. Next: review. |
 | 2026-11-28 | Raghvendra Singh | Started the task. |
 
 ## Decisions and deviations
