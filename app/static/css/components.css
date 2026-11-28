@@ -450,6 +450,41 @@
     transform: scale(var(--aida-press-scale));
   }
 
+  /* Theme choice. It carries its own surface, so it reads the same on the navy chrome. */
+  .theme-switcher {
+    display: flex;
+    width: fit-content;
+    gap: 0.125rem;
+    padding: 0.125rem;
+    border: 1px solid var(--aida-border);
+    border-radius: var(--aida-radius-md);
+    background: var(--aida-surface-sunken);
+  }
+
+  .theme-option {
+    padding: var(--aida-space-1) var(--aida-space-3);
+    border: 0;
+    border-radius: var(--aida-radius-sm);
+    background: transparent;
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-sm);
+    cursor: pointer;
+  }
+
+  .theme-option:hover {
+    background: var(--aida-surface-hover);
+    color: var(--aida-text);
+  }
+
+  .theme-option:active {
+    transform: scale(var(--aida-press-scale));
+  }
+
+  .theme-option[aria-pressed="true"] {
+    background: var(--aida-accent);
+    color: var(--aida-text-on-accent);
+  }
+
   .account-panel {
     display: flex;
     align-items: center;
@@ -1334,6 +1369,12 @@
     display: flex;
     flex-direction: column;
     padding: var(--aida-space-6) var(--aida-space-5);
+  }
+
+  .auth-tools {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--aida-space-4);
   }
 
   .auth-main {

@@ -119,6 +119,7 @@ Before writing a helper, search the codebase. These shared functions must be use
 | Add a menu entry for a login type | `app.core.navigation` | `P1-UI-01` |
 | Show where a signed-in page sits (breadcrumbs) | `app.core.navigation.breadcrumbs()`, passed to the page as `breadcrumbs` | `P1-UI-02` |
 | Render a button, card, badge, modal or other UI element | `templates/macros/ui.html` and the tokens in `static/css/tokens.css` | `P1-UI-02` |
+| Offer the light, dark or system theme | `theme_switcher()` in `templates/macros/ui.html` (works through `static/js/theme.js`) | `P1-UI-02` |
 | Render a sign-in, registration or other page shown before signing in | Extend `templates/layouts/auth.html` and start with `auth_heading()` | `P1-UI-02` |
 
 **Avoid hidden behaviour**

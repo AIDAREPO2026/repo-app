@@ -57,3 +57,12 @@ def test_p1_ui_02_breadcrumbs_markup_marks_the_current_page() -> None:
     assert '<nav aria-label="Breadcrumb">' in html
     assert '<a href="/dashboard/reviewer" class="crumb-link">Dashboard</a>' in html
     assert '<span class="crumb-current" aria-current="page">Style guide</span>' in html
+
+
+def test_p1_ui_02_theme_switcher_offers_three_choices_hidden_without_script() -> None:
+    macro = templates.env.get_template("macros/ui.html").module.theme_switcher  # type: ignore[attr-defined]
+
+    html = str(macro())
+
+    assert re.findall(r'data-theme-choice="(\w+)"', html) == ["system", "light", "dark"]
+    assert 'aria-label="Theme" hidden' in html

@@ -21,6 +21,15 @@
   {%- if commandfor %} commandfor="{{ commandfor }}" command="{{ command }}"{% endif %}>{{ _(label) }}</button>
 {% endmacro %}
 
+{# System, light or dark. static/js/theme.js shows it, marks the choice and remembers it. #}
+{% macro theme_switcher() %}
+<div class="theme-switcher" role="group" aria-label="{{ _('Theme') }}" hidden>
+  {% for value, label in [("system", "System"), ("light", "Light"), ("dark", "Dark")] %}
+  <button type="button" class="theme-option" data-theme-choice="{{ value }}" aria-pressed="false">{{ _(label) }}</button>
+  {% endfor %}
+</div>
+{% endmacro %}
+
 {# A link that looks like a button. #}
 {% macro link_button(label, href, variant="secondary", size="") %}
 <a href="{{ href }}" class="btn btn-{{ variant }}{% if size %} btn-{{ size }}{% endif %}">{{ _(label) }}</a>

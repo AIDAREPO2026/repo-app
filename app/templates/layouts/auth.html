@@ -5,7 +5,7 @@
 #}
 {% extends "base.html" %}
 {% from "macros/icons.html" import icon %}
-{% from "macros/ui.html" import flash_messages with context %}
+{% from "macros/ui.html" import flash_messages, theme_switcher with context %}
 {% block visitor_shell %}
 <div class="auth-shell">
   <aside class="auth-brand chrome" aria-label="{{ _('About the portal') }}">
@@ -26,6 +26,7 @@
   </aside>
 
   <div class="auth-panel">
+    <div class="auth-tools">{{ theme_switcher() }}</div>
     {{ flash_messages(messages|default([])) }}
     <main id="main" tabindex="-1" class="auth-main focus:outline-none">
       {% block visitor_content %}{{ self.content() }}{% endblock %}

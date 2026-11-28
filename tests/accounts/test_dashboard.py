@@ -10,6 +10,7 @@ from app.accounts.service import admin_overview
 from app.core.constants import LOGIN_TYPES
 from app.main import create_app
 from tests.accounts.conftest import SignIn
+from tests.core.test_design_system import INLINE_SCRIPT
 
 
 @pytest.fixture(scope="module")
@@ -29,7 +30,7 @@ def test_p1_ui_01_dashboard_shell_has_landmarks(app: FastAPI, sign_in: SignIn, l
     assert '<nav aria-label="Main">' in html
     assert f'href="/dashboard/{login_type}"' in html
     assert 'aria-current="page"' in html
-    assert "<script" not in html  # no inline scripts, so the CSP can stay strict
+    assert INLINE_SCRIPT.findall(html) == []  # no inline scripts, so the CSP can stay strict
     assert "style=" not in html
 
 
