@@ -46,7 +46,7 @@
 
     <div class="app-main">
       {% if breadcrumbs is defined %}
-      <div class="page-bar"><div class="page page-bar-inner">{{ breadcrumb_trail(breadcrumbs) }}</div></div>
+      <div class="page-dock"><div class="page-bar"><div class="page page-bar-inner">{{ breadcrumb_trail(breadcrumbs) }}</div></div></div>
       {% endif %}
       <div class="app-panel">
         {{ flash_messages(messages|default([])) }}
