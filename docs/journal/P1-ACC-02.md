@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In review |
+| Status | Done |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p1-acc-02-registration` |
 | Pull request | [#19](https://github.com/AIDAREPO2026/repo-app/pull/19) |
@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Merged #29 and #30 on the user's approval. Status Done; tracker row set to Done. |
 | 2026-11-28 | Raghvendra Singh | Reserved IDs gained a category filter and a Removed tab with restore (#30). |
 | 2026-11-28 | Raghvendra Singh | Reserved words now have categories; the screen is compact and shows more rows on scroll (#30). `data_table()` gained `compact` and `batch`, a `P1-UI-02` component. |
 | 2026-11-28 | Raghvendra Singh | Added reserved User IDs with an Admin screen to manage them. Branch `feat/p1-acc-02-reserved-user-ids`, on top of #29. |
