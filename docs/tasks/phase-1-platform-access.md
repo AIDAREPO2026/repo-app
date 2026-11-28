@@ -400,7 +400,7 @@ Later pages only reuse these components. A new component is added here, not insi
 **Scope**
 
 - A public "Register your Discom" flow in three steps:
-    1. Discom (chosen from active organisations), official email address and the CAPTCHA
+    1. Discom (chosen from active organisations that have no pending or active Member login), official email address and the CAPTCHA
     2. the 6-digit code emailed to that address
     3. desired User ID, password and confirmation
 - Step 3 suggests User IDs that are free, and says whether a typed one is free.
