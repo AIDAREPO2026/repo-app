@@ -9,6 +9,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.accounts.discom_names import DISCOM_NAME_SUGGESTIONS
 from app.accounts.models import LoginAttempt, Organisation, UserSession
 from app.accounts.passwords import hash_password
 from app.accounts.router import SIGN_IN_FAILED
@@ -260,3 +261,17 @@ def test_fr_1_6_public_mail_domain_refused_on_add_edit_and_import(sign_in: SignI
     assert stored_discom(engine, listed.id).email_domain == listed.email_domain
     assert "Anyone can get an address" in preview.text
     assert "Will be added" not in preview.text
+
+
+def test_fr_1_6_add_form_suggests_names_not_already_listed(sign_in: SignIn, engine: Engine) -> None:
+    sign_in(APP, "admin")
+    first, second = DISCOM_NAME_SUGGESTIONS[0], DISCOM_NAME_SUGGESTIONS[1]
+    with Session(engine) as session:
+        session.add(Organisation(name=first, email_domain=f"{unique()}.discom.example"))
+        session.commit()
+
+    page = csrf_client(APP).get("/admin/discoms").text
+
+    assert 'list="add-name-list"' in page
+    assert f'<option value="{second}">' in page
+    assert f'<option value="{first}">' not in page

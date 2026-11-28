@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | The Add Discom name field now suggests utility names as you type. Branch `feat/p1-acc-01-discom-name-suggestions`. |
 | 2026-11-28 | Raghvendra Singh | With `P1-UI-02`: deactivating a Discom now reports as a warning (amber) rather than a success. No change to behaviour. (#25) |
 | 2026-11-28 | Raghvendra Singh | Security follow-up, found while researching Discom domains: public mail services such as gmail.com could be listed. They are now refused on add, edit and import, and at registration. Branch `fix/p1-acc-01-free-email-domains`. |
 | 2026-11-28 | Raghvendra Singh | Merged #18 on the user's approval and set the tracker row to Done. |
@@ -29,6 +30,7 @@ Anything decided while building that the spec does not say, and any change from 
 
 | Date | Decision or deviation | Reason | Agreed by |
 | --- | --- | --- | --- |
+| 2026-11-28 | Name suggestions are a draft list from public sources, in code, using the browser's `datalist`. No email domain is filled in | ITPED has not supplied the list (Q-09), and a wrong domain would let an outsider register. Replace with ITPED's list when it arrives | User; pending tech lead review |
 | 2026-11-28 | A fixed list of public mail domains (`PUBLIC_EMAIL_DOMAINS`) cannot be used for a Discom, and registration refuses them even if one is already listed. Broad government domains such as `nic.in` are not blocked; that is part of D-11 for ITPED | Anyone could get an address and ask for that Discom's login. Several Discoms publish only Gmail addresses, so ITPED needs another way to identify them | User; list pending tech lead and security review |
 | 2026-11-28 | Added Reactivate next to Deactivate | Deactivating a Discom by mistake would otherwise need a database fix. Nothing is deleted (SRS 6.3) | Pending tech lead review |
 | 2026-11-28 | Deactivating a Discom ends the open sessions of its Member login, and sign-in refuses it with the usual message, logged with reason `inactive` | The spec says its Member login cannot sign in; ending sessions makes that apply at once, as for a deactivated account | Pending tech lead review |

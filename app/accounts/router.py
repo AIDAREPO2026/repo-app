@@ -13,6 +13,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from sqlalchemy.orm import Session
 
 from app.accounts.discom_csv import DiscomCsvError, ImportRow
+from app.accounts.discom_names import DISCOM_NAME_SUGGESTIONS
 from app.accounts.guards import (
     LOGIN_PATH,
     MFA_PATH,
@@ -678,11 +679,14 @@ def render_discoms(
     messages += done_message(done, DISCOM_DONE_MESSAGES)
     if added is not None:
         messages.append(("success", f"Discoms added from the file: {added}."))
+    listed = discoms(db)
+    listed_names = {discom.name.lower() for discom in listed}
     context = {
         "title": "Discoms",
         "nav": nav_for("admin"),
         "breadcrumbs": breadcrumbs("admin", Crumb("Discoms")),
-        "discoms": discoms(db),
+        "discoms": listed,
+        "name_suggestions": [name for name in DISCOM_NAME_SUGGESTIONS if name.lower() not in listed_names],
         "messages": messages,
     }
     return templates.TemplateResponse(
