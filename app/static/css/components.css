@@ -269,7 +269,10 @@
   /* ---------- Brand chrome: the navy sidebar, menu drawer and sign-in brand panel ---------- */
 
   .chrome {
-    background: var(--aida-brand-stripe) top / 100% 3px no-repeat, var(--aida-chrome);
+    background:
+      var(--aida-brand-stripe) top / 100% 3px no-repeat,
+      var(--aida-chrome-glow),
+      var(--aida-chrome);
     color: var(--aida-chrome-text);
   }
 
@@ -546,7 +549,7 @@
   .btn-primary {
     background: var(--aida-accent);
     color: var(--aida-accent-contrast);
-    box-shadow: var(--aida-shadow-0);
+    box-shadow: var(--aida-shadow-0), var(--aida-accent-glow);
   }
 
 
@@ -676,10 +679,27 @@
   }
 
   /* A figure on a dashboard: what it counts, the number, and where to act on it. */
+  /* Each figure has a tone (blue by default, amber or green), shown on its icon and as a
+     soft wash in the card's corner. The number and text stay in the normal text colours. */
   .stat {
+    --stat-tone: var(--aida-accent);
+    --stat-tone-subtle: var(--aida-accent-subtle);
     display: flex;
     flex-direction: column;
     gap: var(--aida-space-2);
+    background:
+      radial-gradient(16rem 9rem at 100% 0%, color-mix(in srgb, var(--stat-tone) 12%, transparent), transparent 70%),
+      var(--aida-surface);
+  }
+
+  .tone-warning {
+    --stat-tone: var(--aida-warning);
+    --stat-tone-subtle: var(--aida-warning-subtle);
+  }
+
+  .tone-success {
+    --stat-tone: var(--aida-success);
+    --stat-tone-subtle: var(--aida-success-subtle);
   }
 
   .stat-head {
@@ -698,8 +718,8 @@
     width: 2.25rem;
     height: 2.25rem;
     border-radius: var(--aida-radius-md);
-    background: var(--aida-accent-subtle);
-    color: var(--aida-accent);
+    background: var(--stat-tone-subtle, var(--aida-accent-subtle));
+    color: var(--stat-tone, var(--aida-accent));
   }
 
   .stat-value {
@@ -732,6 +752,10 @@
     transition: transform var(--aida-duration-fast) var(--aida-ease-enter);
   }
 
+  .action-card:hover {
+    transform: translateY(-2px);
+  }
+
   .action-card:hover .action-card-arrow {
     color: var(--aida-accent);
     transform: translateX(0.25rem);
@@ -748,6 +772,63 @@
     gap: var(--aida-space-2);
     color: var(--aida-text-muted);
     font-size: var(--aida-text-xs);
+  }
+
+  /* ---------- Welcome banner: the top of a dashboard ---------- */
+
+  .hero {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: var(--aida-space-6);
+    padding: var(--aida-space-6);
+    border-radius: var(--aida-radius-lg);
+    background: var(--aida-hero);
+    box-shadow: var(--aida-shadow-2);
+    color: var(--aida-hero-text);
+  }
+
+  /* The logo's three colours along the bottom edge, as on the top bar. */
+  .hero::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0;
+    height: 4px;
+    background: var(--aida-brand-stripe);
+  }
+
+  .hero-eyebrow {
+    color: var(--aida-hero-muted);
+    font-size: var(--aida-text-xs);
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Phones get the page-title size, so a long name does not fill the screen. */
+  .hero-title {
+    margin-top: var(--aida-space-2);
+    font-size: var(--aida-text-2xl);
+    line-height: var(--aida-text-2xl-leading);
+    letter-spacing: var(--aida-text-2xl-tracking);
+    font-weight: 700;
+  }
+
+  @media (min-width: 40rem) {
+    .hero-title {
+      font-size: var(--aida-text-3xl);
+      line-height: var(--aida-text-3xl-leading);
+      letter-spacing: var(--aida-text-3xl-tracking);
+    }
+  }
+
+  .hero-lead {
+    margin-top: var(--aida-space-2);
+    color: var(--aida-hero-muted);
+    font-size: var(--aida-text-base);
+  }
+
+  .hero :focus-visible {
+    outline-color: var(--aida-hero-text);
   }
 
   /* ---------- Badges ---------- */
@@ -1295,10 +1376,6 @@
       height: 100dvh;
       justify-content: space-between;
       padding: var(--aida-space-7);
-      background:
-        var(--aida-brand-stripe) top / 100% 3px no-repeat,
-        var(--aida-chrome-glow),
-        var(--aida-chrome);
     }
 
     .auth-pitch,

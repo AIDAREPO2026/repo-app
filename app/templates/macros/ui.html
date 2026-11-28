@@ -59,13 +59,23 @@
 {% endmacro %}
 
 {# A dashboard figure. label is a message id; value is data. note is an optional message. #}
-{% macro stat_card(label, value, icon_name, note="") %}
+{# tone: "accent" (blue), "warning" (amber) or "success" (green), for the icon and corner wash. #}
+{% macro stat_card(label, value, icon_name, note="", tone="accent") %}
 {% from "macros/icons.html" import icon %}
-<section class="card stat">
+<section class="card stat tone-{{ tone }}">
   <div class="stat-head"><h2>{{ _(label) }}</h2><span class="stat-icon" aria-hidden="true">{{ icon(icon_name) }}</span></div>
   <p class="stat-value">{{ value }}</p>
   {% if note %}<p class="stat-note">{{ _(note) }}</p>{% endif %}
 </section>
+{% endmacro %}
+
+{# The welcome banner at the top of a dashboard: brand gradient, white text. #}
+{% macro hero(title, lead="", eyebrow="") %}
+<header class="hero">
+  {% if eyebrow %}<p class="hero-eyebrow">{{ _(eyebrow) }}</p>{% endif %}
+  <h1 class="hero-title">{{ title }}</h1>
+  {% if lead %}<p class="hero-lead">{{ lead }}</p>{% endif %}
+</header>
 {% endmacro %}
 
 {# A shortcut to another page: the whole card is the link. #}

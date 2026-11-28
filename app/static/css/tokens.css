@@ -28,12 +28,18 @@
   );
 
   /* Surfaces, from the page behind everything to raised cards, tinted toward the brand
-     blue: cool greys by day, deep navy by night. */
-  --aida-canvas: light-dark(#f3f6fa, #0b1320);
-  --aida-surface: light-dark(#ffffff, #121c2c);
-  --aida-surface-sunken: light-dark(#e8eef5, #1a2638);
-  --aida-surface-hover: light-dark(#edf2f8, #1d2a3e);
-  --aida-surface-pressed: light-dark(#dde6f0, #25344b);
+     blue: cool greys by day, a lifted slate-navy by night (not near-black, which reads
+     heavy and hides the difference between page and card). */
+  --aida-canvas: light-dark(#f3f6fa, #172030);
+  --aida-surface: light-dark(#ffffff, #1f2a3d);
+  --aida-surface-sunken: light-dark(#e8eef5, #1a2436);
+  --aida-surface-hover: light-dark(#edf2f8, #27354b);
+  --aida-surface-pressed: light-dark(#dde6f0, #2f3e57);
+  /* A faint wash of the logo blue and amber across the top of the page. Decorative only:
+     text sits on the solid colours beneath it, which the contrast test checks. */
+  --aida-canvas-wash:
+    radial-gradient(64rem 28rem at 100% -6rem, color-mix(in srgb, var(--aida-brand-blue) 12%, transparent), transparent 70%),
+    radial-gradient(40rem 22rem at 0% -4rem, color-mix(in srgb, var(--aida-brand-amber) 6%, transparent), transparent 70%);
   /* Behind QR codes in both themes, because scanners need dark marks on white. */
   --aida-surface-scan: #ffffff;
   /* Behind the AIDA logo in both themes, because its lettering is dark. */
@@ -41,20 +47,20 @@
 
   /* Text, navy rather than black. Every pair meets WCAG AA (4.5:1) on canvas, surface,
      sunken and hover surfaces; tests/core/test_tokens_contrast.py checks it. */
-  --aida-text: light-dark(#0f1b2d, #edf2f8);
-  --aida-text-muted: light-dark(#4a5a70, #a5b3c6);
+  --aida-text: light-dark(#0f1b2d, #eef2f8);
+  --aida-text-muted: light-dark(#4a5a70, #b0bccd);
   --aida-text-on-accent: light-dark(#ffffff, #0b1320);
 
   /* Borders. The strong border outlines form fields, so it keeps 3:1 (WCAG 1.4.11). */
-  --aida-border: light-dark(#d2dbe6, #2b3a51);
-  --aida-border-strong: light-dark(#7d8ca1, #62748e);
+  --aida-border: light-dark(#d2dbe6, #34435c);
+  --aida-border-strong: light-dark(#7d8ca1, #7587a3);
 
   /* Accent: the logo blue, a shade deeper by day so white button text and links pass AA,
      and lighter by night so it reads on navy. Links, primary buttons, focus, selection. */
   --aida-accent: light-dark(#2a6fad, #6fb0ec);
   --aida-accent-hover: light-dark(#225d93, #93c4f2);
   --aida-accent-pressed: light-dark(#1b4c79, #b6d7f6);
-  --aida-accent-subtle: light-dark(#e6f0f9, #16304d);
+  --aida-accent-subtle: light-dark(#e6f0f9, #1d3a5c);
   --aida-accent-contrast: var(--aida-text-on-accent);
   --aida-focus-ring: light-dark(#2a6fad, #93c4f2);
   /* The soft halo around a focused form field, on top of the focus ring. */
@@ -63,10 +69,10 @@
   /* Brand chrome: the sidebar, the menu drawer and the sign-in brand panel. Deep navy in
      both themes, so the portal looks like AIDA's on every screen. Amber marks the current
      page and the focus ring here, because the accent blue does not show on navy. */
-  --aida-chrome: light-dark(#0f2440, #08111e);
-  --aida-chrome-hover: light-dark(#18324f, #111d2e);
-  --aida-chrome-active: light-dark(#1f3d60, #182a42);
-  --aida-chrome-border: light-dark(#203a5c, #1a283c);
+  --aida-chrome: light-dark(#0f2440, #13203a);
+  --aida-chrome-hover: light-dark(#18324f, #1b2b4a);
+  --aida-chrome-active: light-dark(#1f3d60, #23385c);
+  --aida-chrome-border: light-dark(#203a5c, #263755);
   --aida-chrome-text: #c6d3e4;
   --aida-chrome-label: light-dark(#91a6c2, #8ea2be);
   --aida-chrome-strong: #ffffff;
@@ -78,15 +84,26 @@
     transparent 60%
   );
 
+  /* The welcome banner on dashboards: navy into the logo blue, white text on every part
+     of it (the contrast test checks each stop). */
+  --aida-hero-start: #0f2440;
+  --aida-hero-middle: #1b4877;
+  --aida-hero-end: #2667a2;
+  --aida-hero-text: #ffffff;
+  --aida-hero-muted: #e3ecf7;
+  --aida-hero:
+    radial-gradient(34rem 16rem at 95% -10%, color-mix(in srgb, var(--aida-brand-blue) 45%, transparent), transparent 70%),
+    linear-gradient(120deg, var(--aida-hero-start), var(--aida-hero-middle) 55%, var(--aida-hero-end));
+
   /* Status colours: text colour on its own subtle background. Warning comes from the logo
      amber and danger from its red, each deepened or lightened until text passes AA. */
   --aida-success: light-dark(#17693a, #6fd28f);
-  --aida-success-subtle: light-dark(#e5f3ea, #12291d);
+  --aida-success-subtle: light-dark(#e5f3ea, #173527);
   --aida-warning: light-dark(#8a5300, #f7b23b);
-  --aida-warning-subtle: light-dark(#fef3dc, #2e2310);
+  --aida-warning-subtle: light-dark(#fef3dc, #3a2d14);
   --aida-danger: light-dark(#c4161d, #ff8a8e);
   --aida-danger-hover: light-dark(#a01218, #ffadb0);
-  --aida-danger-subtle: light-dark(#fdeaea, #3a1519);
+  --aida-danger-subtle: light-dark(#fdeaea, #451b20);
   --aida-info: var(--aida-accent);
   --aida-info-subtle: var(--aida-accent-subtle);
 
@@ -106,10 +123,16 @@
   --aida-radius-lg: 1rem;
   --aida-radius-full: 999px;
 
-  /* Two shadow depths: resting cards, and things that float (menus, modals). */
-  --aida-shadow-0: 0 1px 2px rgb(15 27 45 / 0.06);
-  --aida-shadow-1: 0 1px 2px rgb(15 27 45 / 0.06), 0 1px 3px rgb(15 27 45 / 0.08);
-  --aida-shadow-2: 0 12px 32px rgb(15 27 45 / 0.16), 0 2px 6px rgb(15 27 45 / 0.08);
+  /* Shadow depths: resting cards, and things that float (menus, modals). By night
+     shadows go darker, and raised surfaces get a faint lit top edge, so cards still
+     separate from the page. */
+  --aida-shadow-color: light-dark(rgb(15 27 45 / 0.07), rgb(4 8 16 / 0.35));
+  --aida-edge-light: light-dark(rgb(255 255 255 / 0), rgb(255 255 255 / 0.06));
+  --aida-shadow-0: 0 1px 2px var(--aida-shadow-color);
+  --aida-shadow-1: inset 0 1px 0 var(--aida-edge-light), 0 1px 2px var(--aida-shadow-color), 0 2px 6px var(--aida-shadow-color);
+  --aida-shadow-2: inset 0 1px 0 var(--aida-edge-light), 0 14px 34px light-dark(rgb(15 27 45 / 0.14), rgb(4 8 16 / 0.5)), 0 2px 6px var(--aida-shadow-color);
+  /* The soft blue glow under a primary button. */
+  --aida-accent-glow: 0 4px 14px color-mix(in srgb, var(--aida-accent) 28%, transparent);
 
   /* Type: the system font, sizes in rem. Large sizes get tighter tracking and leading;
      body text has none (apple-design §15). */
