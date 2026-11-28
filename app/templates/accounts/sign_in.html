@@ -13,4 +13,5 @@
   {{ field("password", "Password", type="password", autocomplete="current-password", required=true) }}
   <div class="mt-6">{{ button("Sign in", block=true) }}</div>
 </form>
+<p class="mt-6 text-center text-sm text-muted">{{ _("New to the portal?") }} <a href="/register">{{ _("Register your Discom") }}</a></p>
 {% endblock %}

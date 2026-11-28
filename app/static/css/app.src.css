@@ -87,6 +87,11 @@
     color: var(--aida-accent-hover);
   }
 
+  /* WCAG 1.4.1: a link inside a sentence is underlined, not told apart by colour alone. */
+  p a {
+    text-decoration: underline;
+  }
+
   ::selection {
     background: var(--aida-accent-subtle);
   }

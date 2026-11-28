@@ -19,13 +19,16 @@ ONE_OFF_CLASS = re.compile(
     r"indigo|violet|purple|fuchsia|pink|rose|white|black)\b|-\[[^\]]+\]"
 )
 
+# architecture.md: self-hosted scripts only, never inline. A <script> must load a file by src.
+INLINE_SCRIPT = re.compile(r"<script(?![^>]*\bsrc=)")
+
 
 @pytest.mark.parametrize("template", TEMPLATES, ids=lambda path: path.name)
 def test_p1_ui_02_templates_use_only_design_tokens(template: Path) -> None:
     html = template.read_text()
 
     assert "style=" not in html
-    assert "<script" not in html
+    assert INLINE_SCRIPT.findall(html) == []
     assert ONE_OFF_CLASS.findall(html) == []
 
 

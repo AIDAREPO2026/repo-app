@@ -102,11 +102,12 @@ Before writing a helper, search the codebase. These shared functions must be use
 | Require a login type on a route | `app.accounts.guards.require_login_type()` | `P1-ACC-08` |
 | Mark a route open to visitors | `dependencies=[Depends(app.accounts.guards.public_route)]` | `P1-ACC-08` |
 | Describe the signed-in login for an audit event | `app.accounts.guards.actor_for()` | `P1-ACC-08` |
+| Describe a visitor who is not signed in for an audit event | `app.accounts.guards.visitor_actor()` | `P1-ACC-02` |
 | Hash, check or validate a password | `app.accounts.passwords` (`hash_password`, `verify_password`, `check_password_policy`) | `P1-ACC-04` |
 | Check a sign-in, with lockout and attempt logging | `app.accounts.service.authenticate()` | `P1-ACC-04` |
 | Start or end a session, with its cookie and audit | `app.core.sessions.start_session()` and `end_session()` | `P1-ACC-06` |
 | Put the CSRF token in a form | `csrf_field()` in `templates/macros/forms.html`, imported `with context` | `P1-ACC-06` |
-| Issue and verify a CAPTCHA | `app.core.captcha.new_challenge()` and `verify()` | `P0-SEC-01` |
+| Issue and verify a CAPTCHA | `app.core.captcha.new_challenge()` and `verify()`; on a page, `<altcha-widget challenge="/captcha/challenge">` with `static/js/captcha.js` (see `accounts/register.html`) | `P0-SEC-01`, `P1-ACC-02` |
 | Send an email | `app.core.email.send_email()` (`P1-ACC-03` moves sending to Celery with retries) | `P1-ACC-09` |
 | Issue or check a single-use emailed link | `app.accounts.tokens` (`issue_link_token`, `usable_token`, `mark_used`) | `P1-ACC-09` |
 | Issue or check an emailed sign-in code | `app.accounts.tokens` (`issue_email_code`, `use_email_code`) | `P1-ACC-10` |
