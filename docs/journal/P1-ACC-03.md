@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Review feedback from the user: the queue gained serial numbers, row selection with copy and export, the row menu, and separate Email and User ID columns (#33). |
 | 2026-11-28 | Raghvendra Singh | Built the Registrations queue with Approve and Decline, email through the worker with retries, and migration 0010. Moved the four Admin list pages onto one renderer. Checked in a browser with a real worker. Next: review. |
 | 2026-11-28 | Raghvendra Singh | Started the task. |
 

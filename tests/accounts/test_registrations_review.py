@@ -144,3 +144,17 @@ def test_p1_acc_03_a_failed_send_is_retried_and_blocks_nothing(
 
     assert len(tries) == 6  # the first try and five retries
     assert "no mail server" in caplog.text
+
+
+def test_p1_acc_03_the_queue_is_numbered_selectable_and_has_its_own_columns(
+    sign_in: SignIn, engine: Engine
+) -> None:
+    sign_in(APP, "admin")
+    login = pending(engine)
+
+    page = csrf_client(APP).get("/admin/registrations").text
+
+    assert "data-columns" in page and "data-export" in page
+    for heading in ("Sr no", "Discom", "Email", "User ID", "Requested"):
+        assert f">{heading}</th>" in page
+    assert f">{login.user_id}</td>" in page

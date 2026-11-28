@@ -6,11 +6,13 @@
 {{ page_header("Registrations") }}
 
 {% if registrations %}
-{% call data_table("Registrations waiting", registrations|length, search="Search requests") %}
+{% call data_table("Registrations waiting", registrations|length, search="Search requests", columns=[_("Discom"), _("Email"), _("User ID"), _("Requested")], copy_label="Copy email", file="registrations", compact=true) %}
   <thead>
     <tr>
+      <th scope="col" class="w-px whitespace-nowrap">{{ _("Sr no") }}</th>
       <th scope="col">{{ _("Discom") }}</th>
-      <th scope="col">{{ _("Email and User ID") }}</th>
+      <th scope="col">{{ _("Email") }}</th>
+      <th scope="col">{{ _("User ID") }}</th>
       <th scope="col">{{ _("Requested") }}</th>
       <th scope="col"><span class="sr-only">{{ _("Actions") }}</span></th>
     </tr>
@@ -18,26 +20,31 @@
   <tbody>
     {% for request_login in registrations %}
     {% set discom = request_login.organisation %}
-    <tr>
+    <tr data-export='{{ [discom.name, request_login.email, request_login.user_id, request_login.created_at|ist]|tojson }}' data-copy="{{ request_login.email }}">
+      <td class="text-muted">{{ loop.index }}</td>
       <td>
-        <p class="font-semibold">{{ discom.name }}</p>
+        <p class="min-w-40 font-semibold">{{ discom.name }}</p>
         {% if discom.status != "active" %}{{ badge("Discom deactivated", "warning") }}{% endif %}
       </td>
-      <td>
-        <p>{{ request_login.email }}</p>
-        <p class="font-mono text-xs text-muted">{{ request_login.user_id }}</p>
+      {# A long address wraps at the @, so the row's buttons stay on screen. #}
+      {% set name, domain = request_login.email.rsplit("@", 1) %}
+      <td>{{ name }}<wbr>@{{ domain }}</td>
+      <td class="font-mono text-sm">{{ request_login.user_id }}</td>
+      {% set day, time = (request_login.created_at|ist).split(", ") %}
+      <td class="text-sm">
+        <span class="block whitespace-nowrap">{{ day }}</span>
+        <span class="block whitespace-nowrap text-xs text-muted">{{ time }}</span>
       </td>
-      <td class="whitespace-nowrap text-sm">{{ request_login.created_at|ist }}</td>
       <td>
         <div class="flex justify-end gap-2">
           {# Not offered for a deactivated Discom, where it would be refused. #}
           {% if discom.status == "active" %}
           <form method="post" action="/admin/registrations/{{ request_login.id }}/approve" data-confirm="{{ _('%(discom)s can sign in with this login, and is emailed at %(email)s. Check the address belongs to the Discom first.', discom=discom.name, email=request_login.email) }}" data-confirm-title="{{ _('Approve this registration?') }}" data-confirm-action="{{ _('Approve') }}">
             {{ csrf_field() }}
-            {{ button("Approve", size="sm", icon_name="check", needs_script=true) }}
+            {{ button("Approve", size="sm", icon_name="check", icon_only=true, needs_script=true) }}
           </form>
           {% endif %}
-          {{ button("Decline", "secondary", type="button", size="sm", commandfor="decline-" ~ request_login.id, command="show-modal", icon_name="close") }}
+          {{ button("Decline", "secondary", type="button", size="sm", commandfor="decline-" ~ request_login.id, command="show-modal", icon_name="close", icon_only=true) }}
         </div>
 
         {% call modal("decline-" ~ request_login.id, "Decline this registration?") %}

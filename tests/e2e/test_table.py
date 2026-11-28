@@ -129,3 +129,29 @@ def test_p1_ui_02_table_filters_by_group_and_search_together(page: Page) -> None
     page.get_by_role("button", name="Category").click()
     page.get_by_role("option", name="All").click()
     expect(page.locator("tbody tr:not([hidden])")).to_have_count(3)  # scrolled into view, so all show
+
+
+def test_p1_ui_02_the_row_menu_offers_the_rows_own_buttons(page: Page) -> None:
+    actions = templates.env.from_string(
+        '{% from "macros/ui.html" import data_table, button, modal %}'
+        '{% call data_table("Requests", 2, columns=["Discom"]) %}'
+        """<thead><tr><th>Discom</th><th>Actions</th></tr></thead><tbody>"""
+        """<tr data-export='["North"]' data-copy="n"><td>North</td><td>"""
+        '{{ button("Approve", type="button", icon_name="check") }}'
+        '{{ button("Decline", type="button", commandfor="no", command="show-modal", icon_name="close") }}'
+        '{% call modal("no", "Decline this request?") %}<p>Why</p>{% endcall %}</td></tr>'
+        """<tr data-export='["South"]' data-copy="s"><td>South</td><td></td></tr>"""
+        "</tbody>{% endcall %}"
+    )
+    open_login_with(page, actions.render() + '<div class="toasts" role="status"></div>')
+    page.wait_for_load_state()
+    menu = page.get_by_role("group", name="Row actions")
+
+    page.get_by_role("cell", name="South", exact=True).click(button="right")
+    expect(menu.get_by_role("button")).to_have_text(["Copy", "Select row"])
+    page.keyboard.press("Escape")
+
+    page.get_by_role("cell", name="North", exact=True).click(button="right")
+    expect(menu.get_by_role("button")).to_have_text(["Approve", "Decline", "Copy", "Select row"])
+    menu.get_by_role("button", name="Decline").click()
+    expect(page.get_by_role("dialog", name="Decline this request?")).to_be_visible()
