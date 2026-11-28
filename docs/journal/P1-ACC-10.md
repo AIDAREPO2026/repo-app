@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | With `P1-UI-02`: turning two-step sign-in off now reports as a warning. No change to behaviour. (#25) |
 | 2026-11-28 | Raghvendra Singh | Merged #17 on the user's approval and set the tracker row to Done. |
 | 2026-11-28 | Raghvendra Singh | Closed the review gaps in #17: a Member must give a current code to turn MFA off, a new emailed code at most once a minute, and `python -m app.accounts.cli reset-mfa` for when the only Admin loses their phone. Documented the e2e Admin variables in tests/README.md. 227 unit tests and 14 e2e tests pass. Checked by hand in the browser: a Member's email code, the one-minute wait and the Security page. |
 | 2026-11-28 | Raghvendra Singh | Opened #17 with the `security` label, and set the tracker row to In review. |

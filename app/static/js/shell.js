@@ -88,6 +88,16 @@ function closeToast(toast) {
   });
 }
 
+// A result arrives as ?done= or ?added= in the address. Once its notice is on screen, take it
+// out, so reloading or sharing the page does not announce the change again.
+function forgetResult() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("done") && !url.searchParams.has("added")) return;
+  url.searchParams.delete("done");
+  url.searchParams.delete("added");
+  window.history.replaceState(null, "", url);
+}
+
 function applyAll() {
   applyTheme(read(THEME_KEY, "light"));
   applySidebar(read(SIDEBAR_KEY, "shown"));
@@ -96,6 +106,7 @@ function applyAll() {
 applyAll();
 
 document.addEventListener("DOMContentLoaded", () => {
+  forgetResult();
   applyAll();
   // Hidden in the HTML, because without this script they would do nothing.
   for (const control of document.querySelectorAll(".theme-switcher, [data-needs-script]")) {

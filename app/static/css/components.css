@@ -1516,7 +1516,7 @@
     pointer-events: none;
   }
 
-  /* Inverse of the page, as tooltips are; warnings and errors take their own colour. */
+  /* Solid in the colour of its kind: green done, blue note, amber warning, red failure. */
   .toast {
     display: flex;
     align-items: center;
@@ -1527,9 +1527,9 @@
     max-width: calc(100vw - 2rem);
     padding: var(--aida-space-3) var(--aida-space-3) var(--aida-space-3) var(--aida-space-3);
     border-radius: var(--aida-radius-lg);
-    background: var(--aida-text);
+    background: var(--aida-success);
     box-shadow: var(--aida-shadow-2);
-    color: var(--aida-surface);
+    color: var(--aida-text-on-accent);
     font-size: var(--aida-text-sm);
     font-weight: 500;
     pointer-events: auto;
@@ -1571,14 +1571,16 @@
     transform: rotate(var(--aida-close-turn));
   }
 
+  .toast-info {
+    background: var(--aida-info);
+  }
+
   .toast-warning {
     background: var(--aida-warning);
-    color: var(--aida-text-on-accent);
   }
 
   .toast-danger {
     background: var(--aida-danger);
-    color: var(--aida-text-on-accent);
   }
 
   .toast .icon {

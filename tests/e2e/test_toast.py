@@ -3,6 +3,8 @@
 The sign-in page is served with a toast added to it, so the test needs no login.
 """
 
+import re
+
 from playwright.sync_api import Page, Route, expect
 
 TOAST = (
@@ -35,3 +37,9 @@ def test_p1_ui_02_a_success_toast_closes_by_itself(page: Page) -> None:
 
     expect(page.locator(".toast")).to_have_count(1)
     expect(page.locator(".toast")).to_have_count(0, timeout=8_000)
+
+
+def test_p1_ui_02_the_result_leaves_the_address_once_shown(page: Page) -> None:
+    page.goto("/login?done=added&next=/dashboard/admin")
+
+    expect(page).to_have_url(re.compile(r"/login\?next=[^&]*$"))
