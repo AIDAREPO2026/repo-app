@@ -3,9 +3,9 @@
 Pydantic input and view schemas. Views for Members and visitors must never contain admin-only fields.
 """
 
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.core.captcha import MAX_PAYLOAD_LENGTH
 
@@ -38,6 +38,14 @@ class PrivilegedAccountForm(PersonForm):
     login_type: Literal["admin", "reviewer", "approver"]
     # Reviewers only: the alternate covers when the primary Reviewer cannot.
     is_alternate: bool = False
+
+    @model_validator(mode="before")
+    @classmethod
+    def alternate_reviewer_is_a_reviewer(cls, data: Any) -> Any:
+        """Read the form's single "Alternate Reviewer" choice as a Reviewer who is the alternate."""
+        if isinstance(data, dict) and data.get("login_type") == "alternate_reviewer":
+            return data | {"login_type": "reviewer", "is_alternate": True}
+        return data
 
 
 class ReviewerRoleForm(BaseModel):

@@ -59,6 +59,7 @@ from app.accounts.service import (
     free_word,
     import_discoms,
     needs_mfa,
+    open_roles,
     preview_discom_import,
     privileged_account,
     privileged_accounts,
@@ -432,6 +433,7 @@ def render_accounts(
         "nav": nav_for("admin"),
         "breadcrumbs": breadcrumbs("admin", Crumb("Accounts")),
         "accounts": privileged_accounts(db),
+        "open_roles": open_roles(db),
         "admin_id": admin.id,
         "messages": messages,
     }
