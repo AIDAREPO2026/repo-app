@@ -38,6 +38,11 @@ def actor_for(request: Request, login: Login) -> Actor:
     )
 
 
+def visitor_actor(request: Request) -> Actor:
+    """Describe a visitor who is not signed in, by their IP and device, for the audit trail."""
+    return Actor(kind="anonymous", ip=client_ip(request), user_agent=user_agent(request))
+
+
 class LoginTypeGuard:
     """A FastAPI dependency that returns the current login if its type is allowed, or refuses."""
 
