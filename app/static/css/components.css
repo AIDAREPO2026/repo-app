@@ -315,6 +315,15 @@
     transition: transform var(--aida-duration-slow) var(--aida-ease-settle);
   }
 
+  /* Closed, a section is an entry like any other; open, it steps back to a small label over
+     its pages. */
+  .side-group:not([open]) > .side-section {
+    padding-block: var(--aida-space-2);
+    font-size: var(--aida-text-sm);
+    line-height: var(--aida-text-base-leading);
+    font-weight: 500;
+  }
+
   .side-group[open] > .side-section .icon {
     transform: rotate(90deg);
   }
