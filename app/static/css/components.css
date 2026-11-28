@@ -810,6 +810,16 @@
     padding: 0;
   }
 
+  /* Closing a modal or drawer: a true circle, as wide as it is tall. */
+  .dialog-header .btn.btn-icon {
+    flex: none;
+    width: 2.25rem;
+    height: 2.25rem;
+    min-width: 0;
+    min-height: 0;
+    border-radius: var(--aida-radius-full);
+  }
+
   .btn-primary {
     background: var(--aida-accent);
     color: var(--aida-accent-contrast);
@@ -1052,7 +1062,6 @@
 
   .input:not(.find-input):focus-visible {
     background-color: var(--aida-surface);
-    box-shadow: var(--aida-field-halo);
   }
 
   .input[type="file"] {
@@ -1086,8 +1095,13 @@
     border-color: var(--aida-border-strong);
   }
 
-  .input:not(.find-input):focus-visible {
-    border-color: var(--aida-focus-ring);
+  /* Softer than the 2px outline used elsewhere: a pale ring with a halo around it. */
+  .input:focus-visible,
+  .input:not(.find-input):focus-visible,
+  .input:not(.find-input):focus-visible:hover:not(:disabled) {
+    outline: 1px solid color-mix(in srgb, var(--aida-focus-ring) 55%, transparent);
+    border-color: color-mix(in srgb, var(--aida-focus-ring) 55%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--aida-accent) 12%, transparent);
   }
 
   .input:not(.find-input)[aria-invalid="true"] {
