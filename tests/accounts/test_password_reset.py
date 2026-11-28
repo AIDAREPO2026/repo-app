@@ -183,3 +183,22 @@ def test_p1_acc_05_saving_a_password_is_announced_at_sign_in() -> None:
     page = csrf_client(APP).get("/login?done=password").text
 
     assert "Password saved. Sign in with it." in page
+
+
+def test_p1_acc_05_the_owner_is_told_when_the_password_changes(
+    engine: Engine, outbox: list[EmailMessage]
+) -> None:
+    login = member(engine)
+    ask(login.user_id)
+    token = link_token(outbox)
+
+    assert choose(token, "short") == 400
+    assert len(outbox) == 1  # a refused password changes nothing, so nothing is said
+
+    assert choose(token) == 303
+
+    notice = outbox[-1]
+    body = notice.get_content()
+    assert (notice["To"], notice["Subject"]) == (login.email, "Your AIDA portal password was changed")
+    assert login.user_id in body and "IST" in body
+    assert NEW not in body and "http" not in body

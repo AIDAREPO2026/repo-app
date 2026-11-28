@@ -584,7 +584,17 @@ def reset_password(db: Session, token: str, password: str, confirm_password: str
     # Recorded as the visitor who held the link: a shared Member login has no session here to
     # say who that was (SRS 2.3).
     record(db, actor, "accounts.password_reset", "login", str(login.id), "success")
+    _tell_owner_password_changed(login)
     return []
+
+
+def _tell_owner_password_changed(login: Login) -> None:
+    """Email the account's address, so a change its owner did not make does not go unnoticed.
+
+    No link is included: nothing here should teach people to click one in a warning.
+    """
+    context = {"user_id": login.user_id, "changed_at": utc_now()}
+    send_email(login.email, "Your AIDA portal password was changed", "email/password_changed.txt", context)
 
 
 def _use_password_link(
