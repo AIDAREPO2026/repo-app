@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Fix: local testing over HTTPS failed (the browser refused the self-signed certificate, and port 8080's redirect dropped the 8443 port). Moved the HTTPS server's routes into `nginx/snippets/portal-routes.conf` and added `nginx/local-http.conf`, a plain HTTP server on 8081 that includes the same routes. Only `docker-compose.dev.yml` mounts it, published on 127.0.0.1. Checked: 200 on http://localhost:8081 and https://localhost:8443, the CSP and other headers on HTTP, `/internal/` still 404, and sign-in's CSRF cookie accepted over HTTP. |
 | 2026-11-27 | Raghvendra Singh | Pull request approved; set status to Done and squash-merged. CI and the staging check arrive with `P0-OPS-03` and `P0-OPS-01`. |
 | 2026-11-27 | Raghvendra Singh | At the tech lead's request, replaced the fixed `storage_limit_gb` with a free-space reserve read from SeaweedFS, and added task `P2-UPL-04`: an Admin Storage page, a 15-minute check, and portal and email alerts at 75% and 85% full. Phase 2 is now 23 tasks and 53 points; the MVP uses 83% of capacity. |
 | 2026-11-27 | Raghvendra Singh | Moved the database and SeaweedFS data to host folders under `DATA_DIR`, and put SeaweedFS on its own `storage` network, at the tech lead's request. Proved a row and a stored file survive `docker compose down -v`, and that postgres, redis, clamav and beat cannot reach SeaweedFS. |
