@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Merged #27 on the user's approval. The task stays Done. |
 | 2026-11-28 | Raghvendra Singh | The user found the name suggestions wrong. Replaced the browser's suggestion list with the portal's searchable select, which fills the name and the researched domain (#27). |
 | 2026-11-28 | Raghvendra Singh | Add Discom now warns that suggested names are not verified and refuses until the Admin confirms the details were checked (#27). |
 | 2026-11-28 | Raghvendra Singh | The Add Discom name field now suggests utility names as you type. Branch `feat/p1-acc-01-discom-name-suggestions`. |
