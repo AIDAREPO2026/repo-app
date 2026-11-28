@@ -17,7 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
-| 2026-11-28 | Raghvendra Singh | Reopened at the user's request: registration now verifies the email before the User ID is chosen, so only free User IDs are suggested. Replaces the browser-only suggestions of #28. Spec updated. Branch `feat/p1-acc-02-verify-email-first`. |
+| 2026-11-28 | Raghvendra Singh | Reopened at the user's request: registration now verifies the email before the User ID is chosen, so only free User IDs are suggested. Replaces the browser-only suggestions of #28. Spec updated. Branch `feat/p1-acc-02-verify-email-first`. Opened #29; tracker row set to In review (rev 77). |
 | 2026-11-28 | Raghvendra Singh | Approved by the user and merged as #19. In #20 (`P1-UI-02`) the registration and request-sent pages moved to the AIDA sign-in layout (`layouts/auth.html`) and the sign-in page kept the Register link; 355 unit and 21 e2e tests pass, including axe on `/register` in light and dark. Tracker row set to Done. |
 | 2026-11-28 | Raghvendra Singh | Built the public `/register` form, the `/captcha/challenge` route, the vendored ALTCHA widget (3.7.0, external build) and the registration rules. Checked in the browser: the real widget solves our challenge under the CSP and a request creates a pending Member login. Unit tests (279), e2e and axe pass. Opened #19 and set the tracker row to In review. Next: review. |
 | 2026-11-28 | Raghvendra Singh | Started the task. |
