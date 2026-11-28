@@ -148,37 +148,23 @@
 </section>
 {% endmacro %}
 
-{# A dashboard figure. label is a message id; value is data. note is an optional message. #}
-{# tone: "accent" (blue), "warning" (amber) or "success" (green), for the icon and corner wash. #}
-{% macro stat_card(label, value, icon_name, note="", tone="accent") %}
-{% from "macros/icons.html" import icon %}
-<section class="card stat tone-{{ tone }}">
-  <div class="stat-head"><h2>{{ _(label) }}</h2><span class="stat-icon" aria-hidden="true">{{ icon(icon_name) }}</span></div>
-  <p class="stat-value">{{ value }}</p>
-  {% if note %}<p class="stat-note">{{ _(note) }}</p>{% endif %}
-</section>
-{% endmacro %}
-
-{# The welcome banner at the top of a dashboard: brand gradient, white text. #}
-{% macro hero(title, lead="", eyebrow="") %}
-<header class="hero">
-  {% if eyebrow %}<p class="hero-eyebrow">{{ _(eyebrow) }}</p>{% endif %}
-  <h1 class="hero-title">{{ title }}</h1>
-  {% if lead %}<p class="hero-lead">{{ lead }}</p>{% endif %}
+{# The top of a dashboard: a greeting, with the date and which dashboard it is. #}
+{% macro welcome(title, date, eyebrow="") %}
+<header class="welcome">
+  <p class="welcome-meta">{% if eyebrow %}{{ _(eyebrow) }} · {% endif %}{{ date }}</p>
+  <h1 class="welcome-title">{{ title }}</h1>
 </header>
 {% endmacro %}
 
-{# A shortcut to another page: the whole card is the link. #}
-{% macro action_card(href, title, text, icon_name) %}
+{# One number in a row of figures. label and note are message ids; value is data. With href
+   the whole figure is a link to the page behind the number. #}
+{% macro figure(label, value, note="", href="") %}
 {% from "macros/icons.html" import icon %}
-<a href="{{ href }}" class="card item-card action-card">
-  <span class="stat-icon" aria-hidden="true">{{ icon(icon_name) }}</span>
-  <span>
-    <span class="card-title block">{{ _(title) }}</span>
-    <span class="card-text block">{{ _(text) }}</span>
-  </span>
-  <span class="action-card-arrow" aria-hidden="true">{{ icon("arrow-right") }}</span>
-</a>
+<{{ "a href=" ~ href if href else "div" }} class="figure">
+  <span class="figure-label">{{ _(label) }}{% if href %}{{ icon("arrow-right") }}{% endif %}</span>
+  <span class="figure-value">{{ value }}</span>
+  {% if note %}<span class="figure-note">{{ _(note) }}</span>{% endif %}
+</{{ "a" if href else "div" }}>
 {% endmacro %}
 
 {# The heading on a sign-in style page (layouts/auth.html). #}

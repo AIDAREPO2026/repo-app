@@ -84,17 +84,6 @@
     transparent 60%
   );
 
-  /* The welcome banner on dashboards: navy into the logo blue, white text on every part
-     of it (the contrast test checks each stop). */
-  --aida-hero-start: light-dark(#0f2440, #1d2533);
-  --aida-hero-middle: light-dark(#1b4877, #22324a);
-  --aida-hero-end: light-dark(#2667a2, #294160);
-  --aida-hero-text: #ffffff;
-  --aida-hero-muted: #e3ecf7;
-  --aida-hero:
-    radial-gradient(34rem 16rem at 95% -10%, color-mix(in srgb, var(--aida-brand-blue) 45%, transparent), transparent 70%),
-    linear-gradient(120deg, var(--aida-hero-start), var(--aida-hero-middle) 55%, var(--aida-hero-end));
-
   /* Status colours: text colour on its own subtle background. Warning comes from the logo
      amber and danger from its red, each deepened or lightened until text passes AA. */
   --aida-success: light-dark(#17693a, #7fcf99);

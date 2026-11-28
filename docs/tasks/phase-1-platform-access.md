@@ -109,6 +109,7 @@ The Admin audit search screen is built in `P3-UI-01`.
     - empty state, skeleton loader and pagination
 - Instant press and focus feedback (`:active`, `:focus-visible`) on every interactive component. Pressed controls spring back.
 - Page transitions with the View Transitions API (`@view-transition { navigation: auto; }`), and HTMX swaps set to use transitions.
+- A dashboard of a greeting and panels: key figures that link to their pages, quick links and the login's two-step sign-in status.
 - A data table component: search, a header that stays while rows scroll, a height that fits the screen on wide screens, and a row count.
 - A translucent top bar with `backdrop-filter` and a solid fallback.
 - A theme switcher (System, Light, Dark) on every page, remembered in the browser. Light is the default.

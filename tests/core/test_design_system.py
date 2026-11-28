@@ -85,3 +85,11 @@ def test_p1_ui_02_data_table_names_its_scroll_area_and_counts_rows() -> None:
     assert 'role="region" aria-label="Discoms" tabindex="0"' in html
     assert 'aria-label="Search Discoms"' in html
     assert "<span data-shown>3</span> / 3" in html
+
+
+def test_p1_ui_02_controls_shrink_only_while_pressed() -> None:
+    # A damaged selector list once left every button and link permanently scaled down.
+    css = re.sub(r"/\*.*?\*/", "", COMPONENTS_CSS, flags=re.S)
+    for selectors, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css):
+        if "transform: scale(var(--aida-press-scale" in body and "from" not in selectors:
+            assert all(":active" in part for part in selectors.split(",")), selectors.strip()
