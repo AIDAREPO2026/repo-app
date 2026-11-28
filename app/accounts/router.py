@@ -61,6 +61,7 @@ from app.accounts.service import (
     free_word,
     import_discoms,
     needs_mfa,
+    open_roles,
     pending_registrations,
     preview_discom_import,
     privileged_account,
@@ -450,11 +451,10 @@ def render_accounts(
     request: Request, db: Session, admin: Login, error: str = "", done: str = "", status_code: int = 200
 ) -> HTMLResponse:
     """Render the privileged accounts page, with an error or a done message if there is one."""
-    context = {"accounts": privileged_accounts(db), "admin_id": admin.id}
+    context = {"accounts": privileged_accounts(db), "open_roles": open_roles(db), "admin_id": admin.id}
     messages = page_messages(error, done, DONE_MESSAGES)
-    return render_admin_page(
-        request, "accounts/admin_accounts.html", "Accounts", messages, status_code, context
-    )
+    template = "accounts/admin_accounts.html"
+    return render_admin_page(request, template, "Accounts", messages, status_code, context)
 
 
 # Renders an Admin list page with an error: render_accounts or render_discoms.

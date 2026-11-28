@@ -7,7 +7,7 @@ Each code links to its full spec. Status and owner come from each task's file in
 | Phase | Tasks | Dev points | QA points | Total | Done |
 | --- | --- | --- | --- | --- | --- |
 | 0 Mobilise | 12 | 20 | 6 | 26 | 11 |
-| 1 Platform and access | 17 | 31 | 8 | 39 | 23 |
+| 1 Platform and access | 17 | 31 | 8 | 39 | 25 |
 | 2 Content and governance | 23 | 42 | 11 | 53 | 0 |
 | 3 Discovery and directories | 16 | 28 | 9 | 37 | 0 |
 | 4 Hardening and release | 19 | 37 | 12 | 49 | 0 |
@@ -47,7 +47,7 @@ Each code links to its full spec. Status and owner come from each task's file in
 | [`P1-ACC-10`](phase-1-platform-access.md#p1-acc-10--add-mfa-by-authenticator-app-and-email-code) | Add MFA by authenticator app and email code | Dev | 3 | Done | Raghvendra Singh | `P1-ACC-06`, `P1-ACC-09` |
 | [`P1-ACC-01`](phase-1-platform-access.md#p1-acc-01--build-the-discom-master-list-and-admin-screen) | Build the Discom master list and Admin screen | Dev | 2 | Done | Raghvendra Singh | `P1-ACC-08`, `P1-ACC-09` |
 | [`P1-ACC-02`](phase-1-platform-access.md#p1-acc-02--build-the-registration-form-with-captcha) | Build the registration form with CAPTCHA | Dev | 2 | Done | Raghvendra Singh | `P1-ACC-01`, `P1-ACC-04`, `P0-SEC-01` |
-| [`P1-ACC-03`](phase-1-platform-access.md#p1-acc-03--build-admin-verification-activation-and-notification) | Build Admin verification, activation and notification | Dev | 2 | In review | Raghvendra Singh | `P1-ACC-02` |
+| [`P1-ACC-03`](phase-1-platform-access.md#p1-acc-03--build-admin-verification-activation-and-notification) | Build Admin verification, activation and notification | Dev | 2 | Done | Raghvendra Singh | `P1-ACC-02` |
 | [`P1-ACC-05`](phase-1-platform-access.md#p1-acc-05--build-password-reset-with-captcha) | Build password reset with CAPTCHA | Dev | 2 | Not started |  | `P1-ACC-03`, `P1-ACC-04` |
 | [`P1-SEC-01`](phase-1-platform-access.md#p1-sec-01--human-line-by-line-review-of-login-sessions-and-audit) | Human line-by-line review of login, sessions and audit | Dev (tech lead or security reviewer) | 2 | Not started |  | All other Phase 1 Dev tasks |
 | [`P1-QA-01`](phase-1-platform-access.md#p1-qa-01--test-registration-activation-lockout-and-reset) | Test registration, activation, lockout and reset | QA | 3 | Not started |  | `P1-ACC-02`, `P1-ACC-03`, `P1-ACC-04`, `P1-ACC-05` |

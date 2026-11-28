@@ -2,6 +2,7 @@
 {% from "macros/forms.html" import field, select, csrf_field with context %}
 {% from "macros/ui.html" import page_header, button, card, badge, modal, drawer, empty_state, data_table, dialog_actions with context %}
 {% set role_names = {"admin": "Admin", "reviewer": "Reviewer", "approver": "Approver"} %}
+{% set new_role_names = {"admin": "Admin", "reviewer": "Primary Reviewer", "alternate_reviewer": "Alternate Reviewer", "approver": "Approver"} %}
 {% set user_id_help = "4 to 50 lowercase letters, numbers, dots, dashes or underscores." %}
 {% set user_id_pattern = "[a-z0-9._\\-]{4,50}" %}
 
@@ -126,11 +127,10 @@
 <p class="mb-5 text-sm text-muted">{{ _("They get an email with a link to set their password. The link works once, for 60 minutes.") }}</p>
 <form method="post" action="/admin/accounts" data-confirm="{{ _('This person will be able to sign in with the role chosen, after setting a password.') }}" data-confirm-title="{{ _('Create this account?') }}" data-confirm-action="{{ _('Create account') }}">
   {{ csrf_field() }}
-  {{ select("login_type", "Role", [("admin", _("Admin")), ("reviewer", _("Reviewer")), ("approver", _("Approver"))], value="admin", required=true) }}
-  <label class="check">
-    <input name="is_alternate" type="checkbox" value="true">
-    {{ _("Alternate Reviewer (Reviewers only)") }}
-  </label>
+  {% set role_options = [] %}
+  {% for role in open_roles %}{% set _added = role_options.append((role, _(new_role_names[role]))) %}{% endfor %}
+  {{ select("login_type", "Role", role_options, value="admin", required=true,
+            help="A role that is already filled is not listed. Use Reassign on that account to replace the person.") }}
   {{ person_fields("add-") }}
   <div class="dialog-actions">
     {{ dialog_actions("add-account", "Add account", "plus", needs_script=true) }}

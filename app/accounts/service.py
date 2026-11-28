@@ -408,6 +408,21 @@ def privileged_accounts(db: Session) -> list[Login]:
     return list(db.scalars(query))
 
 
+def open_roles(db: Session) -> list[str]:
+    """Return the roles a new account can be given now.
+
+    The Approver and each Reviewer seat hold one person (FR-2.7), so a filled one is not offered.
+    """
+    roles = ["admin"]
+    if _active_reviewer(db, is_alternate=False) is None:
+        roles.append("reviewer")
+    if _active_reviewer(db, is_alternate=True) is None:
+        roles.append("alternate_reviewer")
+    if _active_approver(db) is None:
+        roles.append("approver")
+    return roles
+
+
 def privileged_account(db: Session, login_id: uuid.UUID) -> Login | None:
     """Return one Admin, Reviewer or Approver account, or None, including for a Member's ID."""
     login = db.get(Login, login_id)

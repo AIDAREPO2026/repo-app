@@ -87,3 +87,30 @@ def test_p1_ui_02_a_form_that_asks_cannot_be_sent_without_the_script(template: P
         calls = re.findall(r"\{\{ (?:button|dialog_actions)\(.*?\) \}\}", form)
         submits = [call for call in calls if 'type="button"' not in call]
         assert submits and all("needs_script=true" in call for call in submits), submits
+
+
+# Each choice list, with what keeps it to choices the service will accept.
+OFFERED_CHOICES = {
+    (
+        "register.html",
+        "organisation_id",
+    ): "open Discoms only: test_fr_1_6_a_discom_with_a_login_is_not_offered",
+    ("admin_accounts.html", "login_type"): "free roles: test_fr_2_7_a_filled_role_is_not_offered",
+    ("admin_discoms.html", "suggestion"): "Discoms not yet added; it only fills the form",
+    ("admin_reserved_ids.html", "category"): "fixed list, every value accepted",
+    ("admin_reserved_ids.html", "where"): "fixed list, every value accepted",
+    ("ui.html", "group"): "only filters the rows of a table",
+}
+
+
+def test_p1_ui_02_every_choice_list_offers_only_what_is_accepted() -> None:
+    found = {
+        (template.name, name)
+        for template in TEMPLATES
+        if template.name != "styleguide.html"
+        for name in re.findall(r'\{\{ select\("(\w+)"', template.read_text())
+    }
+    assert found == set(OFFERED_CHOICES), (
+        "list the select() in OFFERED_CHOICES with how its choices stay acceptable "
+        "(docs/conventions.md, Never offer what will be refused)"
+    )
