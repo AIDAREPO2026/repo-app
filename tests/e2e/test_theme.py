@@ -5,6 +5,14 @@ from playwright.sync_api import Page, expect
 from tests.e2e.axe import blocking_violations
 
 
+def test_p1_ui_02_light_is_the_default_on_a_dark_device(page: Page) -> None:
+    page.emulate_media(color_scheme="dark")
+    page.goto("/login")
+
+    expect(page.locator("html")).to_have_class("theme-light")
+    expect(page.get_by_role("button", name="Light")).to_have_attribute("aria-pressed", "true")
+
+
 def test_p1_ui_02_theme_choice_applies_and_survives_reload(page: Page) -> None:
     page.emulate_media(color_scheme="light")
     page.goto("/login")

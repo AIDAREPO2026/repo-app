@@ -1,5 +1,6 @@
 <!doctype html>
-<html lang="en">
+{# Light unless the person chooses otherwise; static/js/theme.js applies their choice. #}
+<html lang="en" class="theme-light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -47,11 +48,13 @@
       {% if breadcrumbs is defined %}
       <div class="page-bar"><div class="page page-bar-inner">{{ breadcrumb_trail(breadcrumbs) }}</div></div>
       {% endif %}
-      {{ flash_messages(messages|default([])) }}
-      <main id="main" tabindex="-1" class="page flex-1 py-8 focus:outline-none">
-        {% block content %}{% endblock %}
-      </main>
-      {{ site_footer() }}
+      <div class="app-panel">
+        {{ flash_messages(messages|default([])) }}
+        <main id="main" tabindex="-1" class="page flex-1 py-6 focus:outline-none">
+          {% block content %}{% endblock %}
+        </main>
+        {{ site_footer() }}
+      </div>
     </div>
   </div>
   {% else %}

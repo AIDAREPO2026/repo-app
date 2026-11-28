@@ -1,5 +1,5 @@
 // The theme switcher (P1-UI-02). tokens.css follows the device setting unless <html> carries
-// .theme-light or .theme-dark; this adds that class from the choice saved in this browser.
+// .theme-light or .theme-dark. Pages arrive light; this applies the choice saved in this browser.
 // Loaded in <head> without defer, so the page never flashes the wrong theme.
 const KEY = "aida-theme";
 const root = document.documentElement;
@@ -7,9 +7,9 @@ const root = document.documentElement;
 // Storage can be blocked by browser settings; the switcher then lasts for this page only.
 function savedTheme() {
   try {
-    return localStorage.getItem(KEY) || "system";
+    return localStorage.getItem(KEY) || "light";
   } catch {
-    return "system";
+    return "light";
   }
 }
 

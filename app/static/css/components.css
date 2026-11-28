@@ -40,9 +40,9 @@
 
 
   .page-title {
-    font-size: var(--aida-text-2xl);
-    line-height: var(--aida-text-2xl-leading);
-    letter-spacing: var(--aida-text-2xl-tracking);
+    font-size: var(--aida-text-xl);
+    line-height: var(--aida-text-xl-leading);
+    letter-spacing: var(--aida-text-xl-tracking);
     font-weight: 700;
   }
 
@@ -57,9 +57,8 @@
 
 
   .section-title {
-    font-size: var(--aida-text-xl);
-    line-height: var(--aida-text-xl-leading);
-    letter-spacing: var(--aida-text-xl-tracking);
+    font-size: var(--aida-text-lg);
+    line-height: var(--aida-text-lg-leading);
     font-weight: 650;
     margin-bottom: var(--aida-space-4);
   }
@@ -183,6 +182,28 @@
     min-height: 100dvh;
   }
 
+  /* Signed-in pages float: the menu, breadcrumbs and content are separate rounded panels
+     on a slightly darker backdrop. */
+  .app-shell {
+    background: var(--aida-surface-sunken);
+  }
+
+  .app-main {
+    gap: var(--aida-space-3);
+    padding: var(--aida-space-3);
+  }
+
+  .app-panel {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    overflow: clip;
+    border: 1px solid var(--aida-border);
+    border-radius: var(--aida-radius-lg);
+    background: var(--aida-canvas-wash), var(--aida-canvas);
+    box-shadow: var(--aida-shadow-1);
+  }
+
   .sidebar {
     display: none;
   }
@@ -195,10 +216,13 @@
 
     .sidebar {
       position: sticky;
-      top: 0;
+      top: var(--aida-space-3);
       display: flex;
       flex-direction: column;
-      height: 100dvh;
+      height: calc(100dvh - 2 * var(--aida-space-3));
+      margin: var(--aida-space-3) 0 var(--aida-space-3) var(--aida-space-3);
+      border-radius: var(--aida-radius-lg);
+      box-shadow: var(--aida-shadow-2);
       padding: var(--aida-space-5) var(--aida-space-3) var(--aida-space-4);
     }
 
@@ -351,7 +375,9 @@
 
   /* A slim translucent bar above the page content, holding the breadcrumbs. */
   .page-bar {
-    border-bottom: 1px solid var(--aida-border);
+    border: 1px solid var(--aida-border);
+    border-radius: var(--aida-radius-lg);
+    box-shadow: var(--aida-shadow-1);
     background: var(--aida-glass);
     -webkit-backdrop-filter: var(--aida-glass-filter);
     backdrop-filter: var(--aida-glass-filter);
@@ -360,7 +386,7 @@
   @media (min-width: 64rem) {
     .page-bar {
       position: sticky;
-      top: 0;
+      top: var(--aida-space-3);
       z-index: 10;
     }
   }
@@ -368,7 +394,7 @@
   .page-bar-inner {
     display: flex;
     align-items: center;
-    min-height: 3.5rem;
+    min-height: 3rem;
   }
 
 
@@ -483,6 +509,14 @@
   .theme-option[aria-pressed="true"] {
     background: var(--aida-accent);
     color: var(--aida-text-on-accent);
+  }
+
+  .chrome .theme-switcher {
+    width: 100%;
+  }
+
+  .chrome .theme-option {
+    flex: 1;
   }
 
   .account-panel {
@@ -758,9 +792,9 @@
   }
 
   .stat-value {
-    font-size: var(--aida-text-3xl);
-    line-height: var(--aida-text-3xl-leading);
-    letter-spacing: var(--aida-text-3xl-tracking);
+    font-size: var(--aida-text-2xl);
+    line-height: var(--aida-text-2xl-leading);
+    letter-spacing: var(--aida-text-2xl-tracking);
     font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
@@ -815,7 +849,7 @@
     position: relative;
     overflow: hidden;
     margin-bottom: var(--aida-space-6);
-    padding: var(--aida-space-6);
+    padding: var(--aida-space-5);
     border-radius: var(--aida-radius-lg);
     background: var(--aida-hero);
     box-shadow: var(--aida-shadow-2);
@@ -842,18 +876,10 @@
   /* Phones get the page-title size, so a long name does not fill the screen. */
   .hero-title {
     margin-top: var(--aida-space-2);
-    font-size: var(--aida-text-2xl);
-    line-height: var(--aida-text-2xl-leading);
-    letter-spacing: var(--aida-text-2xl-tracking);
+    font-size: var(--aida-text-xl);
+    line-height: var(--aida-text-xl-leading);
+    letter-spacing: var(--aida-text-xl-tracking);
     font-weight: 700;
-  }
-
-  @media (min-width: 40rem) {
-    .hero-title {
-      font-size: var(--aida-text-3xl);
-      line-height: var(--aida-text-3xl-leading);
-      letter-spacing: var(--aida-text-3xl-tracking);
-    }
   }
 
   .hero-lead {
@@ -1326,9 +1352,9 @@
   .auth-title {
     margin-top: var(--aida-space-3);
     color: var(--aida-chrome-strong);
-    font-size: var(--aida-text-3xl);
-    line-height: var(--aida-text-3xl-leading);
-    letter-spacing: var(--aida-text-3xl-tracking);
+    font-size: var(--aida-text-2xl);
+    line-height: var(--aida-text-2xl-leading);
+    letter-spacing: var(--aida-text-2xl-tracking);
     font-weight: 700;
   }
 
@@ -1388,9 +1414,9 @@
   }
 
   .auth-heading-title {
-    font-size: var(--aida-text-2xl);
-    line-height: var(--aida-text-2xl-leading);
-    letter-spacing: var(--aida-text-2xl-tracking);
+    font-size: var(--aida-text-xl);
+    line-height: var(--aida-text-xl-leading);
+    letter-spacing: var(--aida-text-xl-tracking);
     font-weight: 700;
   }
 
