@@ -13,6 +13,7 @@ from sqlalchemy import select, update
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
+from app.accounts import cli
 from app.accounts.mfa import decrypt_secret, encrypt_secret
 from app.accounts.models import Login, LoginAttempt, LoginToken, UserSession
 from app.accounts.passwords import hash_password
@@ -22,6 +23,7 @@ from app.audit.models import AuditEvent
 from app.audit.service import SYSTEM
 from app.core.constants import EMAIL_CODE_MAX_TRIES, LOCKOUT_ATTEMPTS
 from app.core.sessions import CSRF_HEADER, SESSION_COOKIE
+from app.core.time import utc_now
 from app.main import create_app
 from tests.accounts.conftest import CLIENT, SignIn, build_login, csrf_client, csrf_from, submit_sign_in
 from tests.accounts.test_guards import EVERY_GUARDED
@@ -256,10 +258,28 @@ def test_fr_2_8_member_mfa_optional(engine: Engine, password_hash: str) -> None:
     # From now on the Member's sign-in needs the code too.
     password_step(member)
 
-    post_form(client, "/account/security/mfa-off", {}, page="/account/security")
+    # The next time step, because the code just used for enrolment cannot be used again.
+    next_code = pyotp.TOTP(secret).at(utc_now() + timedelta(seconds=30))
+    turned_off = post_form(client, "/account/security/mfa-off", {"code": next_code}, page="/account/security")
 
+    assert turned_off.headers["location"] == "/account/security?done=mfa_off"
     assert stored_login(engine, member).mfa_method is None
     assert "accounts.mfa_off" in audit_actions(engine, member)
+
+
+def test_fr_2_8_member_turn_off_needs_a_right_code(engine: Engine, password_hash: str) -> None:
+    secret = pyotp.random_base32()
+    member = saved_login(
+        engine, password_hash, "member", mfa_method="totp", mfa_totp_secret=encrypt_secret(secret)
+    )
+    client = password_step(member)
+    submit_code(client, pyotp.TOTP(secret).now())
+
+    response = post_form(client, "/account/security/mfa-off", {"code": "000000"}, page="/account/security")
+
+    assert response.status_code == 400
+    assert "That code is not right" in response.text
+    assert stored_login(engine, member).mfa_method == "totp"
 
 
 def test_p1_acc_10_totp_secret_encrypted(engine: Engine, password_hash: str) -> None:
@@ -302,4 +322,45 @@ def test_fr_2_8_privileged_cannot_turn_mfa_off(engine: Engine, password_hash: st
     admin, _ = app_login(engine, password_hash)
 
     with Session(engine) as session, pytest.raises(AccountRuleError, match="required"):
-        turn_off_member_mfa(session, SYSTEM, admin)
+        turn_off_member_mfa(session, admin, "000000", None)  # type: ignore[arg-type]
+
+
+def test_p1_acc_10_new_code_at_most_once_a_minute(
+    engine: Engine, password_hash: str, outbox: list[EmailMessage]
+) -> None:
+    login = saved_login(engine, password_hash, "admin", mfa_method="email")
+    client = password_step(login)
+
+    too_soon = post_form(client, "/mfa/send-code", {})
+    assert too_soon.status_code == 429
+    assert "less than a minute ago" in too_soon.text
+    assert len(outbox) == 1
+
+    with Session(engine) as session:
+        session.execute(
+            update(LoginToken)
+            .where(LoginToken.login_id == login.id)
+            .values(created_at=LoginToken.created_at - timedelta(seconds=61))
+        )
+        session.commit()
+    later = post_form(client, "/mfa/send-code", {})
+
+    assert later.status_code == 303
+    assert len(outbox) == 2
+
+
+def test_p1_acc_10_reset_mfa_command(engine: Engine, password_hash: str) -> None:
+    admin, _ = app_login(engine, password_hash)
+    password_step(admin)
+
+    assert cli.main(["reset-mfa", "--user-id", admin.user_id.upper()]) == 0
+
+    assert stored_login(engine, admin).mfa_method is None
+    assert "accounts.mfa_reset" in audit_actions(engine, admin)
+    with Session(engine) as session:
+        query = select(UserSession).where(UserSession.login_id == admin.id, UserSession.ended_at.is_(None))
+        assert session.scalars(query).first() is None
+
+
+def test_p1_acc_10_reset_mfa_command_refuses_unknown_user() -> None:
+    assert cli.main(["reset-mfa", "--user-id", "nobody.here"]) == 1
