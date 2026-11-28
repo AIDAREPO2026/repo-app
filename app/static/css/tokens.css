@@ -18,6 +18,8 @@
   --aida-surface-sunken: light-dark(#eceef1, #232428);
   --aida-surface-hover: light-dark(#eef0f3, #26282c);
   --aida-surface-pressed: light-dark(#e3e6ea, #2e3035);
+  /* Behind QR codes in both themes, because scanners need dark marks on white. */
+  --aida-surface-scan: #ffffff;
 
   /* Text. Every pair meets WCAG AA (4.5:1) on canvas, surface and sunken surfaces. */
   --aida-text: light-dark(#17181a, #f2f3f5);

@@ -4,7 +4,9 @@ Two app-wide dependencies run before every route, in this order:
 
 1. `load_session` reads the `drr_session` cookie, ends the session if it has been idle
    for more than 30 minutes, and puts the login, session ID and CSRF token on
-   `request.state`, where `app.accounts.guards.current_login` reads them.
+   `request.state`, where `app.accounts.guards.current_login` reads them. A session still
+   waiting for its second factor puts the login on `request.state.mfa_login` instead, so
+   every guarded route treats it as signed out (FR-2.8).
 2. `check_csrf` refuses any POST, PUT, PATCH or DELETE whose token does not match.
 
 They are dependencies rather than middleware, so they stay synchronous, show up in the
@@ -50,6 +52,7 @@ def new_token() -> str:
 def load_session(request: Request) -> None:
     """Put the signed-in login, its session ID and the CSRF token for this request on request.state."""
     request.state.login = None
+    request.state.mfa_login = None
     request.state.session_id = None
     request.state.csrf_token = visitor_csrf_token(request)
     token = request.cookies.get(SESSION_COOKIE)
@@ -66,7 +69,10 @@ def load_session(request: Request) -> None:
             return
         _touch(user_session)
         db.commit()
-    request.state.login = login
+    if user_session.mfa_pending:
+        request.state.mfa_login = login
+    else:
+        request.state.login = login
     request.state.session_id = user_session.id
     request.state.csrf_token = user_session.csrf_token
 
@@ -88,11 +94,14 @@ async def check_csrf(request: Request, _: Annotated[None, Depends(load_session)]
         raise HTTPException(status_code=403)
 
 
-def start_session(db: Session, login: Login, request: Request, response: Response) -> UserSession:
+def start_session(
+    db: Session, login: Login, request: Request, response: Response, mfa_pending: bool = False
+) -> UserSession:
     """Create a new session for a login that has just signed in, and set its cookie.
 
-    Any session this browser already had is ended first, so the session token
-    always changes at sign-in.
+    Any session this browser already had is ended first, so the session token always
+    changes at sign-in and again after the second factor. With mfa_pending the session
+    can reach only the code page until the second factor is given (FR-2.8).
     """
     old_token = request.cookies.get(SESSION_COOKIE)
     if old_token:
@@ -105,6 +114,7 @@ def start_session(db: Session, login: Login, request: Request, response: Respons
         token_hash=hash_token(token),
         login_id=login.id,
         csrf_token=new_token(),
+        mfa_pending=mfa_pending,
         ip=client_ip(request),
         user_agent=user_agent(request),
     )
@@ -117,6 +127,7 @@ def start_session(db: Session, login: Login, request: Request, response: Respons
         "login",
         str(login.id),
         "success",
+        {"mfa_pending": mfa_pending},
     )
     set_cookie(response, SESSION_COOKIE, token)
     return user_session

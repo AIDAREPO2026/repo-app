@@ -23,7 +23,7 @@ TEST_ENV = {
     "DATABASE_URL": TEST_DATABASE_URL,
     "REDIS_URL": TEST_REDIS_URL,
     "SECRET_KEY": "test-secret",
-    "FERNET_KEY": "test-fernet",
+    "FERNET_KEY": "gx6V4-N-1aeztRnhXk1AckH9v919v2IVPFoP5IapC4A=",
     "IP_HASH_SALT": "test-salt",
 }
 os.environ.update(TEST_ENV)

@@ -28,9 +28,10 @@ from app.core.constants import LOGIN_TYPES
 from app.core.db import Base, one_of
 
 LOGIN_STATUSES = ("pending", "active", "declined", "deactivated")
-SESSION_END_REASONS = ("logout", "idle", "replaced", "admin", "password_reset")
+SESSION_END_REASONS = ("logout", "idle", "replaced", "admin", "password_reset", "locked")
 ATTEMPT_REASONS = ("ok", "unknown_user", "bad_password", "locked", "inactive", "mfa_failed")
 TOKEN_PURPOSES = ("set_password", "reset_password", "mfa_email_code", "confirm_extra_email")
+MFA_METHODS = ("totp", "email")
 
 
 class Login(Base):
@@ -49,6 +50,10 @@ class Login(Base):
         CheckConstraint("login_type = 'member' OR full_name IS NOT NULL", name="privileged_has_name"),
         CheckConstraint("NOT is_alternate OR login_type = 'reviewer'", name="alternate_is_reviewer"),
         CheckConstraint("failed_count >= 0", name="failed_count_not_negative"),
+        CheckConstraint(one_of("mfa_method", MFA_METHODS), name="mfa_method"),
+        CheckConstraint(
+            "mfa_method IS DISTINCT FROM 'totp' OR mfa_totp_secret IS NOT NULL", name="totp_has_secret"
+        ),
         # FR-1.6, FR-2.2: one pending or active Member login per Discom. Declined or
         # deactivated logins free the Discom to register again.
         Index(
@@ -98,6 +103,14 @@ class Login(Base):
     # FR-1.7: consecutive failed sign-ins, and the end of a lockout.
     failed_count: Mapped[int] = mapped_column(Integer, server_default="0")
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # FR-2.8: null means MFA is off, which only a Member may keep. A secret with no method is
+    # an authenticator app enrolment that has not been confirmed with a code yet.
+    mfa_method: Mapped[str | None] = mapped_column(Text)
+    # Fernet-encrypted (app.accounts.mfa). Never logged.
+    mfa_totp_secret: Mapped[str | None] = mapped_column(Text)
+    # The last authenticator time step accepted, so the same code cannot be used twice.
+    mfa_totp_last_step: Mapped[int | None] = mapped_column(BigInteger)
+    mfa_enrolled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

@@ -2,7 +2,6 @@
 
 import re
 import uuid
-from collections.abc import Iterator
 from datetime import timedelta
 from email.message import EmailMessage
 
@@ -27,9 +26,15 @@ from app.accounts.service import (
 )
 from app.audit.models import AuditEvent
 from app.audit.service import SYSTEM
-from app.core import email
 from app.main import create_app
-from tests.accounts.conftest import CLIENT, SignIn, build_login, csrf_client, csrf_from, submit_sign_in
+from tests.accounts.conftest import (
+    CLIENT,
+    SignIn,
+    build_login,
+    csrf_client,
+    csrf_from,
+    submit_sign_in,
+)
 
 APP = create_app()
 PASSWORD = "Grid-Meter-2026"  # noqa: S105 - a test value, not a real password
@@ -37,47 +42,8 @@ BASE_URL = "https://testserver/"
 LINK = re.compile(r"https://testserver/set-password/(\S+)")
 
 
-class FakeSMTP:
-    """Stands in for smtplib.SMTP and keeps every message sent."""
-
-    sent: list[EmailMessage] = []
-
-    def __init__(self, host: str, port: int, timeout: float) -> None:
-        pass
-
-    def __enter__(self) -> "FakeSMTP":
-        return self
-
-    def __exit__(self, *_: object) -> None:
-        pass
-
-    def send_message(self, message: EmailMessage) -> None:
-        self.sent.append(message)
-
-
-@pytest.fixture
-def outbox(monkeypatch: pytest.MonkeyPatch) -> list[EmailMessage]:
-    FakeSMTP.sent = []
-    monkeypatch.setattr(email.smtplib, "SMTP", FakeSMTP)
-    return FakeSMTP.sent
-
-
-@pytest.fixture(autouse=True)
-def no_active_reviewers_or_approvers(engine: Engine) -> Iterator[None]:
-    """Start and end each test with no active Reviewer or Approver, because only one of each may exist."""
-
-    def clear() -> None:
-        with Session(engine) as session:
-            session.execute(
-                update(Login)
-                .where(Login.login_type.in_(("reviewer", "approver")), Login.status == "active")
-                .values(status="deactivated")
-            )
-            session.commit()
-
-    clear()
-    yield
-    clear()
+# Only one active Reviewer of each kind and one active Approver may exist (FR-2.7).
+pytestmark = pytest.mark.usefixtures("no_active_reviewers_or_approvers")
 
 
 def person(name: str = "Asha Rao") -> dict[str, str]:
@@ -96,12 +62,12 @@ def link_token(message: EmailMessage) -> str:
     return match.group(1)
 
 
-def committed_account(engine: Engine, login_type: str) -> tuple[Login, str]:
+def committed_account(engine: Engine, login_type: str, outbox: list[EmailMessage]) -> tuple[Login, str]:
     """Create an account through the service, commit it, and return it with its link token."""
     with Session(engine, expire_on_commit=False) as session:
         login = create_privileged_account(session, SYSTEM, account_form(login_type), BASE_URL)
         session.commit()
-    return login, link_token(FakeSMTP.sent[-1])
+    return login, link_token(outbox[-1])
 
 
 def test_fr_2_7_admin_creates_privileged_accounts(
@@ -227,7 +193,7 @@ def test_p1_acc_09_refused_reassign_changes_nothing(
     sign_in: SignIn, engine: Engine, outbox: list[EmailMessage]
 ) -> None:
     sign_in(APP, "admin")
-    old, _ = committed_account(engine, "approver")
+    old, _ = committed_account(engine, "approver", outbox)
     taken = person() | {"user_id": old.user_id}
 
     response = csrf_client(APP).post(f"/admin/accounts/{old.id}/reassign", data=taken)
@@ -239,7 +205,7 @@ def test_p1_acc_09_refused_reassign_changes_nothing(
 
 
 def test_p1_acc_09_set_password_link_single_use(engine: Engine, outbox: list[EmailMessage]) -> None:
-    login, token = committed_account(engine, "approver")
+    login, token = committed_account(engine, "approver", outbox)
     client = TestClient(APP, base_url="https://testserver", client=CLIENT)
     path = f"/set-password/{token}"
     page = client.get(path)
@@ -262,7 +228,7 @@ def test_p1_acc_09_set_password_link_single_use(engine: Engine, outbox: list[Ema
 
 
 def test_p1_acc_09_set_password_link_expires(engine: Engine, outbox: list[EmailMessage]) -> None:
-    login, token = committed_account(engine, "admin")
+    login, token = committed_account(engine, "admin", outbox)
     with Session(engine) as session:
         session.execute(
             update(LoginToken)

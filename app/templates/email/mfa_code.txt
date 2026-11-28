@@ -1,0 +1,6 @@
+{{ _("Hello %(name)s,", name=full_name) }}
+
+{{ _("Your AIDA portal sign-in code is %(code)s.", code=code) }}
+{{ _("It works once, for %(minutes)s minutes.", minutes=minutes) }}
+
+{{ _("If you did not try to sign in, change your password and tell an ITPED Admin.") }}

@@ -5,16 +5,19 @@ import hmac
 import re
 import uuid
 from collections.abc import Callable, Iterator
+from email.message import EmailMessage
 
 import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from httpx import Response
+from sqlalchemy import update
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from app.accounts.guards import current_login
 from app.accounts.models import Login
+from app.core import email
 from app.core.sessions import CSRF_HEADER, VISITOR_CSRF_COOKIE
 from tests.conftest import TEST_ENV
 
@@ -95,3 +98,46 @@ def submit_sign_in(client: TestClient, user_id: str, password: str, next_path: s
     token = csrf_from(client.get("/login"))
     form = {"user_id": user_id, "password": password, "next": next_path, "csrf_token": token}
     return client.post("/login", data=form, follow_redirects=False)
+
+
+class FakeSMTP:
+    """Stands in for smtplib.SMTP and keeps every message sent."""
+
+    sent: list[EmailMessage] = []
+
+    def __init__(self, host: str, port: int, timeout: float) -> None:
+        pass
+
+    def __enter__(self) -> "FakeSMTP":
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        pass
+
+    def send_message(self, message: EmailMessage) -> None:
+        self.sent.append(message)
+
+
+@pytest.fixture
+def outbox(monkeypatch: pytest.MonkeyPatch) -> list[EmailMessage]:
+    FakeSMTP.sent = []
+    monkeypatch.setattr(email.smtplib, "SMTP", FakeSMTP)
+    return FakeSMTP.sent
+
+
+@pytest.fixture
+def no_active_reviewers_or_approvers(engine: Engine) -> Iterator[None]:
+    """Start and end each test with no active Reviewer or Approver, because only one of each may exist."""
+
+    def clear() -> None:
+        with Session(engine) as session:
+            session.execute(
+                update(Login)
+                .where(Login.login_type.in_(("reviewer", "approver")), Login.status == "active")
+                .values(status="deactivated")
+            )
+            session.commit()
+
+    clear()
+    yield
+    clear()

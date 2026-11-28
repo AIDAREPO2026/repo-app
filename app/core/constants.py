@@ -23,3 +23,10 @@ LOGIN_TYPES = ("member", "admin", "reviewer", "approver")
 
 # Security.md: set-password and reset links are single-use and expire after 60 minutes.
 LINK_TOKEN_MINUTES = 60
+
+# P1-ACC-10 (FR-2.8): emailed sign-in codes are 6 digits, last 10 minutes and allow 5 tries.
+EMAIL_CODE_DIGITS = 6
+EMAIL_CODE_MINUTES = 10
+EMAIL_CODE_MAX_TRIES = 5
+# P1-ACC-10: a new emailed code at most once a minute, so the form cannot be used to flood an inbox.
+EMAIL_CODE_RESEND_SECONDS = 60

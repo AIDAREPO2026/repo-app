@@ -15,6 +15,7 @@ from app.core.constants import LOGIN_TYPES
 from app.core.sessions import client_ip, user_agent
 
 LOGIN_PATH = "/login"
+MFA_PATH = "/mfa"
 
 
 def current_login(request: Request) -> Login | None:
@@ -49,6 +50,9 @@ class LoginTypeGuard:
 
     def __call__(self, request: Request, login: Annotated[Login | None, Depends(current_login)]) -> Login:
         """Send visitors to sign in, refuse a wrong login type with 403, and return the login."""
+        if login is None and getattr(request.state, "mfa_login", None) is not None:
+            # FR-2.8: half signed in, so the code page is the only place to go.
+            raise HTTPException(status_code=303, headers={"Location": MFA_PATH})
         if login is None:
             # Only the path, never a full URL, so the sign-in page cannot be used as an open redirect.
             location = f"{LOGIN_PATH}?next={quote(request.url.path)}"
@@ -62,6 +66,14 @@ class LoginTypeGuard:
 def require_login_type(*login_types: str) -> LoginTypeGuard:
     """Return the guard for a route open only to these login types."""
     return LoginTypeGuard(login_types)
+
+
+def mfa_pending_login(request: Request) -> Login:
+    """Return the login whose session waits for its second factor, or send the browser to sign in."""
+    login: Login | None = getattr(request.state, "mfa_login", None)
+    if login is None:
+        raise HTTPException(status_code=303, headers={"Location": LOGIN_PATH})
+    return login
 
 
 def public_route() -> None:

@@ -71,6 +71,11 @@ python_version = "3.12"
 strict = true
 packages = ["app"]
 
+# qrcode ships without type hints; its stubs are not an approved dependency.
+[[tool.mypy.overrides]]
+module = ["qrcode", "qrcode.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # Lets tests import `app` without installing the project as a package.

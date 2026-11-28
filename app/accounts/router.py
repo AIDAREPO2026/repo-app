@@ -6,14 +6,27 @@ HTTP routes only. Each route parses input, calls one service function and render
 import uuid
 from collections.abc import Callable
 from typing import Annotated, Any
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy.orm import Session
 
-from app.accounts.guards import LOGIN_PATH, actor_for, current_login, public_route, require_login_type
+from app.accounts.guards import (
+    LOGIN_PATH,
+    MFA_PATH,
+    actor_for,
+    current_login,
+    mfa_pending_login,
+    public_route,
+    require_login_type,
+)
 from app.accounts.models import Login
 from app.accounts.schemas import (
+    MfaCodeForm,
+    MfaOffForm,
+    MfaSetupForm,
+    NextForm,
     PersonForm,
     PrivilegedAccountForm,
     ReviewerRoleForm,
@@ -23,23 +36,38 @@ from app.accounts.schemas import (
 from app.accounts.service import (
     AccountRuleError,
     after_sign_in_path,
+    app_enrolment_details,
     create_privileged_account,
     deactivate_account,
+    finish_mfa,
+    needs_mfa,
     privileged_account,
     privileged_accounts,
     reassign_account,
+    reset_mfa,
+    send_email_code,
     send_set_password_link,
     set_password_from_link,
     set_password_link_is_usable,
     set_reviewer_role,
     sign_in,
     sign_out,
+    start_app_enrolment,
+    turn_off_member_mfa,
+    turn_on_member_mfa,
 )
 from app.audit.service import Actor
 from app.core.constants import LOGIN_TYPES
 from app.core.db import DbSession
 from app.core.navigation import Crumb, breadcrumbs, nav_for
-from app.core.sessions import VISITOR_CSRF_COOKIE, client_ip, new_visitor_csrf_cookie, set_cookie, user_agent
+from app.core.sessions import (
+    VISITOR_CSRF_COOKIE,
+    clear_session_cookie,
+    client_ip,
+    new_visitor_csrf_cookie,
+    set_cookie,
+    user_agent,
+)
 from app.core.templates import templates
 
 router = APIRouter(tags=["accounts"])
@@ -94,8 +122,189 @@ def sign_in_submit(request: Request, db: DbSession, form: Annotated[SignInForm, 
     login = sign_in(db, form.user_id, form.password, request, response)
     if login is None:
         return render_sign_in(request, form.next, SIGN_IN_FAILED, form.user_id)
-    response.headers["location"] = after_sign_in_path(form.next, login)
+    if needs_mfa(login):
+        response.headers["location"] = mfa_page_path(form.next)
+    else:
+        response.headers["location"] = after_sign_in_path(form.next, login)
     return response
+
+
+# FR-2.8: the second step of signing in. Marked public for the route registry, because these
+# routes serve a session that is not signed in yet; mfa_pending_login refuses anyone else.
+MfaLogin = Annotated[Login, Depends(mfa_pending_login)]
+WRONG_CODE = "That code is not right, has been used or has expired. Check it and try again."
+WAIT_FOR_CODE = "A code was sent less than a minute ago. Use that one, or wait a minute and ask again."
+
+
+def mfa_page_path(next_path: str, method: str = "") -> str:
+    """Return the address of the code page, carrying where to go afterwards."""
+    query = {key: value for key, value in (("method", method), ("next", next_path)) if value}
+    if not query:
+        return MFA_PATH
+    return f"{MFA_PATH}?{urlencode(query)}"
+
+
+def render_mfa(
+    request: Request,
+    login: Login,
+    next_path: str,
+    method: str = "",
+    error: str = "",
+    notice: str = "",
+    status_code: int = 200,
+) -> HTMLResponse:
+    """Render the code page, or the choice of method for a login that has no second factor yet."""
+    method = login.mfa_method or method
+    context = {
+        "title": "Confirm it is you",
+        "nav": nav_for(None),
+        "next": next_path,
+        "method": method,
+        "enrolling": login.mfa_method is None,
+        "app_setup": app_enrolment_details(login) if method == "totp" else None,
+        "error": error,
+        "messages": [("info", notice)] if notice else [],
+    }
+    return templates.TemplateResponse(request, "accounts/mfa.html", context, status_code=status_code)
+
+
+@router.get(MFA_PATH, response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def mfa_page(
+    request: Request, db: DbSession, pending: MfaLogin, next: str = "", method: str = ""
+) -> HTMLResponse:
+    """Ask for the second factor, or for a method to enrol."""
+    if method not in ("totp", "email"):
+        method = ""
+    return render_mfa(request, db.get_one(Login, pending.id), next, method)
+
+
+@router.post(MFA_PATH + "/setup", dependencies=[Depends(public_route)])
+def mfa_setup(
+    request: Request, db: DbSession, pending: MfaLogin, form: Annotated[MfaSetupForm, Form()]
+) -> Response:
+    """Start enrolling the chosen method: a new authenticator secret, or an emailed code."""
+    login = db.get_one(Login, pending.id)
+    if login.mfa_method is not None:
+        return RedirectResponse(mfa_page_path(form.next), status_code=303)
+    if form.method == "totp":
+        start_app_enrolment(db, login)
+    else:
+        send_email_code(db, login)
+    return RedirectResponse(mfa_page_path(form.next, form.method), status_code=303)
+
+
+@router.post(MFA_PATH + "/send-code", dependencies=[Depends(public_route)])
+def mfa_send_code(
+    request: Request, db: DbSession, pending: MfaLogin, form: Annotated[NextForm, Form()]
+) -> Response:
+    """Email a new code, replacing the last one, or ask the person to wait a minute."""
+    login = db.get_one(Login, pending.id)
+    if login.mfa_method not in (None, "email"):
+        return RedirectResponse(mfa_page_path(form.next), status_code=303)
+    if not send_email_code(db, login):
+        return render_mfa(request, login, form.next, "email", notice=WAIT_FOR_CODE, status_code=429)
+    return RedirectResponse(mfa_page_path(form.next, "email"), status_code=303)
+
+
+@router.post(MFA_PATH, response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def mfa_submit(
+    request: Request, db: DbSession, pending: MfaLogin, form: Annotated[MfaCodeForm, Form()]
+) -> Response:
+    """Check the code and finish signing in, or ask again."""
+    login = db.get_one(Login, pending.id)
+    response = RedirectResponse(after_sign_in_path(form.next, login), status_code=303)
+    result = finish_mfa(db, login, form.method, form.code, request, response)
+    if result == "ok":
+        return response
+    if result == "locked":
+        locked_out = RedirectResponse(LOGIN_PATH, status_code=303)
+        clear_session_cookie(locked_out)
+        return locked_out
+    return render_mfa(request, login, form.next, form.method, WRONG_CODE, status_code=400)
+
+
+@router.post(MFA_PATH + "/cancel", dependencies=[Depends(public_route)])
+def mfa_cancel(request: Request, db: DbSession, pending: MfaLogin) -> Response:
+    """Give up signing in: end the half-signed-in session."""
+    response = RedirectResponse(LOGIN_PATH, status_code=303)
+    sign_out(db, pending, request, response)
+    return response
+
+
+SECURITY_PATH = "/account/security"
+SECURITY_DONE = {
+    "mfa_off": ("success", "Two-step sign-in is now off for this account."),
+    "code_sent": ("info", "We have emailed you a 6-digit code. It works once, for 10 minutes."),
+    "wait": ("info", WAIT_FOR_CODE),
+}
+
+
+def render_security(
+    request: Request, db: Session, signed_in: Login, done: str = "", error: str = "", status_code: int = 200
+) -> HTMLResponse:
+    """Render the Security page, with a message after a change or an error for the code field."""
+    messages = [SECURITY_DONE[done]] if done in SECURITY_DONE else []
+    context = {
+        "title": "Security",
+        "nav": nav_for(signed_in.login_type),
+        "breadcrumbs": breadcrumbs(signed_in.login_type, Crumb("Security")),
+        "login": db.get_one(Login, signed_in.id),
+        "messages": messages,
+        "error": error,
+    }
+    return templates.TemplateResponse(request, "accounts/security.html", context, status_code=status_code)
+
+
+@router.get(SECURITY_PATH, response_class=HTMLResponse)
+def security_page(
+    request: Request,
+    db: DbSession,
+    signed_in: Annotated[Login, Depends(require_login_type(*LOGIN_TYPES))],
+    done: str = "",
+) -> HTMLResponse:
+    """Show whether two-step sign-in is on, with the Member's switch to turn it on or off (FR-2.8)."""
+    return render_security(request, db, signed_in, done)
+
+
+MemberLogin = Annotated[Login, Depends(require_login_type("member"))]
+
+
+@router.post(SECURITY_PATH + "/mfa-on")
+def member_mfa_on(request: Request, db: DbSession, member: MemberLogin) -> Response:
+    """Send the Member to choose and confirm a second factor."""
+    try:
+        turn_on_member_mfa(db, member, request)
+    except AccountRuleError:
+        return RedirectResponse(SECURITY_PATH, status_code=303)
+    return RedirectResponse(mfa_page_path(SECURITY_PATH), status_code=303)
+
+
+@router.post(SECURITY_PATH + "/send-code")
+def member_send_code(request: Request, db: DbSession, member: MemberLogin) -> Response:
+    """Email a code to a Member who uses email codes, so they can turn two-step sign-in off."""
+    login = db.get_one(Login, member.id)
+    if login.mfa_method != "email":
+        return RedirectResponse(SECURITY_PATH, status_code=303)
+    done = "code_sent" if send_email_code(db, login) else "wait"
+    return RedirectResponse(f"{SECURITY_PATH}?done={done}", status_code=303)
+
+
+@router.post(SECURITY_PATH + "/mfa-off", response_class=HTMLResponse)
+def member_mfa_off(
+    request: Request, db: DbSession, member: MemberLogin, form: Annotated[MfaOffForm, Form()]
+) -> Response:
+    """Turn the Member's second factor off, once they give a current code."""
+    try:
+        result = turn_off_member_mfa(db, member, form.code, request)
+    except AccountRuleError:
+        return RedirectResponse(SECURITY_PATH, status_code=303)
+    if result == "ok":
+        return RedirectResponse(f"{SECURITY_PATH}?done=mfa_off", status_code=303)
+    if result == "locked":
+        locked_out = RedirectResponse(LOGIN_PATH, status_code=303)
+        clear_session_cookie(locked_out)
+        return locked_out
+    return render_security(request, db, member, error=WRONG_CODE, status_code=400)
 
 
 @router.post("/logout")
@@ -159,6 +368,7 @@ DONE_MESSAGES = {
     "reassigned": "Account reassigned. A set-password link has been emailed to the replacement.",
     "reviewer_role": "Reviewer roles updated.",
     "link_sent": "A new set-password link has been emailed.",
+    "mfa_reset": "MFA reset. The person sets it up again at their next sign-in.",
 }
 AdminLogin = Annotated[Login, Depends(require_login_type("admin"))]
 
@@ -286,6 +496,17 @@ def resend_link(request: Request, db: DbSession, admin: AdminLogin, login_id: uu
         send_set_password_link(db, actor, target, base_url(request))
 
     return run_account_change(request, db, admin, change, "link_sent")
+
+
+@router.post(ACCOUNTS_PATH + "/{login_id}/reset-mfa")
+def reset_account_mfa(request: Request, db: DbSession, admin: AdminLogin, login_id: uuid.UUID) -> Response:
+    """Remove someone's second factor, for a lost phone, so they enrol again (FR-2.8)."""
+    target = account_or_404(db, login_id)
+
+    def change(actor: Actor) -> None:
+        reset_mfa(db, actor, admin, target)
+
+    return run_account_change(request, db, admin, change, "mfa_reset")
 
 
 def render_set_password(

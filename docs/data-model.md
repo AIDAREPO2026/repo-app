@@ -82,8 +82,9 @@ Every person or shared Discom account that can sign in. Exactly four login types
 | `decline_reason` | text(1000) | Yes | | Required when `status = 'declined'` |
 | `failed_count` | integer | No | `0` | Consecutive failed sign-ins (FR-1.7) |
 | `locked_until` | timestamptz | Yes | | |
-| `mfa_method` | text | Yes | | `totp` or `email`. Null means MFA is off, which only a Member may have (FR-2.8) |
-| `mfa_totp_secret` | text | Yes | | Fernet-encrypted with a key from the environment. Never logged |
+| `mfa_method` | text | Yes | | `totp` or `email`. Null means MFA is off, which only a Member may keep: a privileged login with none enrols at its next sign-in (FR-2.8). `CHECK (mfa_method IS DISTINCT FROM 'totp' OR mfa_totp_secret IS NOT NULL)` |
+| `mfa_totp_secret` | text | Yes | | Fernet-encrypted with a key from the environment. Never logged. Set with no `mfa_method` while an authenticator enrolment waits for its first code |
+| `mfa_totp_last_step` | bigint | Yes | | The last authenticator time step accepted, so a code cannot be used twice (added in `P1-ACC-10`) |
 | `mfa_enrolled_at` | timestamptz | Yes | | |
 | `created_at` | timestamptz | No | `now()` | For a Member, the registration request time |
 | `updated_at` | timestamptz | No | `now()` | |
@@ -113,7 +114,7 @@ One signed-in browser. The cookie holds the token, the table holds only its SHA-
 | `created_at` | timestamptz | No | `now()` | |
 | `last_seen_at` | timestamptz | No | `now()` | Updated at most once a minute |
 | `ended_at` | timestamptz | Yes | | Null while active |
-| `end_reason` | text | Yes | | `logout`, `idle`, `replaced`, `admin` or `password_reset`. `CHECK ((ended_at IS NULL) = (end_reason IS NULL))` |
+| `end_reason` | text | Yes | | `logout`, `idle`, `replaced`, `admin`, `password_reset` or `locked` (too many wrong codes, `P1-ACC-10`). `CHECK ((ended_at IS NULL) = (end_reason IS NULL))` |
 | `ip` | inet | No | | |
 | `user_agent` | text(500) | No | `''` | |
 
