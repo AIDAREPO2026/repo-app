@@ -105,11 +105,27 @@ function placeMenu(menu, x, y) {
   menu.style.top = `${Math.max(gap, y + height + gap > window.innerHeight ? y - height : y)}px`;
 }
 
+// The menu offers exactly what the row does: one item for each of its buttons, so an action
+// the row leaves out is left out here too. Buttons inside the row's dialogs are not its own.
+function addRowActions(menu, row) {
+  menu.querySelectorAll("[data-row-action]").forEach((item) => item.remove());
+  const buttons = [...row.querySelectorAll("button")].filter((button) => !button.closest("dialog"));
+  for (const button of buttons) {
+    const item = menu.querySelector("[data-row-copy]").cloneNode(true);
+    item.removeAttribute("data-row-copy");
+    item.dataset.rowAction = "";
+    item.querySelector(".menu-icon").replaceChildren(button.querySelector("svg").cloneNode(true));
+    item.querySelector(".menu-text").textContent = button.getAttribute("aria-label") || button.textContent.trim();
+    item.source = button;
+    menu.querySelector("[data-row-copy]").before(item);
+  }
+}
+
 function openRowMenu(table, row, event) {
   const menu = table.querySelector(".row-menu");
   const box = row.querySelector(".row-select input");
   menu.row = row;
-  menu.querySelector("[data-row-open]").hidden = !row.querySelector("[commandfor]");
+  addRowActions(menu, row);
   menu.querySelector("[data-row-select-label]").textContent = box.checked ? table.dataset.untick : table.dataset.tick;
   menu.showPopover();
   // The keyboard's menu key has no pointer, so the menu opens under the row.
@@ -126,7 +142,7 @@ function onMenuClick(table, event) {
   const menu = table.querySelector(".row-menu");
   const { row } = menu;
   menu.hidePopover();
-  if (item.matches("[data-row-open]")) row.querySelector("[commandfor]").click();
+  if (item.matches("[data-row-action]")) item.source.click(); // A confirmation still asks.
   if (item.matches("[data-row-copy]")) copy(table, [row]);
   if (item.matches("[data-row-select]")) setSelected(table, [row], !row.querySelector(".row-select input").checked);
 }

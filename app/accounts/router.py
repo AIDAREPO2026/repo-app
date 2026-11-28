@@ -4,7 +4,7 @@ HTTP routes only. Each route parses input, calls one service function and render
 """
 
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Annotated, Any
 from urllib.parse import urlencode
 
@@ -50,9 +50,11 @@ from app.accounts.service import (
     admin_overview,
     after_sign_in_path,
     app_enrolment_details,
+    approve_registration,
     check_registration_code,
     create_privileged_account,
     deactivate_account,
+    decline_registration,
     discoms,
     edit_discom,
     finish_mfa,
@@ -60,6 +62,7 @@ from app.accounts.service import (
     import_discoms,
     needs_mfa,
     open_roles,
+    pending_registrations,
     preview_discom_import,
     privileged_account,
     privileged_accounts,
@@ -397,7 +400,7 @@ def approver_dashboard(
 
 ACCOUNTS_PATH = "/admin/accounts"
 # Changes that take access away show amber, so they never look like an ordinary success.
-CAUTION_DONE = {"deactivated", "mfa_reset", "removed"}
+CAUTION_DONE = {"deactivated", "mfa_reset", "removed", "declined"}
 
 
 def done_message(done: str, texts: dict[str, str]) -> list[tuple[str, str]]:
@@ -406,6 +409,30 @@ def done_message(done: str, texts: dict[str, str]) -> list[tuple[str, str]]:
         return []
     tone = "warning" if done in CAUTION_DONE else "success"
     return [(tone, texts[done])]
+
+
+def render_admin_page(
+    request: Request,
+    template: str,
+    title: str,
+    messages: list[tuple[str, str]],
+    status_code: int,
+    context: Mapping[str, object],
+) -> HTMLResponse:
+    """Render one of the Admin list pages with its menu, breadcrumbs and messages."""
+    page = {
+        "title": title,
+        "nav": nav_for("admin"),
+        "breadcrumbs": breadcrumbs("admin", Crumb(title)),
+        "messages": messages,
+    }
+    return templates.TemplateResponse(request, template, page | dict(context), status_code=status_code)
+
+
+def page_messages(error: str, done: str, texts: dict[str, str]) -> list[tuple[str, str]]:
+    """Return the notices of a list page: the rule that was broken, or the change just made."""
+    messages = [("error", error)] if error else []
+    return messages + done_message(done, texts)
 
 
 # Shown after a change, picked by a fixed key so the address never carries free text.
@@ -424,22 +451,10 @@ def render_accounts(
     request: Request, db: Session, admin: Login, error: str = "", done: str = "", status_code: int = 200
 ) -> HTMLResponse:
     """Render the privileged accounts page, with an error or a done message if there is one."""
-    messages = []
-    if error:
-        messages.append(("error", error))
-    messages += done_message(done, DONE_MESSAGES)
-    context = {
-        "title": "Accounts",
-        "nav": nav_for("admin"),
-        "breadcrumbs": breadcrumbs("admin", Crumb("Accounts")),
-        "accounts": privileged_accounts(db),
-        "open_roles": open_roles(db),
-        "admin_id": admin.id,
-        "messages": messages,
-    }
-    return templates.TemplateResponse(
-        request, "accounts/admin_accounts.html", context, status_code=status_code
-    )
+    context = {"accounts": privileged_accounts(db), "open_roles": open_roles(db), "admin_id": admin.id}
+    messages = page_messages(error, done, DONE_MESSAGES)
+    template = "accounts/admin_accounts.html"
+    return render_admin_page(request, template, "Accounts", messages, status_code, context)
 
 
 # Renders an Admin list page with an error: render_accounts or render_discoms.
@@ -798,8 +813,6 @@ def render_reserved(
     status_code: int = 200,
 ) -> HTMLResponse:
     """Render the words nobody may use in a User ID."""
-    messages = [("error", error)] if error else []
-    messages += done_message(done, RESERVED_DONE_MESSAGES)
     words = [
         (word, CATEGORIES.get(category, CATEGORIES["other"]), where)
         for where in ("anywhere", "parts")
@@ -813,15 +826,12 @@ def render_reserved(
     context = {
         "show_removed": show_removed,
         "counts": (len(words), len(removed)),
-        "title": "Reserved IDs",
-        "nav": nav_for("admin"),
-        "breadcrumbs": breadcrumbs("admin", Crumb("Reserved IDs")),
         "words": removed if show_removed else sorted(words),
         "categories": list(CATEGORIES.items()),
-        "messages": messages,
     }
-    return templates.TemplateResponse(
-        request, "accounts/admin_reserved_ids.html", context, status_code=status_code
+    messages = page_messages(error, done, RESERVED_DONE_MESSAGES)
+    return render_admin_page(
+        request, "accounts/admin_reserved_ids.html", "Reserved IDs", messages, status_code, context
     )
 
 
@@ -872,6 +882,58 @@ def reserved_ids_restore(
     return run_admin_change(request, db, admin, change, done_url, render_reserved)
 
 
+REGISTRATIONS_PATH = "/admin/registrations"
+REGISTRATION_DONE_MESSAGES = {
+    "approved": "Registration approved. The Discom can sign in, and has been emailed.",
+    "declined": "Registration declined. The Discom has been emailed the reason.",
+}
+
+
+def render_registrations(
+    request: Request, db: Session, admin: Login, error: str = "", done: str = "", status_code: int = 200
+) -> HTMLResponse:
+    """Render the registrations waiting for a decision."""
+    context = {"registrations": pending_registrations(db)}
+    messages = page_messages(error, done, REGISTRATION_DONE_MESSAGES)
+    return render_admin_page(
+        request, "accounts/admin_registrations.html", "Registrations", messages, status_code, context
+    )
+
+
+@router.get(REGISTRATIONS_PATH, response_class=HTMLResponse)
+def registrations_page(request: Request, db: DbSession, admin: AdminLogin, done: str = "") -> HTMLResponse:
+    """Show the registrations waiting for ITPED (FR-1.3)."""
+    return render_registrations(request, db, admin, done=done)
+
+
+@router.post(REGISTRATIONS_PATH + "/{login_id}/approve")
+def registration_approve(request: Request, db: DbSession, admin: AdminLogin, login_id: uuid.UUID) -> Response:
+    """Activate a pending registration."""
+
+    def change(actor: Actor) -> None:
+        approve_registration(db, actor, login_id, base_url(request) + "login")
+
+    done_url = f"{REGISTRATIONS_PATH}?done=approved"
+    return run_admin_change(request, db, admin, change, done_url, render_registrations)
+
+
+@router.post(REGISTRATIONS_PATH + "/{login_id}/decline")
+def registration_decline(
+    request: Request,
+    db: DbSession,
+    admin: AdminLogin,
+    login_id: uuid.UUID,
+    reason: Annotated[str, Form(max_length=1000)] = "",
+) -> Response:
+    """Decline a pending registration with a reason."""
+
+    def change(actor: Actor) -> None:
+        decline_registration(db, actor, login_id, reason)
+
+    done_url = f"{REGISTRATIONS_PATH}?done=declined"
+    return run_admin_change(request, db, admin, change, done_url, render_registrations)
+
+
 DISCOMS_PATH = "/admin/discoms"
 UNCHECKED_DISCOM = "Tick the box to confirm you have checked the name and email domain."
 DISCOM_DONE_MESSAGES = {
@@ -894,18 +956,12 @@ def render_discoms(
     status_code: int = 200,
 ) -> HTMLResponse:
     """Render the Discom master list, with an error or a done message if there is one."""
-    messages = []
-    if error:
-        messages.append(("error", error))
-    messages += done_message(done, DISCOM_DONE_MESSAGES)
+    messages = page_messages(error, done, DISCOM_DONE_MESSAGES)
     if added is not None:
         messages.append(("success", f"Discoms added from the file: {added}."))
     listed = discoms(db)
     listed_names = {discom.name.lower() for discom in listed}
     context = {
-        "title": "Discoms",
-        "nav": nav_for("admin"),
-        "breadcrumbs": breadcrumbs("admin", Crumb("Discoms")),
         "discoms": listed,
         # The value carries both fields to the script that fills them (static/js/shell.js).
         "suggestions": [
@@ -913,10 +969,9 @@ def render_discoms(
             for name, domain in DISCOM_SUGGESTIONS
             if name.lower() not in listed_names
         ],
-        "messages": messages,
     }
-    return templates.TemplateResponse(
-        request, "accounts/admin_discoms.html", context, status_code=status_code
+    return render_admin_page(
+        request, "accounts/admin_discoms.html", "Discoms", messages, status_code, context
     )
 
 

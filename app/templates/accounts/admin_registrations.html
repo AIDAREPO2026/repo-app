@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "macros/forms.html" import field, csrf_field with context %}
+{% from "macros/ui.html" import page_header, button, badge, card, modal, empty_state, data_table, dialog_actions with context %}
+
+{% block content %}
+{{ page_header("Registrations") }}
+
+{% if registrations %}
+{% call data_table("Registrations waiting", registrations|length, search="Search requests", columns=[_("Discom"), _("Email"), _("User ID"), _("Requested")], copy_label="Copy email", file="registrations", compact=true) %}
+  <thead>
+    <tr>
+      <th scope="col" class="w-px whitespace-nowrap">{{ _("Sr no") }}</th>
+      <th scope="col">{{ _("Discom") }}</th>
+      <th scope="col">{{ _("Email") }}</th>
+      <th scope="col">{{ _("User ID") }}</th>
+      <th scope="col">{{ _("Requested") }}</th>
+      <th scope="col"><span class="sr-only">{{ _("Actions") }}</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for request_login in registrations %}
+    {% set discom = request_login.organisation %}
+    <tr data-export='{{ [discom.name, request_login.email, request_login.user_id, request_login.created_at|ist]|tojson }}' data-copy="{{ request_login.email }}">
+      <td class="text-muted">{{ loop.index }}</td>
+      <td>
+        <p class="min-w-40 font-semibold">{{ discom.name }}</p>
+        {% if discom.status != "active" %}{{ badge("Discom deactivated", "warning") }}{% endif %}
+      </td>
+      {# A long address wraps at the @, so the row's buttons stay on screen. #}
+      {% set name, domain = request_login.email.rsplit("@", 1) %}
+      <td>{{ name }}<wbr>@{{ domain }}</td>
+      <td class="font-mono text-sm">{{ request_login.user_id }}</td>
+      {% set day, time = (request_login.created_at|ist).split(", ") %}
+      <td class="text-sm">
+        <span class="block whitespace-nowrap">{{ day }}</span>
+        <span class="block whitespace-nowrap text-xs text-muted">{{ time }}</span>
+      </td>
+      <td>
+        <div class="flex justify-end gap-2">
+          {# Not offered for a deactivated Discom, where it would be refused. #}
+          {% if discom.status == "active" %}
+          <form method="post" action="/admin/registrations/{{ request_login.id }}/approve" data-confirm="{{ _('%(discom)s can sign in with this login, and is emailed at %(email)s. Check the address belongs to the Discom first.', discom=discom.name, email=request_login.email) }}" data-confirm-title="{{ _('Approve this registration?') }}" data-confirm-action="{{ _('Approve') }}">
+            {{ csrf_field() }}
+            {{ button("Approve", size="sm", icon_name="check", icon_only=true, needs_script=true) }}
+          </form>
+          {% endif %}
+          {{ button("Decline", "secondary", type="button", size="sm", commandfor="decline-" ~ request_login.id, command="show-modal", icon_name="close", icon_only=true) }}
+        </div>
+
+        {% call modal("decline-" ~ request_login.id, "Decline this registration?") %}
+        <p class="mb-4 text-sm text-muted">{{ _("%(discom)s is emailed your reason and can register again. This cannot be undone.", discom=discom.name) }}</p>
+        <form method="post" action="/admin/registrations/{{ request_login.id }}/decline" data-confirmed-by="dialog">
+          {{ csrf_field() }}
+          {{ field("reason", "Reason", required=true, rows=4, maxlength=1000, id="reason-" ~ request_login.id, help="The Discom reads this, so write it for them.") }}
+          <div class="dialog-actions">
+            {{ dialog_actions("decline-" ~ request_login.id, "Decline", "close", "danger") }}
+          </div>
+        </form>
+        {% endcall %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+{% endcall %}
+{% else %}
+{% call card(flush=true) %}
+{{ empty_state("No requests waiting", "A Discom that registers appears here until you approve or decline it.", "✓") }}
+{% endcall %}
+{% endif %}
+{% endblock %}

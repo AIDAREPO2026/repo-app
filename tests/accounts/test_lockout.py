@@ -108,6 +108,7 @@ def test_fr_1_7_success_resets_the_counter(db: Session, login: Login) -> None:
 @pytest.mark.parametrize("status", ["pending", "declined", "deactivated"])
 def test_p1_acc_04_inactive_login_cannot_sign_in(db: Session, login: Login, status: str) -> None:
     login.status = status
+    login.decline_reason = "Test reason"  # The database requires one for a declined login.
 
     assert sign_in(db, login, PASSWORD) is None
     assert attempts(db, login.user_id)[-1].reason == "inactive"

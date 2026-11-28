@@ -144,7 +144,7 @@
   <button type="button" class="icon-button" data-bulk-clear aria-label="{{ _('Clear selection') }}" title="{{ _('Clear selection') }}">{{ icon("close") }}</button>
 </div>
 <div class="menu row-menu" popover role="group" aria-label="{{ _('Row actions') }}">
-  <button type="button" class="menu-item" data-row-open><span class="menu-icon">{{ icon("edit") }}</span><span class="menu-text">{{ _("Manage") }}</span></button>
+  {# table.js puts the right-clicked row's own buttons here, above Copy. #}
   <button type="button" class="menu-item" data-row-copy><span class="menu-icon">{{ icon("copy") }}</span><span class="menu-text">{{ _(copy_label) }}</span></button>
   <button type="button" class="menu-item" data-row-select><span class="menu-icon">{{ icon("check") }}</span><span class="menu-text" data-row-select-label></span></button>
 </div>
@@ -155,7 +155,11 @@
   A list of records: an optional search box, a table whose header stays while the rows
   scroll, and a row count. On wide screens it fills the height left on the screen. The caller
   gives the <thead> and <tbody>. label names the table; search is the search box's label,
-  and without one there is no box. static/js/shell.js does the filtering.
+  and without one there is no box. static/js/table.js does the filtering.
+
+  columns names the CSV columns and turns on checkboxes, copy, export and the row menu, for
+  rows that carry data-export and data-copy. compact is for long narrow lists, batch shows
+  rows as the reader scrolls, and groups adds a filter beside the search box.
 #}
 {% macro data_table(label, total, search="", columns=[], copy_label="Copy", file="records", compact=false, batch=0, groups=[], group_label="") %}
 {% from "macros/icons.html" import icon %}

@@ -1,0 +1,7 @@
+{{ _("Hello,") }}
+
+{{ _("ITPED did not approve the AIDA Digital Resource Repository registration for %(discom)s.", discom=discom) }}
+
+{{ _("Reason: %(reason)s", reason=reason) }}
+
+{{ _("You can register again once this is sorted out.") }}

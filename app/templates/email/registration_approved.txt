@@ -1,0 +1,4 @@
+{{ _("Hello,") }}
+{{ _("ITPED has approved the AIDA Digital Resource Repository login for %(discom)s.", discom=discom) }}
+{{ _("Your User ID is %(user_id)s. Sign in with the password you chose when you registered:", user_id=user_id) }}
+{{ link }}

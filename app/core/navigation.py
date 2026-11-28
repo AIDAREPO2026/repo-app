@@ -35,6 +35,7 @@ NAV_BY_LOGIN_TYPE: dict[str, list[NavLink]] = {
     "member": [_dashboard("member"), SECURITY],
     "admin": [
         _dashboard("admin"),
+        NavLink("Registrations", "/admin/registrations", "inbox", "Administration", "Discoms waiting"),
         NavLink("Accounts", "/admin/accounts", "users", "Administration", "ITPED staff logins"),
         NavLink("Discoms", "/admin/discoms", "building", "Administration", "Recognised Discoms"),
         NavLink("Reserved IDs", "/admin/reserved-ids", "lock", "Administration", "Words no User ID may use"),
