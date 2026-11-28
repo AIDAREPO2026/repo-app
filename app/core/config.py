@@ -1,6 +1,7 @@
 """Read configuration from environment variables, failing early when one is missing."""
 
-from pydantic import ValidationError
+from cryptography.fernet import Fernet
+from pydantic import ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,6 +23,13 @@ class Config(BaseSettings):
     smtp_username: str = ""
     smtp_password: str = ""
     mail_from: str = "aida-portal@localhost"
+
+    @field_validator("fernet_key")
+    @classmethod
+    def fernet_key_is_valid(cls, value: str) -> str:
+        """Refuse a key Fernet cannot use, so a bad key stops startup, not someone's MFA enrolment."""
+        Fernet(value.encode())
+        return value
 
 
 class MissingConfigError(RuntimeError):
