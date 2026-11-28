@@ -1,9 +1,8 @@
 {% extends "layouts/auth.html" %}
-{% from "macros/forms.html" import field, select, csrf_field with context %}
+{% from "macros/forms.html" import field, select, csrf_field, captcha_field with context %}
 {% from "macros/ui.html" import alert, auth_heading, button with context %}
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', path='vendor/altcha-3.7.0/altcha.css') }}">
-<script type="module" src="{{ url_for('static', path='js/captcha.js') }}"></script>
+{% include "accounts/_captcha_assets.html" %}
 {% endblock %}
 {% block content %}
 {{ auth_heading("Register your Discom", "Step 1 of 3. We email a code to check your address. Each Discom has one portal login, which ITPED verifies.") }}
@@ -21,11 +20,7 @@
 
   {{ field("email", "Official email address", type="email", value=form.email, autocomplete="email", required=true, maxlength=254,
            help="Use an address on your Discom's own email domain.", error=errors.get("email", "")) }}
-  {% set captcha_error = errors.get("altcha", "") %}
-  <div class="field">
-    <altcha-widget challenge="/captcha/challenge" name="altcha" hidelogo hidefooter></altcha-widget>
-    {% if captcha_error %}<p id="altcha-error" class="field-error" role="alert">{{ captcha_error }}</p>{% endif %}
-  </div>
+  {{ captcha_field(errors.get("altcha", "")) }}
 
   {% include "accounts/_privacy_notice.html" %}
 

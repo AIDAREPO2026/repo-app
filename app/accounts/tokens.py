@@ -56,6 +56,23 @@ def mark_used(found: LoginToken) -> None:
     found.used_at = utc_now()
 
 
+def retire_tokens(db: Session, login: Login, *purposes: str) -> None:
+    """Use up every unused token the login has for these purposes, so older links stop working."""
+    query = select(LoginToken).where(
+        LoginToken.login_id == login.id, LoginToken.purpose.in_(purposes), LoginToken.used_at.is_(None)
+    )
+    for token in db.scalars(query.with_for_update()):
+        mark_used(token)
+
+
+def last_issued_at(db: Session, login: Login, purpose: str) -> datetime | None:
+    """Return when the login's most recent token of this kind was issued, used or not."""
+    query = select(func.max(LoginToken.created_at)).where(
+        LoginToken.login_id == login.id, LoginToken.purpose == purpose
+    )
+    return db.scalar(query)
+
+
 def issue_email_code(db: Session, login: Login) -> str:
     """Store a new 6-digit, 10-minute sign-in code for a login and return it, retiring any earlier code."""
     for earlier in _unused_email_codes(db, login):
@@ -94,10 +111,7 @@ def use_email_code(db: Session, login: Login, code: str) -> bool:
 
 def last_email_code_at(db: Session, login: Login) -> datetime | None:
     """Return when the login's most recent sign-in code was issued, used or not."""
-    query = select(func.max(LoginToken.created_at)).where(
-        LoginToken.login_id == login.id, LoginToken.purpose == EMAIL_CODE
-    )
-    return db.scalar(query)
+    return last_issued_at(db, login, EMAIL_CODE)
 
 
 def _unused_email_codes(db: Session, login: Login) -> list[LoginToken]:

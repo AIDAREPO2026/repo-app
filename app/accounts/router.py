@@ -29,6 +29,7 @@ from app.accounts.schemas import (
     DiscomAddForm,
     DiscomForm,
     DiscomImportForm,
+    ForgotPasswordForm,
     MfaCodeForm,
     MfaOffForm,
     MfaSetupForm,
@@ -60,6 +61,7 @@ from app.accounts.service import (
     finish_mfa,
     free_word,
     import_discoms,
+    link_is_usable,
     needs_mfa,
     open_roles,
     pending_registrations,
@@ -70,16 +72,18 @@ from app.accounts.service import (
     register_member,
     registration_discoms,
     removed_words,
+    request_password_reset,
     reserve_word,
     reserved_entries,
     reset_mfa,
+    reset_password,
     restore_word,
     send_email_code,
+    send_password_reset_link,
     send_registration_code,
     send_set_password_link,
     set_discom_active,
     set_password_from_link,
-    set_password_link_is_usable,
     set_reviewer_role,
     sign_in,
     sign_out,
@@ -135,20 +139,34 @@ def render_visitor_form(
     return response
 
 
-def render_sign_in(request: Request, next_path: str, error: str = "", user_id: str = "") -> HTMLResponse:
+SIGN_IN_DONE_MESSAGES = {"password": "Password saved. Sign in with it."}
+
+
+def render_sign_in(
+    request: Request, next_path: str, error: str = "", user_id: str = "", done: str = ""
+) -> HTMLResponse:
     """Render the sign-in form."""
-    context = {"title": "Sign in", "next": next_path, "error": error, "user_id": user_id}
+    context = {
+        "title": "Sign in",
+        "next": next_path,
+        "error": error,
+        "user_id": user_id,
+        "messages": done_message(done, SIGN_IN_DONE_MESSAGES),
+    }
     return render_visitor_form(request, "accounts/sign_in.html", context)
 
 
 @router.get(LOGIN_PATH, response_class=HTMLResponse, dependencies=[Depends(public_route)])
 def sign_in_page(
-    request: Request, login: Annotated[Login | None, Depends(current_login)], next: str = ""
+    request: Request,
+    login: Annotated[Login | None, Depends(current_login)],
+    next: str = "",
+    done: str = "",
 ) -> Response:
     """Show the sign-in form, or send someone already signed in on to their page."""
     if login is not None:
         return RedirectResponse(after_sign_in_path(next, login), status_code=303)
-    return render_sign_in(request, next)
+    return render_sign_in(request, next, done=done)
 
 
 @router.post(LOGIN_PATH, response_class=HTMLResponse, dependencies=[Depends(public_route)])
@@ -498,8 +516,9 @@ def account_or_404(db: Session, login_id: uuid.UUID) -> Login:
 
 
 def base_url(request: Request) -> str:
-    """Return this site's address, for links in emails."""
-    return str(request.base_url)
+    """Return the portal's own address for emailed links, from configuration, never from the request."""
+    portal_url: str = request.app.state.portal_url
+    return portal_url.rstrip("/") + "/"
 
 
 @router.get(ACCOUNTS_PATH, response_class=HTMLResponse)
@@ -587,34 +606,138 @@ def reset_account_mfa(request: Request, db: DbSession, admin: AdminLogin, login_
     return run_account_change(request, db, admin, change, "mfa_reset")
 
 
-def render_set_password(
-    request: Request, token: str, usable: bool, problems: list[str] | None = None, status_code: int = 200
+# The two pages an emailed link opens to choose a password: a new account's, and a reset.
+PASSWORD_PAGES = {
+    "set-password": {
+        "purpose": "set_password",
+        "title": "Set your password",
+        "lead": "Choose the password you will use to sign in to the portal.",
+        "button_label": "Set password",
+        "unusable": "Ask an ITPED Admin to send a new one.",
+    },
+    "reset-password": {
+        "purpose": "reset_password",
+        "title": "Reset your password",
+        "lead": "Choose a new password. Every device signed in to this account is signed out.",
+        "button_label": "Change password",
+        "unusable": "Ask for a new one below.",
+    },
+}
+
+
+def render_choose_password(
+    request: Request,
+    page: str,
+    token: str,
+    usable: bool,
+    problems: list[str] | None = None,
+    status_code: int = 200,
 ) -> HTMLResponse:
-    """Render the set-password form, or the message for a link that cannot be used."""
-    context = {"title": "Set your password", "token": token, "usable": usable, "problems": problems or []}
+    """Render the choose-a-password form, or the message for a link that cannot be used."""
+    context = PASSWORD_PAGES[page] | {
+        "link_page": page,
+        "token": token,
+        "usable": usable,
+        "problems": problems or [],
+    }
     return render_visitor_form(request, "accounts/set_password.html", context, status_code)
+
+
+def show_password_link(request: Request, db: Session, page: str, token: str) -> HTMLResponse:
+    """Show the form behind an emailed link."""
+    usable = link_is_usable(db, token, PASSWORD_PAGES[page]["purpose"])
+    return render_choose_password(request, page, token, usable, status_code=200 if usable else 400)
+
+
+def submit_password_link(
+    request: Request,
+    db: Session,
+    page: str,
+    token: str,
+    form: SetPasswordForm,
+    save: Callable[[Session, str, str, str, Actor], list[str]],
+) -> Response:
+    """Save the password once, then send the person to sign in with it."""
+    try:
+        problems = save(db, token, form.password, form.confirm_password, visitor_actor(request))
+    except AccountRuleError:
+        return render_choose_password(request, page, token, usable=False, status_code=400)
+    if problems:
+        return render_choose_password(request, page, token, True, problems, status_code=400)
+    return RedirectResponse(LOGIN_PATH + "?done=password", status_code=303)
 
 
 @router.get("/set-password/{token}", response_class=HTMLResponse, dependencies=[Depends(public_route)])
 def set_password_page(request: Request, db: DbSession, token: str) -> HTMLResponse:
     """Show the set-password form for a link from a new-account email."""
-    usable = set_password_link_is_usable(db, token)
-    return render_set_password(request, token, usable, status_code=200 if usable else 400)
+    return show_password_link(request, db, "set-password", token)
 
 
 @router.post("/set-password/{token}", response_class=HTMLResponse, dependencies=[Depends(public_route)])
 def set_password_submit(
     request: Request, db: DbSession, token: str, form: Annotated[SetPasswordForm, Form()]
 ) -> Response:
-    """Set the password once, then send the person to sign in."""
-    actor = visitor_actor(request)
-    try:
-        problems = set_password_from_link(db, token, form.password, form.confirm_password, actor)
-    except AccountRuleError:
-        return render_set_password(request, token, usable=False, status_code=400)
-    if problems:
-        return render_set_password(request, token, usable=True, problems=problems, status_code=400)
-    return RedirectResponse(LOGIN_PATH, status_code=303)
+    """Set a new account's password."""
+    return submit_password_link(request, db, "set-password", token, form, set_password_from_link)
+
+
+@router.get("/reset-password/{token}", response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def reset_password_page(request: Request, db: DbSession, token: str) -> HTMLResponse:
+    """Show the new-password form for a reset link (FR-1.5)."""
+    return show_password_link(request, db, "reset-password", token)
+
+
+@router.post("/reset-password/{token}", response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def reset_password_submit(
+    request: Request, db: DbSession, token: str, form: Annotated[SetPasswordForm, Form()]
+) -> Response:
+    """Replace the password and end every session."""
+    return submit_password_link(request, db, "reset-password", token, form, reset_password)
+
+
+# FR-1.2, FR-1.5: asking for a reset link, CAPTCHA protected.
+FORGOT_PATH = "/forgot-password"
+
+
+def render_forgot_password(
+    request: Request, identifier: str = "", problem: str = "", status_code: int = 200
+) -> HTMLResponse:
+    """Render the "Forgot password" form."""
+    context = {"title": "Forgot your password", "identifier": identifier, "problem": problem}
+    return render_visitor_form(request, "accounts/forgot_password.html", context, status_code)
+
+
+@router.get(FORGOT_PATH, response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def forgot_password_page(request: Request) -> HTMLResponse:
+    """Show the form."""
+    return render_forgot_password(request)
+
+
+@router.post(FORGOT_PATH, response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def forgot_password_submit(
+    request: Request,
+    db: DbSession,
+    background: BackgroundTasks,
+    form: Annotated[ForgotPasswordForm, Form()],
+) -> Response:
+    """Email a link if an account matches, and answer the same way either way."""
+    state = request.app.state
+    captcha_passed = captcha.verify(form.altcha, state.secret_key, state.redis)
+    problem, email, link = request_password_reset(
+        db, visitor_actor(request), form.identifier, base_url(request), captcha_passed
+    )
+    if problem:
+        return render_forgot_password(request, form.identifier, problem, status_code=400)
+    if link:
+        background.add_task(send_password_reset_link, email, link)
+    return RedirectResponse(FORGOT_PATH + "/sent", status_code=303)
+
+
+@router.get(FORGOT_PATH + "/sent", response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def forgot_password_sent(request: Request) -> HTMLResponse:
+    """Say what happens next, without saying whether an account matched."""
+    context = {"title": "Check your email"}
+    return render_visitor_form(request, "accounts/forgot_password_sent.html", context)
 
 
 # FR-1.1, FR-1.2: a Discom asks for its Member login in three public steps: Discom and email

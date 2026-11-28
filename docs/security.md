@@ -54,6 +54,8 @@ Security is a release gate, not a later phase. Every task spec has a **Security*
 - Set cookies with `HttpOnly`, `Secure`, `SameSite=Lax` and `Path=/`, with no `Domain` attribute.
 - Require MFA for Admin, Reviewer and Approver (FR-2.8), with TOTP secrets encrypted using a key from the environment.
 - Make password reset and set-password tokens single-use, store them hashed, and expire them after 60 minutes.
+- Build emailed links from the configured `PORTAL_URL`, never from the request's `Host` header, which the sender controls.
+- Keep link tokens out of logs: add any new address that carries one to `app/core/log_setup.py` and turn its Nginx access log off.
 
 ### Access control
 

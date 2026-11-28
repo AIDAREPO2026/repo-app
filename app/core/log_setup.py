@@ -15,6 +15,9 @@ REMOVED = "[removed]"
 # Everything to the end of the line goes, since cookie and token values contain spaces and ";".
 SENSITIVE_IN_TEXT = re.compile(r"(?i)\b(authorization|set-cookie|cookie)(\s*[:=]\s*)[^\r\n]*")
 
+# The token in an emailed link is part of the page's address, so access logs would keep it.
+LINK_TOKEN_IN_PATH = re.compile(r"(/(?:set|reset)-password/)[^\s\"'?/]+")
+
 # Attributes every LogRecord has; anything else was passed through `extra=`.
 STANDARD_ATTRIBUTES = set(vars(logging.makeLogRecord({}))) | {"message", "asctime"}
 
@@ -29,6 +32,7 @@ def redact(value: Any) -> Any:
     if isinstance(value, list | tuple):
         return [redact(item) for item in value]
     if isinstance(value, str):
+        value = LINK_TOKEN_IN_PATH.sub(rf"\1{REMOVED}", value)
         return SENSITIVE_IN_TEXT.sub(rf"\1\2{REMOVED}", value)
     return value
 

@@ -70,6 +70,14 @@ class SetPasswordForm(BaseModel):
     confirm_password: str = Field(min_length=1, max_length=1024)
 
 
+class ForgotPasswordForm(BaseModel):
+    """Who wants a reset link: a User ID or the account's email (FR-1.5)."""
+
+    identifier: str = Field(default="", max_length=254)
+    # The ALTCHA widget's answer (app.core.captcha). Empty when the widget did not run.
+    altcha: str = Field(default="", max_length=MAX_PAYLOAD_LENGTH)
+
+
 class MfaSetupForm(BaseModel):
     """The second-factor method chosen at enrolment (FR-2.8)."""
 

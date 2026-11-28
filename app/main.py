@@ -62,6 +62,8 @@ def create_app() -> FastAPI:
     application.state.session_factory = make_session_factory(config.database_url)
     # Signs visitor CSRF tokens (app.core.sessions).
     application.state.secret_key = config.secret_key
+    # Emailed links are built from this (app.core.config).
+    application.state.portal_url = config.portal_url
     # Short timeouts, so a stuck Redis fails the health check instead of hanging it.
     application.state.redis = Redis.from_url(config.redis_url, socket_timeout=2, socket_connect_timeout=2)
     for router in ROUTERS:

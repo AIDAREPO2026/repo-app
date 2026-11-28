@@ -11,6 +11,7 @@
   <input type="hidden" name="next" value="{{ next }}">
   {{ field("user_id", "User ID", value=user_id, autocomplete="username", required=true) }}
   {{ field("password", "Password", type="password", autocomplete="current-password", required=true) }}
+  <p class="text-right text-sm"><a href="/forgot-password">{{ _("Forgot your password?") }}</a></p>
   <div class="mt-6">{{ button("Sign in", block=true, icon_name="sign-in") }}</div>
 </form>
 <p class="mt-6 text-center text-sm text-muted">{{ _("New to the portal?") }} <a href="/register">{{ _("Register your Discom") }}</a></p>

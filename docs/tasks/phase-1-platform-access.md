@@ -489,6 +489,7 @@ Later pages only reuse these components. A new component is added here, not insi
 - If the account exists and is active, email a single-use reset link valid for 60 minutes.
 - A reset page that applies the password policy.
 - A successful reset ends all of that login's sessions and clears any lockout.
+- A successful reset emails the account's address that the password changed, with the time and no link.
 
 **Security**
 

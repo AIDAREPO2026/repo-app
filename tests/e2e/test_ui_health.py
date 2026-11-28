@@ -7,7 +7,7 @@ need the seeded e2e logins (P0-QA-02) and are checked once those exist.
 import pytest
 from playwright.sync_api import Page
 
-PAGES = ["/login", "/register", "/no-such-page"]
+PAGES = ["/login", "/register", "/forgot-password", "/no-such-page"]
 WIDTHS = [1280, 375]
 
 # Controls sitting at a scaled size with nothing pressing them.

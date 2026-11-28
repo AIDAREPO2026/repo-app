@@ -67,6 +67,8 @@ PUBLIC_EMAIL_DOMAINS = frozenset(
 
 # Security.md: set-password and reset links are single-use and expire after 60 minutes.
 LINK_TOKEN_MINUTES = 60
+# FR-1.5: at most one reset link per account in this time, so an inbox cannot be flooded.
+RESET_LINK_WAIT_SECONDS = 5 * 60
 
 # P1-ACC-10 (FR-2.8): emailed sign-in codes are 6 digits, last 10 minutes and allow 5 tries.
 EMAIL_CODE_DIGITS = 6

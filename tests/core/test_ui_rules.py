@@ -59,7 +59,8 @@ def test_p1_ui_02_scripts_never_declare_the_same_top_level_name() -> None:
 # Actions that are not serious: they start or end the person's own session, finish a step they
 # are in the middle of, or can be undone at once without changing who may do what.
 SAFE_ACTIONS = {
-    "/logout", "/login", "/register", "/register/code", "/register/account", "/set-password/{{ token }}",
+    "/logout", "/login", "/register", "/register/code", "/register/account",
+    "/forgot-password", "/{{ link_page }}/{{ token }}",
     "/mfa", "/mfa/setup", "/mfa/send-code", "/mfa/cancel", "/account/security/send-code",
     "/account/security/mfa-on", "/admin/discoms/import/preview", "/admin/reserved-ids",
     "/admin/reserved-ids/restore",
