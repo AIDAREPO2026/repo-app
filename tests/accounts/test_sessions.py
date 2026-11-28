@@ -28,8 +28,11 @@ def password_hash() -> str:
 
 @pytest.fixture
 def login(engine: Engine, password_hash: str) -> Login:
-    """An active Admin login, saved for real, because each request uses its own transaction."""
-    saved = build_login("admin")
+    """An active Member login, saved for real, because each request uses its own transaction.
+
+    A Member without MFA, so the password alone completes sign-in; test_mfa.py covers the second step.
+    """
+    saved = build_login("member")
     saved.password_hash = password_hash
     with Session(engine, expire_on_commit=False) as session:
         session.add(saved)
@@ -53,8 +56,8 @@ def test_p1_acc_06_sign_in_opens_the_dashboard(client: TestClient, login: Login,
     response = submit_sign_in(client, login.user_id.upper(), PASSWORD)
 
     assert response.status_code == 303
-    assert response.headers["location"] == "/dashboard/admin"
-    page = client.get("/dashboard/admin")
+    assert response.headers["location"] == "/dashboard/member"
+    page = client.get("/dashboard/member")
     assert page.status_code == 200
     assert "Sign out" in page.text
     with Session(engine) as session:
@@ -85,7 +88,7 @@ def test_p1_acc_06_csrf_required_on_post(client: TestClient, login: Login) -> No
 
     submit_sign_in(client, login.user_id, PASSWORD)
     assert client.post("/logout", follow_redirects=False).status_code == 403
-    session_token = csrf_from(client.get("/dashboard/admin"))
+    session_token = csrf_from(client.get("/dashboard/member"))
     response = client.post("/logout", headers={CSRF_HEADER: session_token}, follow_redirects=False)
     assert response.status_code == 303
 
@@ -101,7 +104,7 @@ def test_p1_acc_06_token_rotates_on_login(client: TestClient, login: Login, engi
     first, second = sessions_of(engine, login)
     assert (first.end_reason, second.end_reason) == ("replaced", None)
     client.cookies.set(SESSION_COOKIE, first_token)
-    assert client.get("/dashboard/admin", follow_redirects=False).status_code == 303
+    assert client.get("/dashboard/member", follow_redirects=False).status_code == 303
 
 
 def test_p1_acc_06_cookie_flags(client: TestClient, login: Login) -> None:
@@ -138,13 +141,13 @@ def set_last_seen(engine: Engine, login: Login, minutes_ago: float) -> None:
 def test_fr_1_7_idle_session_ends_after_30_minutes(client: TestClient, login: Login, engine: Engine) -> None:
     submit_sign_in(client, login.user_id, PASSWORD)
     set_last_seen(engine, login, 29)
-    assert client.get("/dashboard/admin").status_code == 200
+    assert client.get("/dashboard/member").status_code == 200
 
     set_last_seen(engine, login, 31)
-    response = client.get("/dashboard/admin", follow_redirects=False)
+    response = client.get("/dashboard/member", follow_redirects=False)
 
     assert response.status_code == 303
-    assert response.headers["location"] == "/login?next=/dashboard/admin"
+    assert response.headers["location"] == "/login?next=/dashboard/member"
     [ended] = sessions_of(engine, login)
     assert ended.end_reason == "idle"
 
@@ -155,18 +158,18 @@ def test_p1_acc_06_last_seen_written_at_most_once_a_minute(
     submit_sign_in(client, login.user_id, PASSWORD)
     set_last_seen(engine, login, 0.2)
     before = sessions_of(engine, login)[0].last_seen_at
-    client.get("/dashboard/admin")
+    client.get("/dashboard/member")
     assert sessions_of(engine, login)[0].last_seen_at == before
 
     set_last_seen(engine, login, 2)
-    client.get("/dashboard/admin")
+    client.get("/dashboard/member")
     assert utc_now() - sessions_of(engine, login)[0].last_seen_at < timedelta(seconds=10)
 
 
 def test_p1_acc_06_sign_out_ends_session_at_once(client: TestClient, login: Login, engine: Engine) -> None:
     submit_sign_in(client, login.user_id, PASSWORD)
     token = client.cookies[SESSION_COOKIE]
-    csrf = csrf_from(client.get("/dashboard/admin"))
+    csrf = csrf_from(client.get("/dashboard/member"))
 
     response = client.post("/logout", data={"csrf_token": csrf}, follow_redirects=False)
 
@@ -174,17 +177,17 @@ def test_p1_acc_06_sign_out_ends_session_at_once(client: TestClient, login: Logi
     [ended] = sessions_of(engine, login)
     assert ended.end_reason == "logout"
     client.cookies.set(SESSION_COOKIE, token)
-    assert client.get("/dashboard/admin", follow_redirects=False).status_code == 303
+    assert client.get("/dashboard/member", follow_redirects=False).status_code == 303
 
 
 @pytest.mark.parametrize(
     ("next_path", "expected"),
     [
-        ("/dashboard/admin", "/dashboard/admin"),
-        ("//evil.example/page", "/dashboard/admin"),
-        ("/\\evil.example", "/dashboard/admin"),
-        ("https://evil.example", "/dashboard/admin"),
-        ("", "/dashboard/admin"),
+        ("/dashboard/member", "/dashboard/member"),
+        ("//evil.example/page", "/dashboard/member"),
+        ("/\\evil.example", "/dashboard/member"),
+        ("https://evil.example", "/dashboard/member"),
+        ("", "/dashboard/member"),
     ],
 )
 def test_p1_acc_06_next_never_leaves_the_site(
@@ -200,4 +203,4 @@ def test_p1_acc_06_signed_in_user_skips_the_sign_in_page(client: TestClient, log
 
     response = client.get("/login", follow_redirects=False)
 
-    assert (response.status_code, response.headers["location"]) == (303, "/dashboard/admin")
+    assert (response.status_code, response.headers["location"]) == (303, "/dashboard/member")
