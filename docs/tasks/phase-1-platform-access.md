@@ -399,38 +399,44 @@ Later pages only reuse these components. A new component is added here, not insi
 
 **Scope**
 
-- A public "Register your Discom" form with these fields:
-    - Discom, chosen from active organisations
-    - official email address
-    - desired User ID
-    - password and confirmation
+- A public "Register your Discom" flow in three steps:
+    1. Discom (chosen from active organisations), official email address and the CAPTCHA
+    2. the 6-digit code emailed to that address
+    3. desired User ID, password and confirmation
+- Step 3 suggests User IDs that are free, and says whether a typed one is free.
 - The CAPTCHA from `P0-SEC-01` ([decision record 0006](../adr/0006-self-hosted-captcha.md)):
     - a public route that returns `app.core.captcha.new_challenge()` as JSON
     - the ALTCHA widget's `dist/external` build, its CSS and workers, served from `static/vendor/`
     - `app.core.captcha.verify()` called on submit, reused everywhere else a CAPTCHA is needed
 - Validation:
-    - the email domain matches the Discom's domain (D-11)
+    - the email domain matches the Discom's domain (D-11); only then is a code sent
     - the User ID is unique and well formed
     - the password passes `check_password_policy`
     - the Discom has no pending or active Member login (FR-1.6)
+- Until step 3 is sent, the request is kept only in Redis and expires on its own.
 - On success, create a `pending` Member login and show "Your request has been sent to ITPED for verification."
-- Show the privacy notice: what is collected, why and for how long (SRS 5.7).
+- Show the privacy notice wherever personal data is collected: what is collected, why and for how long (SRS 5.7).
 
 **Security**
 
 - The CAPTCHA is checked on the server before any other processing.
 - Registration is rate limited per IP in Nginx.
-- The success message is the same whether or not the email domain was valid, so the form cannot be used to list Discom domains. Field-level errors cover only format problems.
+- Step 1 answers the same way whether or not a code was sent, so it cannot be used to learn Discom domains or who has a login. The email is sent after the answer, so timing does not tell.
+- A code is 6 digits, lasts 10 minutes, allows 5 tries and is sent at most once a minute to an address. Only its hash is stored.
+- Whether a User ID is taken is told only to a visitor who has entered the code, for 30 minutes and at most 30 checks.
 - Each request is audited.
 
 **Acceptance criteria**
 
-- [ ] A valid request with a solved CAPTCHA creates a pending Member login
+- [ ] A solved CAPTCHA, the emailed code and a valid form create a pending Member login
 - [ ] An unsolved or replayed CAPTCHA is refused
+- [ ] An address outside the Discom's domain is sent no code and gets the same page
+- [ ] No later step works without the code
+- [ ] A suggested User ID is free
 - [ ] A second request for a Discom with a pending or active login is refused
-- [ ] The privacy notice is shown on the form
+- [ ] The privacy notice is shown where data is collected
 
-**Tests:** `test_fr_1_1_registration_creates_pending_login`, `test_fr_1_2_captcha_required`, `test_fr_1_6_duplicate_registration_refused`, `test_d11_email_domain_must_match`.
+**Tests:** `test_fr_1_1_registration_creates_pending_login`, `test_fr_1_2_captcha_required`, `test_fr_1_6_duplicate_registration_refused`, `test_d11_only_the_discoms_domain_is_sent_a_code`, `test_p1_acc_02_later_steps_need_a_proved_email`.
 
 ---
 

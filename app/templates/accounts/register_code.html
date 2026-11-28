@@ -1,0 +1,13 @@
+{% extends "layouts/auth.html" %}
+{% from "macros/forms.html" import field, csrf_field with context %}
+{% from "macros/ui.html" import auth_heading, button with context %}
+{% block content %}
+{# The same page whatever the address, so it never says whether a code was sent. #}
+{{ auth_heading("Enter your code", "Step 2 of 3. If that address can register the Discom, we have emailed it a 6-digit code. It works once, for 10 minutes.") }}
+<form method="post" action="/register/code" novalidate>
+  {{ csrf_field() }}
+  {{ field("code", "6-digit code", autocomplete="one-time-code", inputmode="numeric", maxlength=20, required=true, error=_(error) if error else "") }}
+  <div class="mt-6">{{ button("Check the code", block=true, icon_name="check") }}</div>
+</form>
+<p class="mt-6 text-center text-sm text-muted">{{ _("No email?") }} <a href="/register">{{ _("Start again") }}</a></p>
+{% endblock %}

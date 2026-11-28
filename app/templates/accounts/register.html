@@ -6,7 +6,7 @@
 <script type="module" src="{{ url_for('static', path='js/captcha.js') }}"></script>
 {% endblock %}
 {% block content %}
-{{ auth_heading("Register your Discom", "Each Discom has one portal login. ITPED checks every request before the login can be used.") }}
+{{ auth_heading("Register your Discom", "Step 1 of 3. We email a code to check your address. Each Discom has one portal login, which ITPED verifies.") }}
 {% if errors %}
 <div class="mb-5">{{ alert(_("The request was not sent. Check the problems shown below."), "danger", id="register-error") }}</div>
 {% endif %}
@@ -20,32 +20,15 @@
 
   {{ field("email", "Official email address", type="email", value=form.email, autocomplete="email", required=true, maxlength=254,
            help="Use an address on your Discom's own email domain.", error=errors.get("email", "")) }}
-  {{ field("user_id", "User ID", value=form.user_id, autocomplete="username", required=true, maxlength=50,
-           help="4 to 50 lowercase letters, numbers, dots, dashes or underscores. You sign in with it.",
-           error=errors.get("user_id", "")) }}
-  {{ field("password", "Password", type="password", autocomplete="new-password", required=true,
-           help="At least 12 characters, with letters, numbers and symbols.", error=errors.get("password", "")) }}
-  {{ field("confirm_password", "Type the password again", type="password", autocomplete="new-password", required=true) }}
-
   {% set captcha_error = errors.get("altcha", "") %}
   <div class="field">
     <altcha-widget challenge="/captcha/challenge" name="altcha" hidelogo hidefooter></altcha-widget>
     {% if captcha_error %}<p id="altcha-error" class="field-error" role="alert">{{ captcha_error }}</p>{% endif %}
   </div>
 
-  <section class="mt-6 rounded-md border border-border p-4 text-sm" aria-labelledby="privacy-title">
-    <h2 id="privacy-title" class="font-semibold">{{ _("Privacy notice") }}</h2>
-    {# Q-10: placeholder text until ITPED supplies the final notice. #}
-    <p class="mt-1 text-xs text-muted">{{ _("Draft text, to be replaced by ITPED's notice.") }}</p>
-    <ul class="mt-2 list-disc space-y-1 pl-5 text-muted">
-      <li>{{ _("What we collect: your Discom, official email address, User ID and password (stored only as a one-way hash), and the IP address and browser the request came from.") }}</li>
-      <li>{{ _("Why: so ITPED can check the request is genuine, contact your Discom about its login, and keep the portal secure.") }}</li>
-      <li>{{ _("How long: while your Discom's login exists. Security records of this request are kept for 3 years.") }}</li>
-      <li>{{ _("Where: on servers in India. It is not shared outside ITPED.") }}</li>
-    </ul>
-  </section>
+  {% include "accounts/_privacy_notice.html" %}
 
-  <div class="mt-6">{{ button("Send request", block=true, icon_name="mail") }}</div>
+  <div class="mt-6">{{ button("Email me a code", block=true, icon_name="mail") }}</div>
 </form>
 <p class="mt-6 text-center text-sm text-muted">{{ _("Already have a login?") }} <a href="/login">{{ _("Sign in") }}</a></p>
 {% endblock %}
