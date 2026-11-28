@@ -1031,6 +1031,44 @@
     border-color: color-mix(in srgb, var(--aida-border) 60%, transparent);
   }
 
+  /* ---------- Quiet edges: no outlines around panels or buttons ---------- */
+
+  .app-shell .sidebar,
+  .app-shell .card,
+  .card,
+  .page-bar,
+  .menu,
+  .modal,
+  .drawer,
+  .btn-secondary,
+  .btn-secondary:hover,
+  .btn-danger {
+    border-color: var(--aida-edge);
+  }
+
+  /* Without an outline, a quiet button needs its own tint to read as a button. */
+  .btn-secondary {
+    background: var(--aida-surface-sunken);
+    box-shadow: none;
+  }
+
+  .btn-danger {
+    background: var(--aida-danger-subtle);
+  }
+
+  .account-panel .avatar {
+    box-shadow: none;
+    background: var(--aida-accent-subtle);
+  }
+
+  .page-bar .sidebar-toggle:not([hidden]),
+  .dialog-header,
+  .dialog-actions,
+  .data-toolbar,
+  .data-footer {
+    border-color: var(--aida-edge);
+  }
+
   /* ---------- Forms: filled fields that clear to the surface when used ---------- */
 
   .modal .field-label,
