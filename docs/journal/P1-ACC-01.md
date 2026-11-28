@@ -17,7 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
-| | None | |
+| 2026-11-28 | Raghvendra Singh | Merged #18 on the user's approval and set the tracker row to Done. |
 | 2026-11-28 | Raghvendra Singh | Built the `organisation` table (migration 0009), the Admin Discoms screen (list, add, edit, deactivate, reactivate), the CSV import with a preview, the `seed-test-discoms` command and the inactive-Discom sign-in rule. Checked locally in the browser; unit and e2e tests pass. Opened #18 and set the tracker row to In review. Next: review. |
 | 2026-11-28 | Raghvendra Singh | Started the task. |
 
