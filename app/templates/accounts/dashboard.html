@@ -1,27 +1,38 @@
 {% extends "base.html" %}
-{% from "macros/ui.html" import hero, card, empty_state, stat_card, action_card with context %}
-{% set name = (request.state.login.full_name or request.state.login.user_id) %}
+{% from "macros/ui.html" import welcome, card, figure, link_button, page_items, badge, empty_state with context %}
+{% set login = request.state.login %}
+{% set name = login.full_name or login.user_id %}
 {% block content %}
-{{ hero(_("Welcome, %(name)s", name=name), today.strftime("%A %-d %B %Y"), eyebrow=title) }}
+{{ welcome(_("Welcome, %(name)s", name=name), today.strftime("%A %-d %B %Y"), eyebrow=title) }}
 
-{% if overview is not none %}
-<div class="grid gap-4 sm:grid-cols-3">
-  {{ stat_card("Active Discoms", overview.active_discoms, "building", "On the master list and able to register.") }}
-  {{ stat_card("Pending requests", overview.pending_requests, "inbox", "Discom logins waiting for ITPED to verify.", tone="warning") }}
-  {{ stat_card("ITPED accounts", overview.itped_accounts, "users", "Active Admins, Reviewers and the Approver.", tone="success") }}
-</div>
+<div class="dashboard">
+  <div class="dashboard-main">
+    {% call card("Overview") %}
+    {% if overview is not none %}
+    <div class="figures">
+      {{ figure("Active Discoms", overview.active_discoms, "On the master list and able to register.", "/admin/discoms") }}
+      {{ figure("Pending requests", overview.pending_requests, "Discom logins waiting for ITPED to verify.") }}
+      {{ figure("ITPED accounts", overview.itped_accounts, "Active Admins, Reviewers and the Approver.", "/admin/accounts") }}
+    </div>
+    {% else %}
+    {{ empty_state("Nothing to show yet", "Your work will appear here as the portal's features arrive.") }}
+    {% endif %}
+    {% endcall %}
 
-<h2 class="section-title mt-8">{{ _("Manage") }}</h2>
-<div class="grid gap-4 md:grid-cols-2">
-  {{ action_card("/admin/discoms", "Discoms", "Add, edit or import the recognised Discoms.", "building") }}
-  {{ action_card("/admin/accounts", "Accounts", "Add ITPED staff, reassign roles and reset two-step sign-in.", "users") }}
+    {% call card("Your sign-in") %}
+    <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+      <p class="flex items-center gap-2 text-sm">
+        {{ _("Two-step sign-in") }}
+        {% if login.mfa_method %}{{ badge("On", "success") }}{% else %}{{ badge("Off", "warning") }}{% endif %}
+      </p>
+      {{ link_button("Review security", "/account/security", size="sm", icon_name="shield") }}
+    </div>
+    {% endcall %}
+  </div>
+
+  {# Every other page of this login's menu. #}
+  {% call card("Go to") %}
+  <div class="mt-2">{{ page_items(nav|rejectattr("path", "equalto", request.url.path)) }}</div>
+  {% endcall %}
 </div>
-{% else %}
-{% call card() %}
-  {{ empty_state("Nothing to show yet", "Your work will appear here as the portal's features arrive.") }}
-{% endcall %}
-<div class="mt-4 grid gap-4 md:grid-cols-2">
-  {{ action_card("/account/security", "Security", "Check how you sign in and turn on two-step sign-in.", "shield") }}
-</div>
-{% endif %}
 {% endblock %}

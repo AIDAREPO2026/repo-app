@@ -33,6 +33,7 @@ A task is Done when:
 - [ ] The pull request is reviewed and merged, with two reviewers for security-sensitive areas
 - [ ] The change is deployed to staging and checked there
 - [ ] Any doc this task affects is updated in the same pull request
+- [ ] The diff was checked for duplicated code, and anything left is listed in the pull request
 - [ ] Every state change it adds writes an audit event
 - [ ] The task's journal file (`docs/journal/<CODE>.md`) says Done, with its log and decisions complete
 - [ ] The shared planning tracker shows the task as Done, and its totals match the task index
@@ -89,6 +90,9 @@ Do not use `--no-verify`, force-push a shared branch or merge your own pull requ
 
 **Reuse, never copy**
 
+- **Never write the same code twice.** This covers Python, templates, JavaScript, styles and tests. Search before writing; the second time a piece of logic or markup is needed, move it to one shared place (a function, a macro, a helper) in the same change. Override a style by editing its rule, not by adding a second rule further down.
+- **Check for it before calling a task finished.** Read the whole diff for copies and near-copies, fix them, and list in the pull request any you leave and why. `tests/core/test_design_system.py` catches repeated styles; the rest is checked by reading.
+
 Before writing a helper, search the codebase. These shared functions must be used instead of reimplemented:
 
 | Need | Use | Created in |
@@ -116,9 +120,14 @@ Before writing a helper, search the codebase. These shared functions must be use
 | Serve a protected file | `app.content.delivery.protected_file_response()` | `P3-VIEW-03` |
 | Render a page | `app.core.templates.templates`, with the page extending `templates/base.html` | `P1-UI-01` |
 | Render a form field with its label, help and error | `templates/macros/forms.html` | `P1-UI-01` |
+| Offer a choice from a list | `select()` in `templates/macros/forms.html`, never a bare `<select>` (`static/js/select.js` adds search over 10 options, server paging and placement) | `P1-UI-02` |
 | Add a menu entry for a login type | `app.core.navigation` | `P1-UI-01` |
 | Show where a signed-in page sits (breadcrumbs) | `app.core.navigation.breadcrumbs()`, passed to the page as `breadcrumbs` | `P1-UI-02` |
 | Render a button, card, badge, modal or other UI element | `templates/macros/ui.html` and the tokens in `static/css/tokens.css` | `P1-UI-02` |
+| Offer the light or dark theme | `theme_switcher()` in `templates/macros/ui.html` (works through `static/js/shell.js`) | `P1-UI-02` |
+| Open a menu from a button | `menu_panel()` and `page_items()` in `templates/macros/ui.html`, opened with `popovertarget` | `P1-UI-02` |
+| List records in a table | `data_table()` in `templates/macros/ui.html` (search, fixed header, fits the screen height, row count). With `columns`, and `data-export` and `data-copy` on each row, it adds checkboxes, copy and CSV export, and a row menu (`static/js/table.js`) | `P1-UI-02` |
+| Put a page's actions beside the breadcrumbs | `{% block page_actions %}` in a page that extends `templates/base.html` (see `accounts/admin_discoms.html`) | `P1-UI-02` |
 | Render a sign-in, registration or other page shown before signing in | Extend `templates/layouts/auth.html` and start with `auth_heading()` | `P1-UI-02` |
 
 **Avoid hidden behaviour**
@@ -146,17 +155,32 @@ Before writing a helper, search the codebase. These shared functions must be use
 - Wrap user-facing text in `_()` so Hindi can be added later (SRS 5.5).
 - Never render an admin-only field in a Member or public template. Pass view schemas that do not contain those fields (`P2-CON-02`).
 
+**Checks every UI change must pass**
+
+A change that adds or alters a page, component or message is not finished until these hold. Where a test can check a rule, it does; add to that test when you add a page, and add a rule here when a UI defect gets through review.
+
+| Rule | Checked by |
+| --- | --- |
+| A result is announced once: any `?done=`-style name a redirect adds is removed from the address by `forgetResult()` in `static/js/shell.js` | `tests/core/test_ui_rules.py` |
+| A message's colour matches what happened: success, note, warning or failure. A change that takes something away (deactivate, delete, reset, turn off) is a warning, never a plain success | `tests/core/test_ui_rules.py` |
+| Choices use `select()`, not a bare `<select>` | `tests/core/test_ui_rules.py` |
+| Every button has an icon | `tests/core/test_design_system.py` |
+| No script errors, no sideways scroll and no control stuck at its pressed size, on desktop and phone widths | `tests/e2e/test_ui_health.py` |
+| Light and dark both pass axe | `tests/e2e/` |
+| Do the action in a browser, then reload the page and press Back: nothing repeats or reappears | By hand, noted in the pull request |
+
 **UI and motion rules**
 
 The `apple-design` skill in `.claude/skills/` is the reference for look and feel. These rules decide what applies here, and win over the skill in any conflict.
 
 - Build every page from the design-system tokens (CSS variables) and component macros. No one-off colours, sizes, shadows or animations.
 - Give feedback immediately: style `:active` and `:focus-visible` states, and show an HTMX loading indicator for any request that may take longer than about 300 ms.
-- Animate only `transform` and `opacity`, for 150 to 300 ms. Motion must never delay content: the page renders first and motion adds polish.
+- Animate only `transform` and `opacity`, for 150 to 300 ms. The one exception is the sidebar hiding and showing: a 400 ms glide (`--aida-duration-glide`), as a view transition. Motion must never delay content: the page renders first and motion adds polish.
+- Motion settles softly with no overshoot (`--aida-ease-settle`). Pressable controls shrink slightly and return; add a new control to the press rule in `components.css`.
 - Use CSS transitions and the View Transitions API (`hx-swap="... transition:true"` for HTMX swaps). Spring or animation libraries need tech lead approval and are only for real gesture features.
 - Do not add drag, flick or rubber-band physics, sound or haptics to the web portal.
 - Open and close modals, drawers and menus along the same path, and from the control that opened them.
-- Use translucent glass (`backdrop-filter`) only for the top bar and modal scrims. Text on it must pass WCAG AA contrast, with a solid fallback.
+- Use translucent glass (`backdrop-filter`) for the panels of signed-in pages (sidebar, cards, breadcrumb bar), menus, dialogs, the top bar and modal scrims, through `--aida-surface-glass` and `--aida-glass`. Text on it must pass WCAG AA contrast, with a solid fallback.
 - Respect `prefers-reduced-motion` (switch to a short cross-fade or no motion), `prefers-reduced-transparency` (solid surfaces) and `prefers-contrast: more` (solid surfaces, stronger borders). Nothing may flash more than three times a second.
 - Use the `system-ui` font stack, with size in `rem`, tighter letter-spacing on large headings and none on body text. Do not use Apple's SF Pro font files on the web, and do not copy Apple's own designs, icons or assets.
 - Keep the tone calm and professional: no confetti, bouncing or attention-seeking motion on a governed knowledge portal.

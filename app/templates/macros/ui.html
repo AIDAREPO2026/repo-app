@@ -8,35 +8,108 @@
 
 {# Tone names for flash message categories. #}
 {% set FLASH_TONES = {"error": "danger", "success": "success", "warning": "warning", "info": "info"} %}
-{% set ALERT_MARKS = {"danger": "!", "warning": "!", "success": "✓", "info": "i"} %}
+{% set TONE_ICONS = {"danger": "error", "warning": "warning", "success": "check", "info": "info"} %}
+{% set TOAST_TITLES = {"danger": "Something went wrong", "warning": "Warning", "success": "Done", "info": "Note"} %}
 
 {#
   A button. variant: primary, secondary, danger or link. size: "" or "sm".
+  Every button names its icon (macros/icons.html). icon_only keeps just the drawing, for
+  actions repeated on each row and for closing; the label still names it.
   To open or close a dialog, pass commandfor (the dialog id) and command
   ("show-modal" or "close"), so the dialog opens from, and returns to, this control.
 #}
-{% macro button(label, variant="primary", type="submit", size="", block=false, name="", value="", commandfor="", command="") %}
-<button type="{{ type }}" class="btn btn-{{ variant }}{% if size %} btn-{{ size }}{% endif %}{% if block %} btn-block{% endif %}"
+{% macro button(label, variant="primary", type="submit", size="", block=false, name="", value="", commandfor="", command="", icon_name="", icon_only=false) %}
+<button type="{{ type }}" class="btn btn-{{ variant }}{% if size %} btn-{{ size }}{% endif %}{% if block %} btn-block{% endif %}{% if icon_only %} btn-icon{% endif %}"
+  {%- if icon_only %} aria-label="{{ _(label) }}" title="{{ _(label) }}"{% endif %}
   {%- if name %} name="{{ name }}" value="{{ value }}"{% endif %}
-  {%- if commandfor %} commandfor="{{ commandfor }}" command="{{ command }}"{% endif %}>{{ _(label) }}</button>
+  {%- if commandfor %} commandfor="{{ commandfor }}" command="{{ command }}"{% endif %}>{{ button_content(label, icon_name, icon_only) }}</button>
 {% endmacro %}
 
-{# A link that looks like a button. #}
-{% macro link_button(label, href, variant="secondary", size="") %}
-<a href="{{ href }}" class="btn btn-{{ variant }}{% if size %} btn-{{ size }}{% endif %}">{{ _(label) }}</a>
+{# The icon and words inside a button. With icon_only the button's aria-label names it. #}
+{% macro button_content(label, icon_name="", icon_only=false) %}
+{%- from "macros/icons.html" import icon -%}
+{%- if icon_name %}{{ icon(icon_name) }}{% endif -%}
+{%- if not icon_only %}{{ _(label) }}{% endif -%}
 {% endmacro %}
 
 {#
-  Where the reader is: a list of Crumb(label, path) from app.core.navigation.breadcrumbs().
-  The last crumb is the current page and is not a link.
+  A menu that opens from the button with popovertarget="<id>". The browser handles opening,
+  Escape and clicking away, with no script. The caller fills it with .menu-item elements.
 #}
-{% macro breadcrumbs(trail) %}
+{% macro menu_panel(id, title) %}
+<div id="{{ id }}" popover class="menu">
+  <p class="menu-title">{{ _(title) }}</p>
+  {{ caller() }}
+</div>
+{% endmacro %}
+
+{# The pages of a menu section as menu items, the current one ticked. links are NavLinks. #}
+{% macro page_items(links) %}
 {% from "macros/icons.html" import icon %}
+{% for link in links %}
+{% set current = request.url.path == link.path %}
+<a href="{{ link.path }}" class="menu-item"{% if current %} aria-current="page"{% endif %}>
+  <span class="menu-icon">{{ icon(link.icon) }}</span>
+  <span class="menu-text">{{ _(link.label) }}{% if link.description %}<span class="menu-note">{{ _(link.description) }}</span>{% endif %}</span>
+  {% if current %}{{ icon("check") }}{% endif %}
+</a>
+{% endfor %}
+{% endmacro %}
+
+{#
+  One button that switches between light and dark at once. static/js/shell.js shows it,
+  names it after what a click will do, and remembers the choice.
+#}
+{% macro theme_switcher() %}
+{% from "macros/icons.html" import icon %}
+<div class="theme-switcher" hidden>
+  <button type="button" class="icon-button theme-button" data-theme-toggle
+          data-to-dark="{{ _('Switch to dark theme') }}" data-to-light="{{ _('Switch to light theme') }}"
+          aria-label="{{ _('Switch to dark theme') }}" title="{{ _('Switch to dark theme') }}">
+    {# The drawing shows where a click goes: a moon by day, a sun by night. The class names
+       the theme in which CSS shows it. #}
+    <span class="theme-icon theme-icon-light">{{ icon("moon") }}</span>
+    <span class="theme-icon theme-icon-dark">{{ icon("sun") }}</span>
+  </button>
+</div>
+{% endmacro %}
+
+{# A link that looks like a button. #}
+{% macro link_button(label, href, variant="secondary", size="", icon_name="") %}
+<a href="{{ href }}" class="btn btn-{{ variant }}{% if size %} btn-{{ size }}{% endif %}">{{ button_content(label, icon_name) }}</a>
+{% endmacro %}
+
+{#
+  Where the reader is: a list of Crumb(label, path) from app.core.navigation.breadcrumbs(),
+  and the login's menu (nav). The home button opens every page; the section step opens the
+  pages beside this one. The last crumb is the current page and is not a link.
+#}
+{% macro breadcrumbs(trail, nav) %}
+{% from "macros/icons.html" import icon %}
+{# The first page below the dashboard decides the section. The dashboard itself has none. #}
+{% set matches = nav|selectattr("label", "equalto", trail[1].label)|list if trail|length > 1 else [] %}
+{% set section = matches[0].group if matches else "" %}
 <nav aria-label="{{ _('Breadcrumb') }}">
   <ol class="breadcrumbs">
-    {% for crumb in trail %}
     <li class="crumb">
-      {% if not loop.first %}<span class="crumb-separator">{{ icon("chevron") }}</span>{% endif %}
+      <button type="button" class="crumb-button" popovertarget="crumb-home" aria-label="{{ _('Go to') }}" title="{{ _('Go to') }}">
+        {{ icon("home") }}<span class="crumb-caret">{{ icon("chevron-down") }}</span>
+      </button>
+      {% call menu_panel("crumb-home", "Go to") %}{{ page_items(nav) }}{% endcall %}
+    </li>
+    {% if section and section != "Overview" %}
+    <li class="crumb">
+      <span class="crumb-separator">{{ icon("chevron") }}</span>
+      <button type="button" class="crumb-button" popovertarget="crumb-section">
+        {{ _(section) }}<span class="crumb-caret">{{ icon("chevron-down") }}</span>
+      </button>
+      {% call menu_panel("crumb-section", section) %}{{ page_items(nav|selectattr("group", "equalto", section)) }}{% endcall %}
+    </li>
+    {% endif %}
+    {# The dashboard step is the home button, so it is named only when it is the current page. #}
+    {% for crumb in (trail[1:] if trail|length > 1 else trail) %}
+    <li class="crumb">
+      <span class="crumb-separator">{{ icon("chevron") }}</span>
       {% if crumb.path %}<a href="{{ crumb.path }}" class="crumb-link">{{ _(crumb.label) }}</a>
       {% else %}<span class="crumb-current" aria-current="page">{{ _(crumb.label) }}</span>{% endif %}
     </li>
@@ -45,50 +118,82 @@
 </nav>
 {% endmacro %}
 
-{# The heading block at the top of a page, with optional actions from the caller.
-   eyebrow names the part of the portal the page belongs to, such as "Administration". #}
-{% macro page_header(title, lead="", eyebrow="") %}
-<header class="page-header">
-  <div>
-    {% if eyebrow %}<p class="page-eyebrow">{{ _(eyebrow) }}</p>{% endif %}
-    <h1 class="page-title">{{ _(title) }}</h1>
-    {% if lead %}<p class="page-lead">{{ _(lead) }}</p>{% endif %}
-  </div>
-  {% if caller %}<div class="flex flex-wrap gap-2">{{ caller() }}</div>{% endif %}
-</header>
+{#
+  The page's heading. The breadcrumb bar already names the page, so the h1 is for screen
+  readers only; lead shows when the reader needs a sentence of explanation. Page actions go
+  in {% block page_actions %}, which base.html puts beside the breadcrumbs.
+#}
+{% macro page_header(title, lead="") %}
+<h1 class="sr-only">{{ _(title) }}</h1>
+{% if lead %}<p class="page-lead page-intro">{{ _(lead) }}</p>{% endif %}
 {% endmacro %}
 
-{# A dashboard figure. label is a message id; value is data. note is an optional message. #}
-{# tone: "accent" (blue), "warning" (amber) or "success" (green), for the icon and corner wash. #}
-{% macro stat_card(label, value, icon_name, note="", tone="accent") %}
+{# The parts of a selectable table that static/js/table.js drives: the bar of actions for the
+   ticked rows, the menu a right click on a row opens, and the toast it reports with. #}
+{% macro row_actions(copy_label) %}
 {% from "macros/icons.html" import icon %}
-<section class="card stat tone-{{ tone }}">
-  <div class="stat-head"><h2>{{ _(label) }}</h2><span class="stat-icon" aria-hidden="true">{{ icon(icon_name) }}</span></div>
-  <p class="stat-value">{{ value }}</p>
-  {% if note %}<p class="stat-note">{{ _(note) }}</p>{% endif %}
+{# A manual popover, so it centres on the page and not inside the glass card. #}
+<div class="selection-bar" popover="manual" role="toolbar" aria-label="{{ _('Selected rows') }}">
+  <p class="selection-count" role="status"><span data-selected-count>0</span> {{ _("selected") }}</p>
+  <button type="button" class="btn btn-secondary btn-sm" data-bulk-copy>{{ icon("copy") }}{{ _(copy_label) }}</button>
+  <button type="button" class="btn btn-secondary btn-sm" data-bulk-export>{{ icon("download") }}{{ _("Export CSV") }}</button>
+  <button type="button" class="icon-button" data-bulk-clear aria-label="{{ _('Clear selection') }}" title="{{ _('Clear selection') }}">{{ icon("close") }}</button>
+</div>
+<div class="menu row-menu" popover role="group" aria-label="{{ _('Row actions') }}">
+  <button type="button" class="menu-item" data-row-open><span class="menu-icon">{{ icon("edit") }}</span><span class="menu-text">{{ _("Manage") }}</span></button>
+  <button type="button" class="menu-item" data-row-copy><span class="menu-icon">{{ icon("copy") }}</span><span class="menu-text">{{ _(copy_label) }}</span></button>
+  <button type="button" class="menu-item" data-row-select><span class="menu-icon">{{ icon("check") }}</span><span class="menu-text" data-row-select-label></span></button>
+</div>
+<template>{{ toast("", "success") }}</template>
+{% endmacro %}
+
+{#
+  A list of records: an optional search box, a table whose header stays while the rows
+  scroll, and a row count. On wide screens it fills the height left on the screen. The caller
+  gives the <thead> and <tbody>. label names the table; search is the search box's label,
+  and without one there is no box. static/js/shell.js does the filtering.
+#}
+{% macro data_table(label, total, search="", columns=[], copy_label="Copy", file="records") %}
+{% from "macros/icons.html" import icon %}
+<section class="card card-flush data-table"
+  {%- if columns %} data-columns='{{ columns|tojson }}' data-file="{{ file }}"
+  data-select-all="{{ _('Select all rows shown') }}" data-select-row="{{ _('Select') }}"
+  data-tick="{{ _('Select row') }}" data-untick="{{ _('Deselect row') }}"
+  data-copied="{{ _('Copied to the clipboard.') }}" data-copy-failed="{{ _('Copying is not allowed here.') }}"{% endif %}>
+  {% if search %}
+  <div class="data-toolbar" data-needs-script hidden>
+    <div class="find-field">
+      {{ icon("search") }}
+      <input type="search" class="input find-input" data-filter-table placeholder="{{ _(search) }}" aria-label="{{ _(search) }}">
+    </div>
+  </div>
+  {% endif %}
+  {# Focusable, so the keyboard can scroll it. #}
+  <div class="data-scroll" role="region" aria-label="{{ _(label) }}" tabindex="0">
+    <table class="table">{{ caller() }}</table>
+  </div>
+  <p class="data-footer" role="status">{{ _("Rows shown:") }} <span data-shown>{{ total }}</span> / {{ total }}</p>
+  {% if columns %}{{ row_actions(copy_label) }}{% endif %}
 </section>
 {% endmacro %}
 
-{# The welcome banner at the top of a dashboard: brand gradient, white text. #}
-{% macro hero(title, lead="", eyebrow="") %}
-<header class="hero">
-  {% if eyebrow %}<p class="hero-eyebrow">{{ _(eyebrow) }}</p>{% endif %}
-  <h1 class="hero-title">{{ title }}</h1>
-  {% if lead %}<p class="hero-lead">{{ lead }}</p>{% endif %}
+{# The top of a dashboard: a greeting, with the date and which dashboard it is. #}
+{% macro welcome(title, date, eyebrow="") %}
+<header class="welcome">
+  <p class="welcome-meta">{% if eyebrow %}{{ _(eyebrow) }} · {% endif %}{{ date }}</p>
+  <h1 class="welcome-title">{{ title }}</h1>
 </header>
 {% endmacro %}
 
-{# A shortcut to another page: the whole card is the link. #}
-{% macro action_card(href, title, text, icon_name) %}
+{# One number in a row of figures. label and note are message ids; value is data. With href
+   the whole figure is a link to the page behind the number. #}
+{% macro figure(label, value, note="", href="") %}
 {% from "macros/icons.html" import icon %}
-<a href="{{ href }}" class="card item-card action-card">
-  <span class="stat-icon" aria-hidden="true">{{ icon(icon_name) }}</span>
-  <span>
-    <span class="card-title block">{{ _(title) }}</span>
-    <span class="card-text block">{{ _(text) }}</span>
-  </span>
-  <span class="action-card-arrow" aria-hidden="true">{{ icon("arrow-right") }}</span>
-</a>
+<{{ "a href=" ~ href if href else "div" }} class="figure">
+  <span class="figure-label">{{ _(label) }}{% if href %}{{ icon("arrow-right") }}{% endif %}</span>
+  <span class="figure-value">{{ value }}</span>
+  {% if note %}<span class="figure-note">{{ _(note) }}</span>{% endif %}
+</{{ "a" if href else "div" }}>
 {% endmacro %}
 
 {# The heading on a sign-in style page (layouts/auth.html). #}
@@ -128,21 +233,46 @@
 <span class="badge badge-warning">{{ _("Available to member Discoms – log in") }}</span>
 {% endmacro %}
 
-{# A message box. tone: info, success, warning or danger. text is shown as given (already translated). #}
+{# A message box that is part of the page. tone: info, success, warning or danger. text is
+   shown as given (already translated). #}
 {% macro alert(text, tone="info", id="") %}
+{% from "macros/icons.html" import icon %}
 <div class="alert alert-{{ tone }}"{% if id %} id="{{ id }}"{% endif %}{% if tone == "danger" %} role="alert"{% endif %}>
-  <span class="alert-icon" aria-hidden="true">{{ ALERT_MARKS[tone] }}</span>
+  <span class="tone-tile" aria-hidden="true">{{ icon(TONE_ICONS[tone]) }}</span>
   <p class="alert-text">{{ text }}</p>
+</div>
+{% endmacro %}
+
+{#
+  A short notice about what just happened, like a tooltip at the bottom centre. It closes
+  itself; success and note after 3 seconds, warning and error after 6. The clock pauses
+  under the pointer or keyboard focus. static/js/shell.js closes it; without script it stays.
+#}
+{% macro toast(text, tone="info") %}
+{% from "macros/icons.html" import icon %}
+<div class="toast toast-{{ tone }}">
+  <span class="toast-icon" aria-hidden="true">{{ icon(TONE_ICONS[tone]) }}</span>
+  {# The kind of notice is told by colour and drawing; screen readers get it in words. #}
+  <p class="toast-text"><span class="sr-only">{{ _(TOAST_TITLES[tone]) }}: </span>{{ text }}</p>
+  <button type="button" class="toast-close" data-toast-close data-needs-script hidden
+          aria-label="{{ _('Dismiss notification') }}" title="{{ _('Dismiss notification') }}">{{ icon("close") }}</button>
+  <span class="toast-timer" aria-hidden="true"></span>
 </div>
 {% endmacro %}
 
 {# Flash messages: a list of (category, text) pairs. Categories: error, success, warning, info. #}
 {% macro flash_messages(messages) %}
-<div class="page mt-4 grid gap-2 empty:hidden" role="status" aria-live="polite">
+<div class="toasts" role="status" aria-live="polite">
   {%- for category, text in messages -%}
-  {{ alert(text, FLASH_TONES.get(category, "info")) }}
+  {{ toast(text, FLASH_TONES.get(category, "info")) }}
   {%- endfor -%}
 </div>
+{% endmacro %}
+
+{# The foot of a dialog: Cancel, which closes dialog id, and the button that submits. #}
+{% macro dialog_actions(id, label, icon_name, variant="primary") %}
+{{ button("Cancel", "secondary", type="button", commandfor=id, command="close", icon_name="close") }}
+{{ button(label, variant, icon_name=icon_name) }}
 {% endmacro %}
 
 {# A modal dialog. Open it with button(..., commandfor=id, command="show-modal"). #}
@@ -150,7 +280,7 @@
 <dialog id="{{ id }}" class="modal" aria-labelledby="{{ id }}-title" closedby="any">
   <div class="dialog-header">
     <h2 id="{{ id }}-title" class="section-title mb-0">{{ _(title) }}</h2>
-    {{ button("Close", "secondary", type="button", size="sm", commandfor=id, command="close") }}
+    {{ button("Close", "secondary", type="button", size="sm", commandfor=id, command="close", icon_name="close", icon_only=true) }}
   </div>
   {{ caller() }}
 </dialog>
@@ -161,7 +291,7 @@
 <dialog id="{{ id }}" class="drawer" aria-labelledby="{{ id }}-title" closedby="any">
   <div class="dialog-header">
     <h2 id="{{ id }}-title" class="section-title mb-0">{{ _(title) }}</h2>
-    {{ button("Close", "secondary", type="button", size="sm", commandfor=id, command="close") }}
+    {{ button("Close", "secondary", type="button", size="sm", commandfor=id, command="close", icon_name="close", icon_only=true) }}
   </div>
   {{ caller() }}
 </dialog>

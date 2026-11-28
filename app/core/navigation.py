@@ -14,27 +14,34 @@ class NavLink(NamedTuple):
     icon: str = "grid"
     # The menu section it sits under. The sidebar prints the name where a section starts.
     group: str = "Overview"
+    # One short line under the label in the breadcrumb menus.
+    description: str = ""
+
+
+def _dashboard(login_type: str) -> NavLink:
+    """Return the first menu entry of a login type: its own dashboard."""
+    return NavLink("Dashboard", f"/dashboard/{login_type}", description="Your starting page")
 
 
 # Visitors and error pages see the public menu. Later tasks add entries here, not in templates.
 PUBLIC_NAV: list[NavLink] = []
 
 # P1-UI-02: privileged logins review the design system; Members never see it.
-STYLE_GUIDE = NavLink("Style guide", "/_styleguide", "swatch", "Resources")
+STYLE_GUIDE = NavLink("Style guide", "/_styleguide", "swatch", "Resources", "Design tokens and components")
 # P1-ACC-10: every login can see its MFA settings.
-SECURITY = NavLink("Security", "/account/security", "shield", "Your account")
+SECURITY = NavLink("Security", "/account/security", "shield", "Your account", "Two-step sign-in settings")
 
 NAV_BY_LOGIN_TYPE: dict[str, list[NavLink]] = {
-    "member": [NavLink("Dashboard", "/dashboard/member"), SECURITY],
+    "member": [_dashboard("member"), SECURITY],
     "admin": [
-        NavLink("Dashboard", "/dashboard/admin"),
-        NavLink("Accounts", "/admin/accounts", "users", "Administration"),
-        NavLink("Discoms", "/admin/discoms", "building", "Administration"),
+        _dashboard("admin"),
+        NavLink("Accounts", "/admin/accounts", "users", "Administration", "ITPED staff logins"),
+        NavLink("Discoms", "/admin/discoms", "building", "Administration", "Recognised Discoms"),
         SECURITY,
         STYLE_GUIDE,
     ],
-    "reviewer": [NavLink("Dashboard", "/dashboard/reviewer"), SECURITY, STYLE_GUIDE],
-    "approver": [NavLink("Dashboard", "/dashboard/approver"), SECURITY, STYLE_GUIDE],
+    "reviewer": [_dashboard("reviewer"), SECURITY, STYLE_GUIDE],
+    "approver": [_dashboard("approver"), SECURITY, STYLE_GUIDE],
 }
 
 

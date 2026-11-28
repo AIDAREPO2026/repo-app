@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% from "macros/forms.html" import field, csrf_field with context %}
-{% from "macros/ui.html" import page_header, button, card, badge, modal, drawer, empty_state with context %}
+{% from "macros/forms.html" import field, select, csrf_field with context %}
+{% from "macros/ui.html" import page_header, button, card, badge, modal, drawer, empty_state, data_table, dialog_actions with context %}
 {% set role_names = {"admin": "Admin", "reviewer": "Reviewer", "approver": "Approver"} %}
 {% set user_id_help = "4 to 50 lowercase letters, numbers, dots, dashes or underscores." %}
 {% set user_id_pattern = "[a-z0-9._\\-]{4,50}" %}
@@ -18,15 +18,15 @@
 {% else %}{{ badge("Active", "success") }}{% endif %}
 {% endmacro %}
 
-{% block content %}
-{% call page_header("Accounts", "Named Admin, Reviewer and Approver accounts. Each belongs to one person with their own email.", eyebrow="Administration") %}
-  {{ button("Add account", type="button", commandfor="add-account", command="show-modal") }}
-{% endcall %}
+{% block page_actions %}
+  {{ button("Add account", type="button", commandfor="add-account", command="show-modal", icon_name="plus") }}
+{% endblock %}
 
-{% call card(flush=true) %}
+{% block content %}
+{{ page_header("Accounts") }}
+
 {% if accounts %}
-<div class="overflow-x-auto">
-<table class="table">
+{% call data_table("Accounts", accounts|length, search="Search accounts", columns=[_("Person"), _("Email"), _("User ID"), _("Role")], copy_label="Copy email", file="accounts") %}
   <thead>
     <tr>
       <th scope="col">{{ _("Person") }}</th>
@@ -39,7 +39,7 @@
     {% for account in accounts %}
     {% set is_self = account.id == admin_id %}
     {% set can_change = account.status == "active" and not is_self %}
-    <tr>
+    <tr data-export='{{ [account.full_name, account.email, account.user_id, _(role_names[account.login_type])]|tojson }}' data-copy="{{ account.email }}">
       <td>
         <div class="flex items-center gap-3">
           <span class="avatar" aria-hidden="true">{{ account.full_name[:1]|upper }}</span>
@@ -57,7 +57,7 @@
       <td>
         {% if can_change %}
         <div class="flex justify-end">
-          {{ button("Manage", "secondary", type="button", size="sm", commandfor="manage-" ~ account.id, command="show-modal") }}
+          {{ button("Manage", "secondary", type="button", size="sm", commandfor="manage-" ~ account.id, command="show-modal", icon_name="edit", icon_only=true) }}
         </div>
 
         {% call drawer("manage-" ~ account.id, account.full_name) %}
@@ -68,14 +68,14 @@
           {% if account.password_hash is none %}
           <form method="post" action="/admin/accounts/{{ account.id }}/set-password-link">
             {{ csrf_field() }}
-            {{ button("Send a new set-password link", "secondary", size="sm") }}
+            {{ button("Send a new set-password link", "secondary", size="sm", icon_name="mail") }}
           </form>
           {% endif %}
           {% if account.login_type == "reviewer" %}
           <form method="post" action="/admin/accounts/{{ account.id }}/reviewer-role">
             {{ csrf_field() }}
             <input type="hidden" name="is_alternate" value="{{ 'false' if account.is_alternate else 'true' }}">
-            {{ button("Make primary" if account.is_alternate else "Make alternate", "secondary", size="sm") }}
+            {{ button("Make primary" if account.is_alternate else "Make alternate", "secondary", size="sm", icon_name="swap") }}
           </form>
           {% endif %}
         </div>
@@ -86,7 +86,7 @@
         <p class="mb-4 text-sm text-muted">{{ _("Reset it if the person has lost their phone or cannot get codes. Their sessions end, and they set it up again at their next sign-in.") }}</p>
         <form method="post" action="/admin/accounts/{{ account.id }}/reset-mfa">
           {{ csrf_field() }}
-          {{ button("Reset two-step sign-in", "secondary") }}
+          {{ button("Reset two-step sign-in", "secondary", icon_name="refresh") }}
         </form>
         {% endif %}
 
@@ -95,20 +95,19 @@
         <form method="post" action="/admin/accounts/{{ account.id }}/reassign">
           {{ csrf_field() }}
           {{ person_fields("reassign-" ~ account.id ~ "-") }}
-          {{ button("Deactivate and replace", "danger") }}
+          {{ button("Deactivate and replace", "danger", icon_name="swap") }}
         </form>
 
         <h3 class="section-title mt-8">{{ _("Deactivate") }}</h3>
         <p class="mb-4 text-sm text-muted">{{ _("Use this when the person leaves and nobody takes over the role yet.") }}</p>
-        {{ button("Deactivate account", "danger", type="button", commandfor="deactivate-" ~ account.id, command="show-modal") }}
+        {{ button("Deactivate account", "danger", type="button", commandfor="deactivate-" ~ account.id, command="show-modal", icon_name="user-minus") }}
         {% endcall %}
 
         {% call modal("deactivate-" ~ account.id, "Deactivate this account?") %}
         <p class="text-sm text-muted">{{ _("%(name)s can no longer sign in, and every session they have open ends at once. This cannot be undone; create a new account to give them access again.", name=account.full_name) }}</p>
         <form method="post" action="/admin/accounts/{{ account.id }}/deactivate" class="dialog-actions">
           {{ csrf_field() }}
-          {{ button("Cancel", "secondary", type="button", commandfor="deactivate-" ~ account.id, command="close") }}
-          {{ button("Deactivate", "danger") }}
+          {{ dialog_actions("deactivate-" ~ account.id, "Deactivate", "power", "danger") }}
         </form>
         {% endcall %}
         {% endif %}
@@ -116,33 +115,25 @@
     </tr>
     {% endfor %}
   </tbody>
-</table>
-</div>
-{% else %}
-{{ empty_state("No accounts yet", "Add the Admins, Reviewers and the Approver who will run the portal.", "+") }}
-{% endif %}
 {% endcall %}
+{% else %}
+{% call card(flush=true) %}
+{{ empty_state("No accounts yet", "Add the Admins, Reviewers and the Approver who will run the portal.", "+") }}
+{% endcall %}
+{% endif %}
 
 {% call modal("add-account", "Add an account") %}
 <p class="mb-5 text-sm text-muted">{{ _("They get an email with a link to set their password. The link works once, for 60 minutes.") }}</p>
 <form method="post" action="/admin/accounts">
   {{ csrf_field() }}
-  <div class="field">
-    <label for="login_type" class="field-label">{{ _("Role") }} <span class="field-required" aria-hidden="true">*</span></label>
-    <select id="login_type" name="login_type" required class="input">
-      <option value="admin">{{ _("Admin") }}</option>
-      <option value="reviewer">{{ _("Reviewer") }}</option>
-      <option value="approver">{{ _("Approver") }}</option>
-    </select>
-  </div>
+  {{ select("login_type", "Role", [("admin", _("Admin")), ("reviewer", _("Reviewer")), ("approver", _("Approver"))], value="admin", required=true) }}
   <label class="check">
     <input name="is_alternate" type="checkbox" value="true">
     {{ _("Alternate Reviewer (Reviewers only)") }}
   </label>
   {{ person_fields("add-") }}
   <div class="dialog-actions">
-    {{ button("Cancel", "secondary", type="button", commandfor="add-account", command="close") }}
-    {{ button("Add account") }}
+    {{ dialog_actions("add-account", "Add account", "plus") }}
   </div>
 </form>
 {% endcall %}

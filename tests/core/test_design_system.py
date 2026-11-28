@@ -4,8 +4,9 @@ import re
 from pathlib import Path
 
 import pytest
+from starlette.requests import Request
 
-from app.core.navigation import Crumb, breadcrumbs
+from app.core.navigation import Crumb, breadcrumbs, nav_for
 from app.core.templates import templates
 
 APP_DIR = Path(__file__).resolve().parents[2] / "app"
@@ -32,6 +33,50 @@ def test_p1_ui_02_templates_use_only_design_tokens(template: Path) -> None:
     assert ONE_OFF_CLASS.findall(html) == []
 
 
+def css_rules() -> list[tuple[str, str, list[str]]]:
+    """Return every rule in components.css as (surrounding at-rules, selectors, declarations)."""
+    css = re.sub(r"/\*.*?\*/", "", COMPONENTS_CSS, flags=re.S)
+    rules: list[tuple[str, str, list[str]]] = []
+    open_blocks: list[tuple[str, list[str]]] = []
+    text = ""
+    for part in re.split(r"([{};])", css):
+        if part == "{":
+            open_blocks.append((" ".join(text.split()), []))
+        elif part == ";" and open_blocks:
+            open_blocks[-1][1].append(" ".join(text.split()))
+        elif part == "}":
+            selectors, declarations = open_blocks.pop()
+            around = " ".join(head for head, _ in open_blocks if not head.startswith("@layer"))
+            if declarations and "@keyframes" not in around:
+                rules.append((around, selectors, declarations))
+        text = "" if part in "{};" else part
+    return rules
+
+
+def test_p1_ui_02_no_style_is_written_twice() -> None:
+    seen: set[tuple[str, str, str]] = set()
+    twice = []
+    for around, selectors, declarations in css_rules():
+        for selector in selectors.split(","):
+            for declaration in declarations:
+                key = (around, selector.strip(), declaration)
+                if key in seen:
+                    twice.append(key)
+                seen.add(key)
+
+    assert twice == [], "the same declaration is set twice for one selector"
+
+
+def test_p1_ui_02_no_two_rules_share_a_whole_block() -> None:
+    blocks: dict[tuple[str, tuple[str, ...]], list[str]] = {}
+    for around, selectors, declarations in css_rules():
+        if len(declarations) >= 4:
+            blocks.setdefault((around, tuple(sorted(declarations))), []).append(selectors)
+
+    copies = [names for names in blocks.values() if len(names) > 1]
+    assert copies == [], "join these selectors into one rule"
+
+
 def test_p1_ui_02_components_animate_only_transform_and_opacity() -> None:
     allowed = {"transform", "opacity", "overlay", "display"}
     for declaration in re.findall(r"transition:\s*([^;]+);", COMPONENTS_CSS):
@@ -49,11 +94,97 @@ def test_p1_ui_02_breadcrumbs_start_at_the_dashboard_and_end_unlinked() -> None:
     ]
 
 
-def test_p1_ui_02_breadcrumbs_markup_marks_the_current_page() -> None:
-    macro = templates.env.get_template("macros/ui.html").module.breadcrumbs  # type: ignore[attr-defined]
+def test_p1_ui_02_breadcrumbs_open_menus_and_mark_the_current_page() -> None:
+    template = templates.env.from_string(
+        '{% from "macros/ui.html" import breadcrumbs with context %}{{ breadcrumbs(trail, nav) }}'
+    )
+    request = Request({"type": "http", "path": "/admin/discoms", "headers": [], "query_string": b""})
+    trail = breadcrumbs("admin", Crumb("Discoms"))
 
-    html = str(macro(breadcrumbs("reviewer", Crumb("Style guide"))))
+    html = template.render(request=request, trail=trail, nav=nav_for("admin"))
 
     assert '<nav aria-label="Breadcrumb">' in html
-    assert '<a href="/dashboard/reviewer" class="crumb-link">Dashboard</a>' in html
-    assert '<span class="crumb-current" aria-current="page">Style guide</span>' in html
+    assert 'popovertarget="crumb-home"' in html
+    assert 'popovertarget="crumb-section"' in html  # Discoms sits in Administration
+    assert '<span class="crumb-current" aria-current="page">Discoms</span>' in html
+
+
+def test_p1_ui_02_theme_button_toggles_and_is_hidden_without_script() -> None:
+    macro = templates.env.get_template("macros/ui.html").module.theme_switcher  # type: ignore[attr-defined]
+
+    html = str(macro())
+
+    assert '<div class="theme-switcher" hidden>' in html
+    assert "data-theme-toggle" in html
+    assert "popovertarget" not in html  # one click changes the theme, with no menu
+
+
+def test_p1_ui_02_data_table_names_its_scroll_area_and_counts_rows() -> None:
+    template = templates.env.from_string(
+        '{% from "macros/ui.html" import data_table %}'
+        '{% call data_table("Discoms", 3, search="Search Discoms") %}<tbody></tbody>{% endcall %}'
+    )
+
+    html = template.render()
+
+    assert 'role="region" aria-label="Discoms" tabindex="0"' in html
+    assert 'aria-label="Search Discoms"' in html
+    assert "<span data-shown>3</span> / 3" in html
+
+
+def test_p1_ui_02_controls_shrink_only_while_pressed() -> None:
+    # A damaged selector list once left every button and link permanently scaled down.
+    css = re.sub(r"/\*.*?\*/", "", COMPONENTS_CSS, flags=re.S)
+    for selectors, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css):
+        if "transform: scale(var(--aida-press-scale" in body and "from" not in selectors:
+            assert all(":active" in part for part in selectors.split(",")), selectors.strip()
+
+
+def test_p1_ui_02_every_button_has_an_icon() -> None:
+    calls = [
+        (template.name, call)
+        for template in TEMPLATES
+        for call in re.findall(r"\{\{ (?:link_)?button\(.*?\) \}\}", template.read_text())
+    ]
+
+    assert calls
+    assert [item for item in calls if "icon_name=" not in item[1]] == []
+
+
+def test_p1_ui_02_select_renders_a_native_select_that_script_enhances() -> None:
+    template = templates.env.from_string(
+        '{% from "macros/forms.html" import select %}'
+        '{{ select("discom", "Discom", [(1, "North"), (2, "South")], value=2, source="/lookup") }}'
+    )
+
+    html = template.render()
+
+    assert 'data-select data-source="/lookup"' in html
+    assert '<select id="discom" name="discom" class="input"' in html
+    assert '<option value="2" selected>South</option>' in html
+
+
+def test_p1_ui_02_every_toast_closes_itself_and_names_its_kind() -> None:
+    macro = templates.env.get_template("macros/ui.html").module.flash_messages  # type: ignore[attr-defined]
+
+    html = str(macro([("success", "Saved"), ("error", "Not saved")]))
+
+    assert html.count('class="toast toast-') == 2
+    assert html.count("toast-timer") == 2
+    assert "Something went wrong: </span>Not saved" in html
+    assert 'role="status"' in html
+
+
+def test_p1_ui_02_selectable_table_has_an_action_bar_and_row_menu() -> None:
+    template = templates.env.from_string(
+        '{% from "macros/ui.html" import data_table %}'
+        '{% call data_table("Discoms", 1, columns=["Discom"], copy_label="Copy domain") %}<tbody></tbody>'
+        "{% endcall %}"
+    )
+
+    html = template.render()
+
+    assert "data-columns='[\"Discom\"]'" in html
+    assert " data-select=" not in html  # that attribute belongs to the custom select (select.js)
+    assert 'class="selection-bar"' in html
+    assert 'class="menu row-menu" popover' in html

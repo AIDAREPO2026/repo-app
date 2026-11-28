@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% from "macros/ui.html" import page_header, button, link_button, card, item_card, badge, lock_badge, alert, modal, drawer, empty_state, skeleton, pagination with context %}
-{% from "macros/forms.html" import field with context %}
+{% from "macros/ui.html" import page_header, button, link_button, card, item_card, badge, lock_badge, alert, toast, modal, drawer, empty_state, skeleton, pagination with context %}
+{% from "macros/forms.html" import field, select with context %}
 {#
   The style guide (P1-UI-02): every token and component, shown once forced light and once
   forced dark. Class names are written out in full so Tailwind finds them.
@@ -14,8 +14,8 @@
   ("Danger", "bg-danger"), ("Danger subtle", "bg-danger-subtle"),
 ] %}
 {% set type_scale = [
-  ("3xl, page titles", "text-3xl font-bold"), ("2xl", "text-2xl font-bold"), ("xl, section titles", "text-xl font-semibold"),
-  ("lg, lead text", "text-lg"), ("base, body text", "text-base"), ("sm, controls", "text-sm"), ("xs, help and labels", "text-xs"),
+  ("3xl", "text-3xl font-bold"), ("2xl", "text-2xl font-bold"), ("xl, page titles", "text-xl font-semibold"),
+  ("lg, section titles", "text-lg"), ("base, body text", "text-base"), ("sm, controls", "text-sm"), ("xs, help and labels", "text-xs"),
 ] %}
 {% set spacing = [("1", "w-1"), ("2", "w-2"), ("3", "w-3"), ("4", "w-4"), ("6", "w-6"), ("8", "w-8"), ("12", "w-12"), ("16", "w-16")] %}
 
@@ -62,12 +62,12 @@
 
     {% call card("Buttons") %}
     <div class="mt-4 flex flex-wrap items-center gap-3">
-      {{ button("Primary", type="button") }}
-      {{ button("Secondary", "secondary", type="button") }}
-      {{ button("Danger", "danger", type="button") }}
-      {{ button("Link", "link", type="button") }}
-      {{ button("Small", "secondary", type="button", size="sm") }}
-      {{ link_button("Link as button", "#" ~ scheme ~ "-heading") }}
+      {{ button("Primary", type="button", icon_name="check") }}
+      {{ button("Secondary", "secondary", type="button", icon_name="edit") }}
+      {{ button("Danger", "danger", type="button", icon_name="user-minus") }}
+      {{ button("Link", "link", type="button", icon_name="arrow-right") }}
+      {{ button("Small", "secondary", type="button", size="sm", icon_name="plus") }}
+      {{ link_button("Link as button", "#" ~ scheme ~ "-heading", icon_name="arrow-right") }}
     </div>
     {% endcall %}
 
@@ -84,6 +84,7 @@
         {{ alert(_("The change was saved."), "success") }}
         {{ alert(_("Check this before going on."), "warning") }}
         {{ alert(_("Something went wrong."), "danger") }}
+        {{ toast(_("The Discom was not added."), "danger") }}
       </div>
       {% endcall %}
     </div>
@@ -93,14 +94,16 @@
       <div class="mt-4">
         {{ field(scheme ~ "-name", "Full name", required=true, help="As it should appear on the account.") }}
         {{ field(scheme ~ "-email", "Email", type="email", value="not-an-email", error="Enter an email address, such as name@itped.example.") }}
+        {{ select(scheme ~ "-short", "Short list", [("a", "Admin"), ("r", "Reviewer"), ("p", "Approver")]) }}
+        {{ select(scheme ~ "-long", "Long list, with search", [(1, "North Discom"), (2, "South Discom"), (3, "East Discom"), (4, "West Discom"), (5, "Central Discom"), (6, "Coastal Discom"), (7, "Hill Discom"), (8, "Valley Discom"), (9, "Delta Discom"), (10, "Plateau Discom"), (11, "Desert Discom"), (12, "Island Discom")]) }}
       </div>
       {% endcall %}
       <div class="grid gap-4">
         {{ item_card("#" ~ scheme ~ "-heading", "Smart meter rollout playbook", "Lessons from three Discoms on planning and procurement.", ["PDF", "12 pages"]) }}
         {% call card("Modal and drawer", "Both open from their button and close back to it.") %}
         <div class="mt-4 flex flex-wrap gap-3">
-          {{ button("Open modal", "secondary", type="button", commandfor=scheme ~ "-modal", command="show-modal") }}
-          {{ button("Open drawer", "secondary", type="button", commandfor=scheme ~ "-drawer", command="show-modal") }}
+          {{ button("Open modal", "secondary", type="button", commandfor=scheme ~ "-modal", command="show-modal", icon_name="plus") }}
+          {{ button("Open drawer", "secondary", type="button", commandfor=scheme ~ "-drawer", command="show-modal", icon_name="sidebar") }}
         </div>
         {% endcall %}
       </div>
@@ -126,8 +129,8 @@
   {% call modal(scheme ~ "-modal", "Deactivate this account?") %}
   <p class="text-muted">{{ _("Their sessions end at once. You can create a replacement afterwards.") }}</p>
   <div class="dialog-actions">
-    {{ button("Cancel", "secondary", type="button", commandfor=scheme ~ "-modal", command="close") }}
-    {{ button("Deactivate", "danger", type="button", commandfor=scheme ~ "-modal", command="close") }}
+    {{ button("Cancel", "secondary", type="button", commandfor=scheme ~ "-modal", command="close", icon_name="close") }}
+    {{ button("Deactivate", "danger", type="button", commandfor=scheme ~ "-modal", command="close", icon_name="power") }}
   </div>
   {% endcall %}
   {% call drawer(scheme ~ "-drawer", "Filters") %}
@@ -137,7 +140,7 @@
 {% endmacro %}
 
 {% block content %}
-{{ page_header("Style guide", "Every design token and component, in light and dark. Pages build only from these.", eyebrow="Resources") }}
+{{ page_header("Style guide") }}
 {{ showcase("light", "Light") }}
 {{ showcase("dark", "Dark") }}
 {% endblock %}

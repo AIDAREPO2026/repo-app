@@ -107,9 +107,17 @@ The Admin audit search screen is built in `P3-UI-01`.
     - alert and flash message
     - modal using the native `<dialog>`, and a side drawer
     - empty state, skeleton loader and pagination
-- Instant press and focus feedback (`:active`, `:focus-visible`) on every interactive component.
+- Instant press and focus feedback (`:active`, `:focus-visible`) on every interactive component. Pressed controls shrink slightly and settle back.
 - Page transitions with the View Transitions API (`@view-transition { navigation: auto; }`), and HTMX swaps set to use transitions.
+- A dashboard of a greeting and panels: key figures that link to their pages, quick links and the login's two-step sign-in status.
+- Every button has an icon. Closing a dialog and per-row actions show the icon alone, with an accessible name.
+- A select component over the native select: search above 10 options, options from a server address with search and infinite scroll, and a list that opens where there is room.
+- Toasts for the result of an action, rising at the bottom centre: small, like a tooltip; success and note close after 3 seconds, warning and error after 6, pausing under the pointer or focus.
+- Selectable tables: checkboxes, a bar of actions for the ticked rows (copy, CSV export) and a right-click row menu. Actions that change records are not part of this task.
+- A data table component: search, a header that stays while rows scroll, a height that fits the screen on wide screens, and a row count.
 - A translucent top bar with `backdrop-filter` and a solid fallback.
+- A theme button on every page that switches between light and dark in one click, remembered in the browser. Light is the default.
+- Signed-in pages float: a light sidebar with folding sections and a page finder, a row with the breadcrumb pill (menus for pages, and a button that hides the sidebar) and the page actions, then cards on the canvas. The breadcrumbs name the page, so page headings are for screen readers.
 - `prefers-reduced-motion`, `prefers-reduced-transparency` and `prefers-contrast: more` handled once, in the tokens, so no component needs its own check.
 - A style-guide page at `/_styleguide` showing every token and component, in light and dark, for review by ITPED and the designer.
 - If a designer supplies mock-ups (Q-11), take colours, radii and spacing from them. If not, build the clean default and record that in [decisions.md](../decisions.md).

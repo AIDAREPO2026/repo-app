@@ -247,7 +247,7 @@ def mfa_cancel(request: Request, db: DbSession, pending: MfaLogin) -> Response:
 
 SECURITY_PATH = "/account/security"
 SECURITY_DONE = {
-    "mfa_off": ("success", "Two-step sign-in is now off for this account."),
+    "mfa_off": ("warning", "Two-step sign-in is now off for this account."),
     "code_sent": ("info", "We have emailed you a 6-digit code. It works once, for 10 minutes."),
     "wait": ("info", WAIT_FOR_CODE),
 }
@@ -377,6 +377,18 @@ def approver_dashboard(
 
 
 ACCOUNTS_PATH = "/admin/accounts"
+# Changes that take access away show amber, so they never look like an ordinary success.
+CAUTION_DONE = {"deactivated", "mfa_reset"}
+
+
+def done_message(done: str, texts: dict[str, str]) -> list[tuple[str, str]]:
+    """Return the notice for a finished change, or nothing for a key that is not known."""
+    if done not in texts:
+        return []
+    tone = "warning" if done in CAUTION_DONE else "success"
+    return [(tone, texts[done])]
+
+
 # Shown after a change, picked by a fixed key so the address never carries free text.
 DONE_MESSAGES = {
     "created": "Account created. A set-password link has been emailed to the person.",
@@ -396,8 +408,7 @@ def render_accounts(
     messages = []
     if error:
         messages.append(("error", error))
-    if done in DONE_MESSAGES:
-        messages.append(("success", DONE_MESSAGES[done]))
+    messages += done_message(done, DONE_MESSAGES)
     context = {
         "title": "Accounts",
         "nav": nav_for("admin"),
@@ -664,8 +675,7 @@ def render_discoms(
     messages = []
     if error:
         messages.append(("error", error))
-    if done in DISCOM_DONE_MESSAGES:
-        messages.append(("success", DISCOM_DONE_MESSAGES[done]))
+    messages += done_message(done, DISCOM_DONE_MESSAGES)
     if added is not None:
         messages.append(("success", f"Discoms added from the file: {added}."))
     context = {

@@ -17,32 +17,12 @@
     max-width: 28rem;
   }
 
-  .page-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--aida-space-4);
-    margin-bottom: var(--aida-space-6);
-    padding-bottom: var(--aida-space-5);
-    border-bottom: 1px solid var(--aida-border);
-  }
 
-  /* The section a page belongs to, above its title. */
-  .page-eyebrow {
-    margin-bottom: var(--aida-space-1);
-    color: var(--aida-accent);
-    font-size: var(--aida-text-xs);
-    font-weight: 650;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-
-  .page-title {
-    font-size: var(--aida-text-2xl);
-    line-height: var(--aida-text-2xl-leading);
-    letter-spacing: var(--aida-text-2xl-tracking);
+  .page-title,
+  .auth-heading-title {
+    font-size: var(--aida-text-xl);
+    line-height: var(--aida-text-xl-leading);
+    letter-spacing: var(--aida-text-xl-tracking);
     font-weight: 700;
   }
 
@@ -57,9 +37,8 @@
 
 
   .section-title {
-    font-size: var(--aida-text-xl);
-    line-height: var(--aida-text-xl-leading);
-    letter-spacing: var(--aida-text-xl-tracking);
+    font-size: var(--aida-text-lg);
+    line-height: var(--aida-text-lg-leading);
     font-weight: 650;
     margin-bottom: var(--aida-space-4);
   }
@@ -152,7 +131,6 @@
     font-size: var(--aida-text-sm);
     font-weight: 550;
     text-decoration: none;
-    transition: transform var(--aida-duration-fast) var(--aida-ease-enter);
   }
 
   .nav-link:hover {
@@ -162,7 +140,6 @@
 
   .nav-link:active {
     background: var(--aida-surface-pressed);
-    transform: scale(var(--aida-press-scale));
   }
 
   .nav-link[aria-current="page"] {
@@ -183,6 +160,29 @@
     min-height: 100dvh;
   }
 
+  /* Signed-in pages float: the sidebar, the breadcrumb pill, the page actions and each card
+     are separate surfaces on the canvas. */
+  .app-shell {
+    background: var(--aida-backdrop), var(--aida-canvas);
+    background-attachment: fixed;
+  }
+
+  .app-main {
+    gap: var(--aida-space-4);
+    padding: var(--aida-space-3);
+  }
+
+  /* Content uses the full width beside the sidebar. */
+  .app-main > main {
+    max-width: none;
+    padding-block-end: var(--aida-space-5);
+  }
+
+  .app-main > .page-dock,
+  .app-main > main {
+    padding-inline: var(--aida-space-3);
+  }
+
   .sidebar {
     display: none;
   }
@@ -195,11 +195,28 @@
 
     .sidebar {
       position: sticky;
-      top: 0;
+      top: var(--aida-space-3);
       display: flex;
       flex-direction: column;
-      height: 100dvh;
-      padding: var(--aida-space-5) var(--aida-space-3) var(--aida-space-4);
+      height: calc(100dvh - 2 * var(--aida-space-3));
+      margin: var(--aida-space-3) 0 var(--aida-space-3) var(--aida-space-3);
+      border-radius: var(--aida-radius-lg);
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--aida-border) 60%, transparent);
+      background: linear-gradient(
+        var(--aida-surface) 40%,
+        color-mix(in srgb, var(--aida-accent) 5%, var(--aida-surface))
+      );
+      box-shadow: var(--aida-shadow-1);
+      padding: var(--aida-space-4) var(--aida-space-3) var(--aida-space-3);
+    }
+
+    .sidebar-hidden .app-shell {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sidebar-hidden .sidebar {
+      display: none;
     }
 
     .mobile-bar {
@@ -208,31 +225,108 @@
   }
 
   .sidebar-brand {
-    padding: 0 var(--aida-space-2) var(--aida-space-5);
+    padding: 0 var(--aida-space-1) var(--aida-space-3);
+  }
+
+  .sidebar .brand-logo {
+    height: 2.25rem;
+  }
+
+  /* The logo already spells out the association's name. */
+  .sidebar .brand-sub,
+  .drawer-left .brand-sub {
+    display: none;
+  }
+
+  .find-field[hidden] {
+    display: none;
+  }
+
+  .find-field {
+    position: relative;
+    display: block;
+  }
+
+  .find-page {
+    margin-bottom: var(--aida-space-3);
+  }
+
+  .find-field .icon {
+    position: absolute;
+    top: 50%;
+    left: var(--aida-space-3);
+    width: 1rem;
+    height: 1rem;
+    color: var(--aida-text-muted);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .input.find-input {
+    min-height: 2.25rem;
+    padding-left: 2.25rem;
+    border-color: transparent;
+    background: var(--aida-surface-sunken);
+    box-shadow: none;
+    font-size: var(--aida-text-sm);
   }
 
 
   .sidebar-nav {
     flex: 1;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--aida-border) transparent;
   }
 
   .side-nav {
     display: grid;
     gap: 0.125rem;
-    margin-bottom: var(--aida-space-5);
+    margin-bottom: var(--aida-space-1);
   }
 
-  /* A menu section's name, small and quiet above its links. */
+  /* A menu section: its name folds and unfolds the links under it. */
   .side-section {
-    padding: 0 var(--aida-space-3) var(--aida-space-2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: var(--aida-space-2);
+    padding: var(--aida-space-2) var(--aida-space-3);
+    border-radius: var(--aida-radius-md);
     color: var(--aida-text-muted);
     font-size: var(--aida-text-xs);
-    font-weight: 650;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-weight: 600;
+    list-style: none;
+    cursor: pointer;
   }
 
+  .side-section::-webkit-details-marker {
+    display: none;
+  }
+
+  .side-section:hover {
+    background: var(--aida-surface-hover);
+    color: var(--aida-text);
+  }
+
+  .side-section .icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    transition: transform var(--aida-duration-slow) var(--aida-ease-settle);
+  }
+
+  /* Closed, a section is an entry like any other; open, it steps back to a small label over
+     its pages. */
+  .side-group:not([open]) > .side-section {
+    padding-block: var(--aida-space-2);
+    font-size: var(--aida-text-sm);
+    line-height: var(--aida-text-base-leading);
+    font-weight: 500;
+  }
+
+  .side-group[open] > .side-section .icon {
+    transform: rotate(90deg);
+  }
 
   .side-link {
     display: flex;
@@ -242,9 +336,8 @@
     border-radius: var(--aida-radius-md);
     color: var(--aida-text-muted);
     font-size: var(--aida-text-sm);
-    font-weight: 550;
+    font-weight: 500;
     text-decoration: none;
-    transition: transform var(--aida-duration-fast) var(--aida-ease-enter);
   }
 
   .side-link:hover {
@@ -254,16 +347,19 @@
 
   .side-link:active {
     background: var(--aida-surface-pressed);
-    transform: scale(var(--aida-press-scale));
   }
 
+  /* The current page: a soft fill and a heavier weight, so colour is not the only sign. */
   .side-link[aria-current="page"] {
     background: var(--aida-accent-subtle);
     color: var(--aida-accent);
-    font-weight: 650;
-    /* The amber marker on the current page, from the logo. Its colour is not the only sign:
-       the background and weight change too. */
-    box-shadow: inset 3px 0 0 var(--aida-brand-amber);
+    font-weight: 600;
+  }
+
+  .side-link .icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    stroke-width: 1.4;
   }
 
   /* ---------- Brand chrome: the navy sidebar, menu drawer and sign-in brand panel ---------- */
@@ -280,97 +376,66 @@
     outline-color: var(--aida-chrome-focus);
   }
 
-  .chrome .brand,
-  .chrome .brand:hover {
-    color: var(--aida-chrome-strong);
-  }
-
-  /* In the narrow sidebar the product name sits under the logo, which already names AIDA. */
-  .chrome .brand {
-    flex-direction: column;
-    align-items: flex-start;
+  /* The row above the page: a breadcrumb pill, and a pill of page actions. */
+  .page-dock {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
     gap: var(--aida-space-3);
   }
 
-  .chrome .brand-sub {
-    display: none;
+  .page-bar,
+  .page-actions,
+  .page-tools,
+  .account-panel {
+    display: flex;
+    align-items: center;
+    gap: var(--aida-space-2);
+    max-width: 100%;
   }
 
-  .chrome .side-section {
-    color: var(--aida-chrome-label);
-  }
-
-  .chrome .side-link {
-    color: var(--aida-chrome-text);
-  }
-
-  .chrome .side-link:hover {
-    background: var(--aida-chrome-hover);
-    color: var(--aida-chrome-strong);
-  }
-
-  .chrome .side-link:active {
-    background: var(--aida-chrome-active);
-  }
-
-  .chrome .side-link[aria-current="page"] {
-    background: var(--aida-chrome-active);
-    color: var(--aida-chrome-strong);
-  }
-
-  .chrome .account-panel {
-    border-color: var(--aida-chrome-border);
-  }
-
-  .chrome .account-name {
-    color: var(--aida-chrome-strong);
-  }
-
-  .chrome .account-role {
-    color: var(--aida-chrome-label);
-  }
-
-  .chrome .avatar {
-    background: var(--aida-brand-amber);
-    color: var(--aida-on-amber);
-  }
-
-  .chrome .icon-button {
-    color: var(--aida-chrome-text);
-  }
-
-  .chrome .icon-button:hover {
-    background: var(--aida-chrome-hover);
-    color: var(--aida-chrome-strong);
-  }
-
-  .chrome .dialog-header {
-    color: var(--aida-chrome-strong);
-  }
-
-
-  /* A slim translucent bar above the page content, holding the breadcrumbs. */
   .page-bar {
-    border-bottom: 1px solid var(--aida-border);
-    background: var(--aida-glass);
-    -webkit-backdrop-filter: var(--aida-glass-filter);
-    backdrop-filter: var(--aida-glass-filter);
+    gap: var(--aida-space-1);
+    padding: var(--aida-space-1);
+    border: 1px solid var(--aida-border);
+    border-radius: var(--aida-radius-lg);
+    box-shadow: var(--aida-shadow-1);
   }
 
+  /* The right end of the row: the page's actions, then the theme and account buttons. */
+  .page-tools {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--aida-space-4);
+    margin-left: auto;
+  }
+
+  .page-actions {
+    flex-wrap: wrap;
+  }
+
+  /* Only wide screens have a sidebar to hide. A rule separates it from the trail. */
+  .page-bar .sidebar-toggle {
+    display: none;
+    width: 2rem;
+    height: 2rem;
+  }
+
+  /* The row scrolls with the page: pinning it needed a strip behind it, which read as a
+     box around the buttons. Lists keep it in view anyway, since only their rows scroll. */
   @media (min-width: 64rem) {
-    .page-bar {
-      position: sticky;
-      top: 0;
-      z-index: 10;
+    .page-bar .sidebar-toggle:not([hidden]) {
+      display: grid;
+      margin-right: var(--aida-space-1);
+      border-right: 1px solid var(--aida-border);
+      border-radius: var(--aida-radius-md) 0 0 var(--aida-radius-md);
     }
   }
 
-  .page-bar-inner {
-    display: flex;
-    align-items: center;
-    min-height: 3.5rem;
+  .page-intro {
+    margin-bottom: var(--aida-space-5);
   }
-
 
   /* Breadcrumbs: small and quiet, with thin chevrons; the current page in full text colour. */
   .breadcrumbs {
@@ -399,25 +464,63 @@
     height: 0.75rem;
   }
 
-  .crumb-link {
-    padding: 0.125rem 0.25rem;
-    border-radius: var(--aida-radius-sm);
+  .crumb-link,
+  .crumb-button,
+  .crumb-current {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--aida-space-1);
+    min-height: 2rem;
+    padding: 0 var(--aida-space-2);
+    border-radius: var(--aida-radius-md);
+  }
+
+  .crumb-link,
+  .crumb-button {
     color: var(--aida-text-muted);
     text-decoration: none;
   }
 
-  .crumb-link:hover {
+  .crumb-button {
+    border: 0;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .crumb-link:hover,
+  .crumb-button:hover {
+    background: var(--aida-surface-hover);
     color: var(--aida-text);
-    text-decoration: underline;
   }
 
   .crumb-current {
-    padding: 0.125rem 0.25rem;
+    min-width: 0;
     overflow: hidden;
     color: var(--aida-text);
-    font-weight: 500;
+    font-weight: 650;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .crumb-button .icon {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .crumb-caret {
+    display: inline-flex;
+  }
+
+  .crumb-caret .icon {
+    width: 0.75rem;
+    height: 0.75rem;
+    transition: transform var(--aida-duration-slow) var(--aida-ease-settle);
+  }
+
+  /* The caret turns over while its menu is open. */
+  .crumb:has(.menu:popover-open) .crumb-caret .icon {
+    transform: rotate(180deg);
   }
 
   .icon {
@@ -437,7 +540,6 @@
     background: transparent;
     color: var(--aida-text-muted);
     cursor: pointer;
-    transition: transform var(--aida-duration-fast) var(--aida-ease-enter);
   }
 
   .icon-button:hover {
@@ -447,16 +549,162 @@
 
   .icon-button:active {
     background: var(--aida-surface-pressed);
-    transform: scale(var(--aida-press-scale));
   }
 
-  .account-panel {
+  /* The theme button shows the drawing for the choice in use. */
+  .theme-icon {
+    display: none;
+  }
+
+  :root:not([data-theme]) .theme-icon-light,
+  :root[data-theme="light"] .theme-icon-light,
+  :root[data-theme="dark"] .theme-icon-dark {
+    display: inline-flex;
+  }
+
+  /* ---------- Menus: popovers opened from a button ---------- */
+
+  .menu {
+    position: fixed;
+    inset: auto;
+    /* Beside the button that opened it, flipped when there is no room. */
+    position-area: bottom span-right;
+    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+    width: max-content;
+    min-width: 12rem;
+    max-width: min(20rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 6rem);
+    margin: var(--aida-space-2) 0;
+    padding: var(--aida-space-2);
+    overflow-y: auto;
+    border: 1px solid var(--aida-border);
+    border-radius: var(--aida-radius-lg);
+    background: var(--aida-surface);
+    color: var(--aida-text);
+    box-shadow: var(--aida-shadow-2);
+    letter-spacing: 0;
+    text-align: left;
+    text-transform: none;
+  }
+
+  /* Browsers without anchor positioning get the menu in the middle of the screen. */
+  @supports not (position-area: bottom) {
+    .menu:not(.row-menu) {
+      inset: 0;
+      margin: auto;
+      height: fit-content;
+    }
+  }
+
+  .menu:popover-open {
+    animation: aida-menu-in var(--aida-duration-slow) var(--aida-ease-settle);
+  }
+
+  @keyframes aida-menu-in {
+    from {
+      opacity: 0;
+      transform: scale(var(--aida-press-scale));
+    }
+  }
+
+  .menu-title {
+    padding: var(--aida-space-1) var(--aida-space-2) var(--aida-space-2);
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-xs);
+    font-weight: 650;
+    text-transform: uppercase;
+  }
+
+  .menu-item {
     display: flex;
     align-items: center;
     gap: var(--aida-space-3);
-    margin-top: var(--aida-space-4);
-    padding: var(--aida-space-3) var(--aida-space-2) 0;
-    border-top: 1px solid var(--aida-border);
+    width: 100%;
+    padding: var(--aida-space-2);
+    border: 0;
+    border-radius: var(--aida-radius-md);
+    background: transparent;
+    color: var(--aida-text);
+    font: inherit;
+    font-size: var(--aida-text-sm);
+    font-weight: 500;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .menu-item:hover {
+    background: var(--aida-surface-hover);
+    color: var(--aida-text);
+  }
+
+  .menu-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--aida-radius-sm);
+    background: var(--aida-accent-subtle);
+    color: var(--aida-accent);
+  }
+
+  .menu-icon .icon,
+  .menu-item > .icon {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .menu-text {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .menu-note {
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-xs);
+    font-weight: 500;
+  }
+
+  .menu-item > .icon {
+    color: var(--aida-accent);
+  }
+
+  .account-button {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: var(--aida-space-3);
+    min-width: 0;
+    padding: var(--aida-space-1);
+    border: 0;
+    border-radius: var(--aida-radius-md);
+    background: transparent;
+    color: var(--aida-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .account-button:hover {
+    background: var(--aida-surface-hover);
+  }
+
+  .account-panel .avatar {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--aida-accent) 40%, transparent);
+  }
+
+  /* On phones the avatar stands for the account; the name stays for screen readers. */
+  @media (max-width: 47.99rem) {
+    .account-panel .account-name {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
   }
 
   /* An enrolment QR code (P1-ACC-10). Always dark on white, which scanners need in dark mode too. */
@@ -527,12 +775,11 @@
     border-radius: var(--aida-radius-md);
     font: inherit;
     font-size: var(--aida-text-sm);
-    font-weight: 600;
+    font-weight: 500;
     line-height: 1;
     text-decoration: none;
     white-space: nowrap;
     cursor: pointer;
-    transition: transform var(--aida-duration-fast) var(--aida-ease-enter);
   }
 
   .btn:disabled,
@@ -544,6 +791,32 @@
 
   .btn:active {
     transform: scale(var(--aida-press-scale));
+  }
+
+  .btn .icon {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .btn-sm .icon {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  /* An icon alone: a square button. */
+  .btn.btn-icon {
+    min-width: 2.25rem;
+    padding: 0;
+  }
+
+  /* Closing a modal or drawer: a true circle, as wide as it is tall. */
+  .dialog-header .btn.btn-icon {
+    flex: none;
+    width: 2.25rem;
+    height: 2.25rem;
+    min-width: 0;
+    min-height: 0;
+    border-radius: var(--aida-radius-full);
   }
 
   .btn-primary {
@@ -679,92 +952,6 @@
   }
 
   /* A figure on a dashboard: what it counts, the number, and where to act on it. */
-  /* Each figure has a tone (blue by default, amber or green), shown on its icon and as a
-     soft wash in the card's corner. The number and text stay in the normal text colours. */
-  .stat {
-    --stat-tone: var(--aida-accent);
-    --stat-tone-subtle: var(--aida-accent-subtle);
-    display: flex;
-    flex-direction: column;
-    gap: var(--aida-space-2);
-    background:
-      radial-gradient(16rem 9rem at 100% 0%, color-mix(in srgb, var(--stat-tone) 12%, transparent), transparent 70%),
-      var(--aida-surface);
-  }
-
-  .tone-warning {
-    --stat-tone: var(--aida-warning);
-    --stat-tone-subtle: var(--aida-warning-subtle);
-  }
-
-  .tone-success {
-    --stat-tone: var(--aida-success);
-    --stat-tone-subtle: var(--aida-success-subtle);
-  }
-
-  .stat-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--aida-space-3);
-    color: var(--aida-text-muted);
-    font-size: var(--aida-text-sm);
-    font-weight: 550;
-  }
-
-  .stat-icon {
-    display: grid;
-    place-items: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: var(--aida-radius-md);
-    background: var(--stat-tone-subtle, var(--aida-accent-subtle));
-    color: var(--stat-tone, var(--aida-accent));
-  }
-
-  .stat-value {
-    font-size: var(--aida-text-3xl);
-    line-height: var(--aida-text-3xl-leading);
-    letter-spacing: var(--aida-text-3xl-tracking);
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .stat-note {
-    color: var(--aida-text-muted);
-    font-size: var(--aida-text-xs);
-  }
-
-  /* A shortcut card: icon, title, one line, and an arrow that nudges on hover. */
-  .action-card {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: var(--aida-space-4);
-  }
-
-  .action-card .stat-icon {
-    flex: none;
-  }
-
-  .action-card-arrow {
-    margin-left: auto;
-    color: var(--aida-text-muted);
-    transition: transform var(--aida-duration-fast) var(--aida-ease-enter);
-  }
-
-  .action-card:hover {
-    transform: translateY(-2px);
-  }
-
-  .action-card:hover .action-card-arrow {
-    color: var(--aida-accent);
-    transform: translateX(0.25rem);
-  }
-
-
-  .item-card:active {
-    transform: scale(var(--aida-press-scale));
-  }
 
   .item-meta {
     display: flex;
@@ -776,59 +963,444 @@
 
   /* ---------- Welcome banner: the top of a dashboard ---------- */
 
-  .hero {
-    position: relative;
-    overflow: hidden;
-    margin-bottom: var(--aida-space-6);
-    padding: var(--aida-space-6);
-    border-radius: var(--aida-radius-lg);
-    background: var(--aida-hero);
-    box-shadow: var(--aida-shadow-2);
-    color: var(--aida-hero-text);
+  /* ---------- Press feel: controls give a little under the pointer and settle back ---------- */
+
+  .btn,
+  .nav-link,
+  .side-link,
+  .page-link,
+  .crumb-link,
+  .crumb-button,
+  .icon-button,
+  .menu-item,
+  .account-button,
+  .side-section,
+  .item-card {
+    transition: transform var(--aida-duration-base) var(--aida-ease-settle);
   }
 
-  /* The logo's three colours along the bottom edge, as on the top bar. */
-  .hero::after {
-    content: "";
-    position: absolute;
-    inset: auto 0 0;
-    height: 4px;
-    background: var(--aida-brand-stripe);
+  .btn:not(:disabled):active,
+  .nav-link:active,
+  .side-link:active,
+  .page-link:active,
+  .crumb-link:active,
+  .crumb-button:active,
+  .icon-button:active,
+  .menu-item:active,
+  .account-button:active,
+  .side-section:active {
+    transform: scale(var(--aida-press-scale));
+    transition: transform var(--aida-duration-press) var(--aida-ease-settle);
   }
 
-  .hero-eyebrow {
-    color: var(--aida-hero-muted);
-    font-size: var(--aida-text-xs);
-    font-weight: 650;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+  /* Large surfaces move less than small ones, or the press looks like a jump. */
+  .item-card:active {
+    transform: scale(var(--aida-press-scale-large));
+    transition: transform var(--aida-duration-press) var(--aida-ease-settle);
   }
 
-  /* Phones get the page-title size, so a long name does not fill the screen. */
-  .hero-title {
-    margin-top: var(--aida-space-2);
-    font-size: var(--aida-text-2xl);
-    line-height: var(--aida-text-2xl-leading);
-    letter-spacing: var(--aida-text-2xl-tracking);
-    font-weight: 700;
+  /* ---------- Glass: panels let the backdrop through ---------- */
+
+  .app-shell .sidebar,
+  .app-shell .card,
+  .page-bar,
+  .menu,
+  .modal,
+  .drawer {
+    background: var(--aida-surface-glass);
+    -webkit-backdrop-filter: var(--aida-glass-filter);
+    backdrop-filter: var(--aida-glass-filter);
+    /* A bright inner edge, like light catching the pane. */
+    border-color: color-mix(in srgb, var(--aida-border) 70%, transparent);
   }
 
-  @media (min-width: 40rem) {
-    .hero-title {
-      font-size: var(--aida-text-3xl);
-      line-height: var(--aida-text-3xl-leading);
-      letter-spacing: var(--aida-text-3xl-tracking);
+  /* Without backdrop-filter, translucency would leave text over busy content: go solid. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .app-shell .sidebar,
+    .app-shell .card,
+    .page-bar,
+    .menu,
+    .modal,
+    .drawer {
+      background: var(--aida-surface);
     }
   }
 
-  .hero-lead {
-    margin-top: var(--aida-space-2);
-    color: var(--aida-hero-muted);
-    font-size: var(--aida-text-base);
+  /* Dividers inside panels are fainter than their edges. */
+  .dialog-header,
+  .dialog-actions,
+  .data-toolbar,
+  .data-footer,
+  .table th,
+  .table td {
+    border-color: color-mix(in srgb, var(--aida-border) 60%, transparent);
   }
 
-  .hero :focus-visible {
-    outline-color: var(--aida-hero-text);
+  /* ---------- Select box: a button over the native select, and its list (select.js) ---------- */
+
+  /* The select sits inside its field, so the 1px box cannot stray across the page. Named
+     with .input and .field, or the general field styles would make it full width again. */
+  .field[data-select] {
+    position: relative;
+  }
+
+  .field .input.select-native {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .input.select-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--aida-space-3);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  /* A chevron drawn from two borders, turned over while the list is open. */
+  .select-button::after {
+    content: "";
+    flex: none;
+    width: 0.45rem;
+    height: 0.45rem;
+    border-right: 2px solid var(--aida-text-muted);
+    border-bottom: 2px solid var(--aida-text-muted);
+    transform: translateY(-25%) rotate(45deg);
+    transition: transform var(--aida-duration-base) var(--aida-ease-settle);
+  }
+
+  .select-button[aria-expanded="true"]::after {
+    transform: translateY(25%) rotate(225deg);
+  }
+
+  .select-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .select-value.is-placeholder {
+    color: var(--aida-text-muted);
+  }
+
+  /* As wide as its button. .menu places it where there is room, flipping at edges. */
+  .select-menu {
+    width: anchor-size(width);
+    min-width: 12rem;
+    max-width: calc(100vw - 2rem);
+    max-height: 18rem;
+    margin: var(--aida-space-1) 0;
+    overflow: hidden;
+  }
+
+  .select-menu:popover-open {
+    display: flex;
+    flex-direction: column;
+    gap: var(--aida-space-2);
+  }
+
+  /* Soft focus like the other fields, and no room left for an icon it does not have. */
+  .input.find-input.select-search {
+    flex: none;
+    padding-left: var(--aida-space-3);
+  }
+
+  .input.find-input.select-search:focus-visible {
+    outline: 1px solid color-mix(in srgb, var(--aida-focus-ring) 55%, transparent);
+    box-shadow: none;
+  }
+
+  .input.select-button[aria-expanded="true"]:not(:disabled) {
+    border-color: color-mix(in srgb, var(--aida-focus-ring) 55%, transparent);
+  }
+
+  .select-list {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .select-option {
+    position: relative;
+    padding: var(--aida-space-2) var(--aida-space-3);
+    border-radius: var(--aida-radius-sm);
+    font-size: var(--aida-text-sm);
+    cursor: pointer;
+  }
+
+  .select-option:hover,
+  .select-option.is-active {
+    background: var(--aida-surface-hover);
+  }
+
+  .select-option[aria-selected="true"] {
+    background: var(--aida-accent-subtle);
+    color: var(--aida-accent);
+    font-weight: 600;
+  }
+
+  .select-status:not(:empty) {
+    padding: var(--aida-space-2) var(--aida-space-3);
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-xs);
+  }
+
+  /* ---------- Forms: filled fields that clear to the surface when used ---------- */
+
+  .modal .field-label,
+  .drawer .field-label,
+  .card .field-label,
+  .auth-main .field-label {
+    margin-bottom: var(--aida-space-1);
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-xs);
+    font-weight: 650;
+  }
+
+  .input:not(.find-input) {
+    min-height: 3rem;
+    padding-inline: var(--aida-space-4);
+    background-color: color-mix(in srgb, var(--aida-surface-sunken) 70%, transparent);
+    box-shadow: none;
+  }
+
+  .input:not(.find-input):focus-visible {
+    background-color: var(--aida-surface);
+  }
+
+  .input[type="file"] {
+    padding: var(--aida-space-2);
+  }
+
+  .input[type="file"]::file-selector-button {
+    margin-right: var(--aida-space-3);
+    padding: var(--aida-space-1) var(--aida-space-3);
+    border: 1px solid var(--aida-border);
+    border-radius: var(--aida-radius-sm);
+    background: var(--aida-surface);
+    color: var(--aida-text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .input:not(.find-input),
+  .input[type="file"]::file-selector-button {
+    border-color: var(--aida-field-border);
+  }
+
+  .input:not(.find-input):hover:not(:disabled) {
+    border-color: var(--aida-border-strong);
+  }
+
+  /* Softer than the 2px outline used elsewhere: a pale ring with a halo around it. */
+  .input:focus-visible,
+  .input:not(.find-input):focus-visible,
+  .input:not(.find-input):focus-visible:hover:not(:disabled) {
+    outline: 1px solid color-mix(in srgb, var(--aida-focus-ring) 55%, transparent);
+    border-color: color-mix(in srgb, var(--aida-focus-ring) 55%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--aida-accent) 12%, transparent);
+  }
+
+  .input:not(.find-input)[aria-invalid="true"] {
+    border-color: var(--aida-danger);
+  }
+
+  /* A dialog's heading and its buttons are set off by hairlines. */
+  .dialog-header {
+    padding-bottom: var(--aida-space-3);
+    border-bottom: 1px solid var(--aida-border);
+  }
+
+  .dialog-actions {
+    padding-top: var(--aida-space-4);
+    border-top: 1px solid var(--aida-border);
+  }
+
+  /* ---------- Micro-interactions: a small lift, and arrows that point ---------- */
+
+  /* Only for a real pointer, and never when the person asks for less motion. */
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .figure-label .icon,
+    .crumb-caret {
+      transition: transform var(--aida-duration-base) var(--aida-ease-settle);
+    }
+
+    .btn:not(:disabled):hover:not(:active) {
+      transform: translateY(-1px);
+    }
+
+    a.figure:hover .figure-label .icon {
+      transform: translateX(0.125rem);
+    }
+
+    .crumb-button:hover .crumb-caret {
+      transform: translateY(1px);
+    }
+  }
+
+  /* ---------- Hiding and showing the sidebar ---------- */
+
+  /* Named only while it moves, so page-to-page transitions stay a plain cross-fade. */
+  .sidebar-moving .sidebar {
+    view-transition-name: sidebar;
+  }
+
+  .sidebar-moving .app-main {
+    view-transition-name: app-main;
+  }
+
+  /* The content and the sidebar move together on one even glide. */
+  ::view-transition-group(app-main),
+  ::view-transition-group(sidebar) {
+    animation-duration: var(--aida-duration-glide);
+    animation-timing-function: var(--aida-ease-settle);
+  }
+
+  /* Only the new content is drawn, at its own size, so it slides instead of cross-fading
+     two layouts over each other. */
+  ::view-transition-old(app-main),
+  .sidebar-moving::view-transition-old(root) {
+    display: none;
+  }
+
+  ::view-transition-new(app-main),
+  .sidebar-moving::view-transition-new(root) {
+    animation: none;
+  }
+
+  ::view-transition-new(app-main) {
+    width: auto;
+    height: auto;
+  }
+
+  /* The sidebar leaves to the left and comes back the same way. */
+  ::view-transition-old(sidebar):only-child {
+    animation: aida-sidebar-out var(--aida-duration-glide) var(--aida-ease-settle) both;
+  }
+
+  ::view-transition-new(sidebar):only-child {
+    animation: aida-sidebar-in var(--aida-duration-glide) var(--aida-ease-settle) both;
+  }
+
+  @keyframes aida-sidebar-out {
+    to {
+      opacity: 0;
+      transform: translateX(calc(-1 * var(--aida-drawer-offset)));
+    }
+  }
+
+  @keyframes aida-sidebar-in {
+    from {
+      opacity: 0;
+      transform: translateX(calc(-1 * var(--aida-drawer-offset)));
+    }
+  }
+
+  /* By night the colour washes and button glow go, so surfaces stay clean graphite. */
+  .theme-dark body {
+    --aida-canvas-wash: none;
+  }
+
+  .theme-dark .btn-primary {
+    box-shadow: var(--aida-shadow-0);
+  }
+
+  /* ---------- Dashboard: greeting, then panels ---------- */
+
+  .welcome {
+    margin-bottom: var(--aida-space-5);
+  }
+
+  .welcome-meta {
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-sm);
+  }
+
+  .welcome-title {
+    font-size: var(--aida-text-xl);
+    line-height: var(--aida-text-xl-leading);
+    letter-spacing: var(--aida-text-xl-tracking);
+    font-weight: 600;
+  }
+
+  .dashboard,
+  .dashboard-main {
+    display: grid;
+    gap: var(--aida-space-4);
+    align-content: start;
+  }
+
+  @media (min-width: 64rem) {
+    .dashboard {
+      grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+      align-items: start;
+    }
+  }
+
+  /* The numbers sit side by side in one panel, divided by hairlines. */
+  .figures {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 1px;
+    margin-top: var(--aida-space-4);
+    overflow: hidden;
+    border-radius: var(--aida-radius-md);
+    background: var(--aida-border);
+  }
+
+  .figure {
+    display: flex;
+    flex-direction: column;
+    gap: var(--aida-space-1);
+    padding: var(--aida-space-4);
+    background: var(--aida-surface);
+    color: var(--aida-text);
+    text-decoration: none;
+  }
+
+  a.figure:hover {
+    background: var(--aida-surface-hover);
+    color: var(--aida-text);
+  }
+
+  a.figure:focus-visible {
+    outline-offset: -2px;
+  }
+
+  .figure-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-sm);
+    font-weight: 500;
+  }
+
+  .figure-label .icon {
+    width: 1rem;
+    height: 1rem;
+    color: var(--aida-accent);
+  }
+
+  .figure-value {
+    font-size: var(--aida-text-3xl);
+    line-height: var(--aida-text-3xl-leading);
+    letter-spacing: var(--aida-text-3xl-tracking);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .figure-note {
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-xs);
   }
 
   /* ---------- Badges ---------- */
@@ -870,12 +1442,42 @@
 
   /* ---------- Alerts and flash messages ---------- */
 
+  /* The tone sets the icon tile. */
+  .alert-info {
+    --tone: var(--aida-info);
+  }
+
+  .alert-success {
+    --tone: var(--aida-success);
+  }
+
+  .alert-warning {
+    --tone: var(--aida-warning);
+  }
+
+  .alert-danger {
+    --tone: var(--aida-danger);
+  }
+
+  .tone-tile {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--aida-radius-sm);
+    background: color-mix(in srgb, var(--tone) 14%, transparent);
+    color: var(--tone);
+  }
+
   .alert {
     display: flex;
+    align-items: center;
     gap: var(--aida-space-3);
-    padding: var(--aida-space-3) var(--aida-space-4);
-    border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+    padding: var(--aida-space-3);
+    border: 1px solid color-mix(in srgb, var(--tone) 25%, transparent);
     border-radius: var(--aida-radius-md);
+    background: color-mix(in srgb, var(--tone) 6%, var(--aida-surface));
     font-size: var(--aida-text-sm);
     animation: aida-enter var(--aida-duration-slow) var(--aida-ease-enter);
   }
@@ -884,29 +1486,189 @@
     color: var(--aida-text);
   }
 
-  .alert-info {
-    background: var(--aida-info-subtle);
-    color: var(--aida-info);
+  /* ---------- Toasts: a short notice at the bottom centre, like a tooltip ---------- */
+
+  .toasts {
+    position: fixed;
+    right: 0;
+    bottom: var(--aida-space-5);
+    left: 0;
+    z-index: 60;
+    display: grid;
+    justify-items: center;
+    gap: var(--aida-space-2);
+    pointer-events: none;
   }
 
-  .alert-success {
-    background: var(--aida-success-subtle);
-    color: var(--aida-success);
+  /* A white card with a soft shadow; the colour of its kind is on the text, icon and line:
+     green done, blue note, amber warning, red failure. */
+  .toast {
+    display: flex;
+    align-items: center;
+    position: relative;
+    gap: var(--aida-space-3);
+    overflow: hidden;
+    min-width: 16rem;
+    max-width: calc(100vw - 2rem);
+    padding: var(--aida-space-3) var(--aida-space-3) var(--aida-space-3) var(--aida-space-3);
+    border-radius: var(--aida-radius-lg);
+    --tone: var(--aida-success);
+    border: 1px solid var(--aida-border);
+    background: var(--aida-surface);
+    box-shadow: var(--aida-shadow-2);
+    color: var(--tone);
+    font-size: var(--aida-text-sm);
+    font-weight: 500;
+    pointer-events: auto;
+    animation: aida-toast-in var(--aida-duration-slow) var(--aida-ease-settle);
+    transition: transform var(--aida-duration-base) var(--aida-ease-settle);
   }
 
-  .alert-warning {
-    background: var(--aida-warning-subtle);
-    color: var(--aida-warning);
+  /* Under the pointer it lifts, and its clock stops. */
+  .toast:hover {
+    transform: translateY(-2px) scale(1.02);
   }
 
-  .alert-danger {
-    background: var(--aida-danger-subtle);
-    color: var(--aida-danger);
-  }
-
-  .alert-icon {
+  /* The icon arrives a beat after the notice, then the words slide in beside it. */
+  .toast-icon {
+    display: grid;
     flex: none;
-    font-weight: 750;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: var(--aida-radius-full);
+    background: color-mix(in srgb, currentColor 16%, transparent);
+    animation: aida-icon-in var(--aida-duration-slow) var(--aida-ease-settle) var(--aida-duration-fast) backwards;
+  }
+
+  .toast-text {
+    flex: 1;
+    animation: aida-text-in var(--aida-duration-slow) var(--aida-ease-settle) var(--aida-duration-fast) backwards;
+  }
+
+  .toast-close .icon {
+    transition: transform var(--aida-duration-base) var(--aida-ease-settle);
+  }
+
+  /* The close button stays quiet, so the message is what carries the colour. */
+  .toast-close {
+    color: var(--aida-text-muted);
+  }
+
+  .toast-close:hover {
+    background: color-mix(in srgb, currentColor 16%, transparent);
+  }
+
+  .toast-close:hover .icon {
+    transform: rotate(var(--aida-close-turn));
+  }
+
+  .toast-info {
+    --tone: var(--aida-info);
+  }
+
+  .toast-warning {
+    --tone: var(--aida-warning);
+  }
+
+  .toast-danger {
+    --tone: var(--aida-danger);
+  }
+
+  .toast .icon {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .toast-close {
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 0;
+    border-radius: var(--aida-radius-sm);
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .toast-close[hidden] {
+    display: none;
+  }
+
+  .toast :focus-visible {
+    outline-color: currentColor;
+  }
+
+  .toast.is-leaving {
+    animation: aida-toast-out var(--aida-duration-base) var(--aida-ease-exit) forwards;
+  }
+
+  /* A thin line that runs down: when it ends, shell.js closes the toast. */
+  .toast-timer {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: var(--tone);
+    transform-origin: left;
+    animation: aida-toast-clock 3s linear forwards;
+  }
+
+  .toast-warning .toast-timer,
+  .toast-danger .toast-timer {
+    animation-duration: 6s;
+  }
+
+  .toast:hover .toast-timer,
+  .toast:focus-within .toast-timer {
+    animation-play-state: paused;
+  }
+
+  @keyframes aida-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(var(--aida-toast-offset)) scale(var(--aida-toast-scale));
+    }
+  }
+
+  @keyframes aida-toast-out {
+    to {
+      opacity: 0;
+      transform: translateY(var(--aida-toast-offset)) scale(var(--aida-toast-scale));
+    }
+  }
+
+  @keyframes aida-toast-clock {
+    to {
+      transform: scaleX(0);
+    }
+  }
+
+  @keyframes aida-icon-in {
+    from {
+      opacity: 0;
+      transform: scale(var(--aida-toast-scale)) rotate(var(--aida-icon-turn));
+    }
+  }
+
+  @keyframes aida-text-in {
+    from {
+      opacity: 0;
+      transform: translateX(var(--aida-text-offset));
+    }
+  }
+
+  /* The line is still the clock when motion is reduced, so it is hidden, not stopped. */
+  @media (prefers-reduced-motion: reduce) {
+    .toast-timer {
+      opacity: 0;
+    }
+
+    .toast:hover {
+      transform: none;
+    }
   }
 
   /* ---------- Forms ---------- */
@@ -1039,15 +1801,13 @@
     border-bottom: 1px solid var(--aida-border);
     color: var(--aida-text-muted);
     font-size: var(--aida-text-xs);
-    font-weight: 650;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    font-weight: 600;
     white-space: nowrap;
   }
 
 
   .table td {
-    padding: var(--aida-space-4) var(--aida-space-5);
+    padding: var(--aida-space-2) var(--aida-space-5);
     border-top: 1px solid var(--aida-border);
     vertical-align: middle;
   }
@@ -1059,6 +1819,230 @@
 
   .table tbody tr:hover {
     background: var(--aida-surface-hover);
+  }
+
+  /* ---------- Data table: toolbar, scrolling rows under a fixed header, row count ---------- */
+
+  .data-table {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .data-toolbar:not([hidden]) {
+    display: flex;
+    padding: var(--aida-space-3);
+    border-bottom: 1px solid var(--aida-border);
+  }
+
+  .data-toolbar .find-field {
+    width: min(20rem, 100%);
+  }
+
+  .data-scroll {
+    overflow: auto;
+  }
+
+  .data-scroll th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .data-footer {
+    padding: var(--aida-space-3) var(--aida-space-5);
+    border-top: 1px solid var(--aida-border);
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* On a screen with room, the page stops at the window and only the rows scroll. Short
+     windows scroll the whole page instead, so the table never shrinks to a slit. */
+  @media (min-width: 64rem) and (min-height: 32rem) {
+    .app-main:has(.data-table) {
+      height: 100dvh;
+    }
+
+    .app-main:has(.data-table) > main {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding-block-end: 0;
+    }
+
+    /* The card always takes the height left, however few the rows, so the footer stays put. */
+    .app-main .data-table,
+    .app-main .data-scroll {
+      flex: 1;
+      min-height: 0;
+    }
+
+    .app-main:has(.data-table) {
+      padding-bottom: var(--aida-space-3);
+    }
+  }
+
+  /* Header actions are compact, to sit level with the breadcrumb bar and account buttons. */
+  .page-actions .btn {
+    min-height: 2.25rem;
+    gap: 0.375rem;
+    padding-inline: var(--aida-space-3);
+    font-size: var(--aida-text-xs);
+  }
+
+  .page-actions .btn .icon {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  /* ---------- One sliding highlight for menus and select lists (glide.js) ---------- */
+
+  .menu-glider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: var(--aida-radius-sm);
+    background: var(--aida-accent-subtle);
+    pointer-events: none;
+    transition: transform var(--aida-duration-base) var(--aida-ease-settle);
+  }
+
+  .menu-glider[hidden] {
+    display: none;
+  }
+
+  /* Items sit above the highlight and leave the colour to it. */
+  .menu.has-glider .menu-item {
+    position: relative;
+  }
+
+  .menu.has-glider .menu-item:hover,
+  .menu.has-glider .select-option:hover,
+  .menu.has-glider .select-option.is-active,
+  .menu.has-glider .select-option[aria-selected="true"] {
+    background: transparent;
+  }
+
+  /* ---------- Selected rows, their actions and the row menu ---------- */
+
+  .table .row-select {
+    width: 1%;
+    padding-inline: var(--aida-space-4) 0;
+  }
+
+  .row-select input {
+    display: block;
+    width: 1.125rem;
+    height: 1.125rem;
+    accent-color: var(--aida-accent);
+    cursor: pointer;
+  }
+
+  .table tbody tr.is-selected {
+    background: var(--aida-accent-subtle);
+  }
+
+  /* Floats at the bottom centre while rows are ticked. */
+  .selection-bar {
+    position: fixed;
+    inset: auto 0 var(--aida-space-5);
+    align-items: center;
+    gap: var(--aida-space-2);
+    width: max-content;
+    max-width: calc(100vw - 2rem);
+    margin: 0 auto;
+    padding: var(--aida-space-2) var(--aida-space-2) var(--aida-space-2) var(--aida-space-4);
+    flex-wrap: wrap;
+    border: 1px solid var(--aida-border);
+    border-radius: var(--aida-radius-lg);
+    background: var(--aida-surface);
+    box-shadow: var(--aida-shadow-2);
+    animation: aida-toast-in var(--aida-duration-slow) var(--aida-ease-settle);
+  }
+
+  .selection-bar:popover-open {
+    display: flex;
+  }
+
+  .selection-count {
+    margin-right: var(--aida-space-2);
+    font-size: var(--aida-text-sm);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Toasts sit above the bar rather than over it. */
+  body:has(.selection-bar:popover-open) .toasts {
+    bottom: 6rem;
+  }
+
+  /* Opened at the pointer: table.js sets left and top. */
+  .menu.row-menu {
+    position-area: none;
+    position-try-fallbacks: none;
+    inset: auto;
+    margin: 0;
+  }
+
+  .row-menu [hidden] {
+    display: none;
+  }
+
+  /* Compact, like the menus of a desktop app: small rows, bare icons, nothing that moves
+     once it is open. It fades in from the pointer's corner. */
+  .menu.row-menu {
+    min-width: 13rem;
+    padding: var(--aida-space-2);
+    border-radius: var(--aida-radius-md);
+    transform-origin: top left;
+  }
+
+  .menu.row-menu:popover-open {
+    animation: aida-row-menu-in var(--aida-duration-press) var(--aida-ease-settle);
+  }
+
+  @keyframes aida-row-menu-in {
+    from {
+      opacity: 0;
+      transform: scale(var(--aida-press-scale));
+    }
+  }
+
+  .row-menu .menu-item,
+  .row-menu .menu-item:active {
+    gap: var(--aida-space-3);
+    padding: var(--aida-space-2) var(--aida-space-3);
+    border-radius: var(--aida-radius-sm);
+    font-weight: 500;
+    transform: none;
+  }
+
+  .row-menu .menu-icon {
+    width: 1rem;
+    height: 1rem;
+    background: transparent;
+    color: var(--aida-text-muted);
+  }
+
+  /* One highlight, which follows the pointer or the arrow keys (table.js moves focus). */
+  .row-menu .menu-item:hover {
+    background: transparent;
+  }
+
+  .row-menu .menu-item:focus {
+    outline: none;
+  }
+
+  .row-menu .menu-item:focus .menu-icon {
+    color: var(--aida-accent);
+  }
+
+  /* More contrast and forced colours need a real ring, not only a tint. */
+  @media (prefers-contrast: more), (forced-colors: active) {
+    .row-menu .menu-item:focus {
+      outline: 2px solid var(--aida-focus-ring);
+      outline-offset: -2px;
+    }
   }
 
   /* ---------- Modal and drawer: native <dialog>, opened by the control that names it ---------- */
@@ -1093,7 +2077,7 @@
   .drawer[open] {
     opacity: 1;
     transform: none;
-    transition-timing-function: var(--aida-ease-enter);
+    transition-timing-function: var(--aida-ease-enter), var(--aida-ease-settle);
     transition-duration: var(--aida-duration-slow);
   }
 
@@ -1108,7 +2092,7 @@
     padding: var(--aida-space-5);
     border-radius: var(--aida-radius-lg);
     /* Grows out of its control and shrinks back into it (same path both ways). */
-    transform: scale(0.96) translateY(var(--aida-enter-offset));
+    transform: scale(0.98) translateY(var(--aida-enter-offset));
   }
 
   /* The drawer slides in from the right edge and leaves the same way. */
@@ -1129,17 +2113,10 @@
     transform: translateX(calc(-1 * var(--aida-drawer-offset)));
   }
 
-  /* The menu drawer wears the navy chrome; .drawer above would otherwise paint it white. */
-  .drawer.chrome {
-    background: var(--aida-chrome);
-    color: var(--aida-chrome-text);
-  }
-
   .drawer-left[open] {
     display: flex;
     flex-direction: column;
     width: min(18rem, 85%);
-    border-color: var(--aida-chrome-border);
   }
 
   @starting-style {
@@ -1151,7 +2128,7 @@
     }
 
     .modal[open] {
-      transform: scale(0.96) translateY(var(--aida-enter-offset));
+      transform: scale(0.98) translateY(var(--aida-enter-offset));
     }
 
     .drawer[open] {
@@ -1234,16 +2211,11 @@
     color: var(--aida-text);
     font-size: var(--aida-text-sm);
     text-decoration: none;
-    transition: transform var(--aida-duration-fast) var(--aida-ease-enter);
   }
 
   .page-link:hover {
     background: var(--aida-surface-hover);
     color: var(--aida-text);
-  }
-
-  .page-link:active {
-    transform: scale(var(--aida-press-scale));
   }
 
   .page-link[aria-current="page"] {
@@ -1291,9 +2263,9 @@
   .auth-title {
     margin-top: var(--aida-space-3);
     color: var(--aida-chrome-strong);
-    font-size: var(--aida-text-3xl);
-    line-height: var(--aida-text-3xl-leading);
-    letter-spacing: var(--aida-text-3xl-tracking);
+    font-size: var(--aida-text-2xl);
+    line-height: var(--aida-text-2xl-leading);
+    letter-spacing: var(--aida-text-2xl-tracking);
     font-weight: 700;
   }
 
@@ -1331,9 +2303,24 @@
   }
 
   .auth-panel {
+    position: relative;
     display: flex;
     flex-direction: column;
     padding: var(--aida-space-6) var(--aida-space-5);
+  }
+
+  .auth-tools {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--aida-space-4);
+  }
+
+  @media (min-width: 64rem) {
+    .auth-tools {
+      position: absolute;
+      top: var(--aida-space-5);
+      right: var(--aida-space-5);
+    }
   }
 
   .auth-main {
@@ -1344,13 +2331,6 @@
 
   .auth-heading {
     margin-bottom: var(--aida-space-6);
-  }
-
-  .auth-heading-title {
-    font-size: var(--aida-text-2xl);
-    line-height: var(--aida-text-2xl-leading);
-    letter-spacing: var(--aida-text-2xl-tracking);
-    font-weight: 700;
   }
 
   .auth-heading-lead {

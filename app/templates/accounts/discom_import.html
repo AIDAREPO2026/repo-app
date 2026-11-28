@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% from "macros/forms.html" import csrf_field with context %}
-{% from "macros/ui.html" import page_header, button, link_button, card, badge, alert with context %}
+{% from "macros/ui.html" import page_header, button, link_button, card, badge, alert, data_table with context %}
 {% set problems = rows|selectattr("problem")|list %}
 {% block content %}
-{{ page_header("Check the import", eyebrow="Administration", lead="Nothing has been saved yet. Rows with a problem are skipped; fix them in the file and import it again.") }}
+{{ page_header("Check the import", lead="Nothing has been saved yet. Rows with a problem are skipped; fix them in the file and import it again.") }}
 
 <div class="mb-6 flex flex-wrap gap-2">
   {{ badge(_("To add: %(count)s", count=to_add), "success") }}
@@ -11,9 +11,7 @@
   {{ badge(_("Problems: %(count)s", count=problems|length), "danger" if problems else "neutral") }}
 </div>
 
-{% call card(flush=true) %}
-<div class="overflow-x-auto">
-<table class="table">
+{% call data_table("Rows in the file", rows|length) %}
   <thead>
     <tr>
       <th scope="col">{{ _("Line") }}</th>
@@ -36,8 +34,6 @@
     </tr>
     {% endfor %}
   </tbody>
-</table>
-</div>
 {% endcall %}
 
 <form method="post" action="/admin/discoms/import" class="mt-6 flex flex-wrap gap-3">
@@ -45,8 +41,8 @@
   {# The file travels back unchanged and is checked again when saved. #}
   <textarea name="csv_text" hidden>{{ csv_text }}</textarea>
   {% if to_add %}
-  {{ button(_("Add 1 Discom") if to_add == 1 else _("Add %(count)s Discoms", count=to_add)) }}
+  {{ button(_("Add 1 Discom") if to_add == 1 else _("Add %(count)s Discoms", count=to_add), icon_name="plus") }}
   {% endif %}
-  {{ link_button("Back to Discoms", "/admin/discoms") }}
+  {{ link_button("Back to Discoms", "/admin/discoms", icon_name="arrow-left") }}
 </form>
 {% endblock %}
