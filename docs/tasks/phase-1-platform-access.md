@@ -404,7 +404,7 @@ Later pages only reuse these components. A new component is added here, not insi
     2. the 6-digit code emailed to that address
     3. desired User ID, password and confirmation
 - Step 3 suggests User IDs that are free, and says whether a typed one is free.
-- Reserved User IDs: format rules, words refused anywhere or as a whole part (seen through separators, number tails, look-alike digits, doubled letters and plurals), and each Discom's bracketed code kept for that Discom. Admin adds and removes words on a Reserved IDs screen. The rules also apply to staff accounts an Admin creates; existing logins are unchanged.
+- Reserved User IDs: format rules, words refused anywhere or as a whole part (seen through separators, number tails, look-alike digits, doubled letters and plurals), and each Discom's bracketed code kept for that Discom. Every word has a category. Admin adds and removes words on a Reserved IDs screen with a Removed tab that restores them, a compact table that shows more rows as it is scrolled. The rules also apply to staff accounts an Admin creates; existing logins are unchanged.
 - The CAPTCHA from `P0-SEC-01` ([decision record 0006](../adr/0006-self-hosted-captcha.md)):
     - a public route that returns `app.core.captcha.new_challenge()` as JSON
     - the ALTCHA widget's `dist/external` build, its CSS and workers, served from `static/vendor/`

@@ -14,11 +14,21 @@ from app.accounts.service import (
     AccountRuleError,
     create_privileged_account,
     free_word,
+    removed_words,
     reserve_word,
+    reserved_entries,
     reserved_words,
+    restore_word,
     suggest_user_ids,
 )
-from app.accounts.user_id_rules import DEFAULT_ANYWHERE, DEFAULT_PARTS, is_reserved, shape_problem
+from app.accounts.user_id_rules import (
+    CATEGORIES,
+    DEFAULT_ANYWHERE,
+    DEFAULT_PARTS,
+    is_reserved,
+    shape_problem,
+    split_entry,
+)
 from app.audit.service import SYSTEM
 from app.main import create_app
 from tests.accounts.conftest import SignIn, build_organisation, csrf_client
@@ -28,7 +38,8 @@ APP = create_app()
 
 
 def reserved(user_id: str) -> bool:
-    return is_reserved(user_id, list(DEFAULT_ANYWHERE), list(DEFAULT_PARTS))
+    anywhere = [split_entry(entry)[1] for entry in DEFAULT_ANYWHERE]
+    return is_reserved(user_id, anywhere, [split_entry(entry)[1] for entry in DEFAULT_PARTS])
 
 
 @pytest.mark.parametrize(
@@ -57,10 +68,23 @@ def test_p1_acc_02_shapes_that_are_refused(user_id: str) -> None:
     assert shape_problem(user_id)
 
 
-def test_p1_acc_02_every_default_word_is_stored_plain() -> None:
-    for word in [*DEFAULT_ANYWHERE, *DEFAULT_PARTS]:
+def test_p1_acc_02_every_default_word_is_stored_plain_with_a_category() -> None:
+    entries = [split_entry(entry) for entry in [*DEFAULT_ANYWHERE, *DEFAULT_PARTS]]
+    for category, word in entries:
+        assert category in CATEGORIES and category != "other"
         assert word == user_id_rules.plain_word(word)
-    assert all(len(word) >= 4 for word in DEFAULT_ANYWHERE)
+    assert all(len(split_entry(entry)[1]) >= 4 for entry in DEFAULT_ANYWHERE)
+    assert split_entry("oldword") == ("other", "oldword")  # saved before categories
+
+
+def test_p1_acc_02_an_added_word_keeps_its_category(db: Session) -> None:
+    word = "wvz" + "".join("bfghjkqvxz"[int(c, 16) % 10] for c in uuid.uuid4().hex[:6])
+
+    reserve_word(db, SYSTEM, ReservedWordForm(word=word, where="parts", category="government"))
+
+    assert ("government", word) in reserved_entries(db, "parts")
+    with pytest.raises(AccountRuleError, match="category"):
+        reserve_word(db, SYSTEM, ReservedWordForm(word=word + "x", where="parts", category="nonsense"))
 
 
 def test_p1_acc_02_admin_words_apply_and_can_be_freed(db: Session) -> None:
@@ -117,7 +141,11 @@ def test_p1_acc_02_admin_page_adds_removes_and_refuses_others(sign_in: SignIn) -
     client = csrf_client(APP)
     word = "qkwy" + "".join("abcdefghij"[int(c, 16) % 10] for c in uuid.uuid4().hex[:4])
 
-    added = client.post("/admin/reserved-ids", data={"word": word, "where": "parts"}, follow_redirects=False)
+    added = client.post(
+        "/admin/reserved-ids",
+        data={"word": word, "where": "parts", "category": "system"},
+        follow_redirects=False,
+    )
     listed = client.get("/admin/reserved-ids").text
     removed = client.post(
         "/admin/reserved-ids/remove", data={"word": word, "where": "parts"}, follow_redirects=False
@@ -125,6 +153,8 @@ def test_p1_acc_02_admin_page_adds_removes_and_refuses_others(sign_in: SignIn) -
 
     assert added.headers["location"] == "/admin/reserved-ids?done=added"
     assert f'value="{word}"' in listed
+    assert 'data-group="System"' in listed
+    assert "data-filter-group" in listed
     assert removed.headers["location"] == "/admin/reserved-ids?done=removed"
     assert f'value="{word}"' not in client.get("/admin/reserved-ids").text
 
@@ -132,3 +162,18 @@ def test_p1_acc_02_admin_page_adds_removes_and_refuses_others(sign_in: SignIn) -
     sign_in(APP, "reviewer")
     refused = csrf_client(APP).post("/admin/reserved-ids", data={"word": "abcd", "where": "parts"})
     assert refused.status_code == 403
+
+
+def test_p1_acc_02_a_removed_word_is_kept_and_restored(db: Session) -> None:
+    word = "kkq" + "".join("bfghjkqvxz"[int(c, 16) % 10] for c in uuid.uuid4().hex[:6])
+    reserve_word(db, SYSTEM, ReservedWordForm(word=word, where="parts", category="system"))
+
+    free_word(db, SYSTEM, ReservedWordForm(word=word, where="parts"))
+    assert (word, "system", "parts") in removed_words(db)
+    assert word not in reserved_words(db, "parts")
+
+    restore_word(db, SYSTEM, ReservedWordForm(word=word, where="parts"))
+    assert ("system", word) in reserved_entries(db, "parts")
+    assert word not in [entry[0] for entry in removed_words(db)]
+    with pytest.raises(AccountRuleError, match="not among the removed"):
+        restore_word(db, SYSTEM, ReservedWordForm(word=word, where="parts"))

@@ -36,7 +36,7 @@
   </tbody>
 {% endcall %}
 
-<form method="post" action="/admin/discoms/import" class="mt-6 flex flex-wrap gap-3">
+<form method="post" action="/admin/discoms/import" data-confirmed-by="preview" class="mt-6 flex flex-wrap gap-3">
   {{ csrf_field() }}
   {# The file travels back unchanged and is checked again when saved. #}
   <textarea name="csv_text" hidden>{{ csv_text }}</textarea>

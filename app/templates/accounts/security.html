@@ -18,7 +18,7 @@
 {% if login.login_type == "member" %}
 <p class="card-text mt-4">{{ _("With two-step sign-in, each sign-in needs your password and a 6-digit code, so a stolen password alone is not enough.") }}</p>
 {% if login.mfa_method %}
-<form method="post" action="/account/security/mfa-off" class="mt-5" novalidate>
+<form method="post" action="/account/security/mfa-off" data-confirm="{{ _('Your account will be protected by the password alone.') }}" data-confirm-title="{{ _('Turn off two-step sign-in?') }}" data-confirm-action="{{ _('Turn off') }}" class="mt-5" novalidate>
   {{ csrf_field() }}
   {% set code_help = "The code from your authenticator app." if login.mfa_method == "totp" else "The code from your latest email. Ask for one below." %}
   {{ field("code", "6-digit code", autocomplete="one-time-code", required=true, inputmode="numeric", maxlength=6, help=code_help, error=_(error) if error else "") }}

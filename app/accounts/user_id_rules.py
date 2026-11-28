@@ -6,40 +6,62 @@ DEFAULT_ANYWHERE and DEFAULT_PARTS are what they start as.
 
 import re
 
+# Why a word is reserved. Shown on the Reserved IDs screen and chosen when adding one.
+CATEGORIES = {
+    "authority": "Authority",
+    "portal": "Portal",
+    "system": "System",
+    "network": "Web and network",
+    "support": "Trust and support",
+    "pages": "Pages and actions",
+    "government": "Government",
+    "placeholder": "Placeholders",
+    "other": "Other",
+}
+
+
+def _entries(groups: dict[str, str]) -> tuple[str, ...]:
+    """Turn {category: "word word"} into the stored form, "category:word"."""
+    return tuple(f"{category}:{word}" for category, words in groups.items() for word in words.split())
+
+
 # Refused wherever they appear in an ID.
-DEFAULT_ANYWHERE = (
-    "admin", "superuser", "sysadm", "webmaster", "postmaster", "hostmaster", "moderator", "itped",
-    "helpdesk", "noreply", "localhost", "official",
-)  # fmt: skip
+DEFAULT_ANYWHERE = _entries(
+    {
+        "authority": "admin superuser moderator",
+        "system": "sysadm localhost",
+        "network": "webmaster postmaster hostmaster",
+        "portal": "itped official",
+        "support": "helpdesk noreply",
+    }
+)
 
 # Refused as the whole ID or as a whole part between . _ and -.
-DEFAULT_PARTS = (
-    # Authority
-    "root", "su", "sudo", "owner", "master", "manager", "director", "chairman", "officer", "staff",
-    "team", "mod",
-    # Portal
-    "aida", "discom", "discoms", "portal", "repository", "member", "reviewer", "approver", "visitor",
-    "secretariat", "association",
-    # System
-    "system", "sys", "service", "daemon", "server", "backup", "database", "db", "operator", "cron",
-    "bot", "robot", "api", "app", "dev", "test", "staging", "prod", "git", "log", "logs", "sql",
-    # Web and network
-    "www", "www1", "web", "http", "https", "ftp", "sftp", "ssh", "ssl", "tls", "dns", "ns1", "ns2",
-    "mx", "tcp", "udp", "smtp", "imap", "pop", "pop3", "mail", "email", "webmail", "ldap", "vpn",
-    "cdn", "proxy", "host", "domain", "website", "url", "uri", "ip", "cloud",
-    # Trust and support
-    "support", "help", "security", "secure", "abuse", "contact", "info", "notice", "notification",
-    "alert", "billing", "privacy", "legal", "audit", "compliance", "verify", "verified",
-    # Pages and actions
-    "login", "logout", "signin", "signup", "register", "account", "password", "reset", "dashboard",
-    "settings", "profile", "search", "static", "health", "healthz", "captcha", "delete", "update",
-    # Government
-    "gov", "govt", "government", "ministry", "india", "bharat", "regulator", "cerc", "cea", "pfc",
-    "rec", "mop",
-    # Placeholders
-    "demo", "guest", "user", "anonymous", "unknown", "null", "nil", "undefined", "none", "true",
-    "false", "default", "example", "sample", "temp",
-)  # fmt: skip
+DEFAULT_PARTS = _entries(
+    {
+        "authority": "root su sudo owner master manager director chairman officer staff team mod",
+        "portal": "aida discom discoms portal repository member reviewer approver visitor "
+        "secretariat association",
+        "system": "system sys service daemon server backup database db operator cron bot robot api app "
+        "dev test staging prod git log logs sql",
+        "network": "www www1 web http https ftp sftp ssh ssl tls dns ns1 ns2 mx tcp udp smtp imap pop "
+        "pop3 mail email webmail ldap vpn cdn proxy host domain website url uri ip cloud",
+        "support": "support help security secure abuse contact info notice notification alert billing "
+        "privacy legal audit compliance verify verified",
+        "pages": "login logout signin signup register account password reset dashboard settings profile "
+        "search static health healthz captcha delete update",
+        "government": "gov govt government ministry india bharat regulator cerc cea pfc rec mop",
+        "placeholder": "demo guest user anonymous unknown null nil undefined none true false default "
+        "example sample temp",
+    }
+)
+
+
+def split_entry(entry: str) -> tuple[str, str]:
+    """Return (category, word). An entry saved without a category counts as "other"."""
+    category, found, word = entry.partition(":")
+    return (category, word) if found else ("other", entry)
+
 
 SEPARATORS = re.compile(r"[._-]+")
 # Endings that make an ID look like a web address or a file.

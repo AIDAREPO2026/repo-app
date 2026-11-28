@@ -52,7 +52,7 @@ from app.accounts.tokens import (
     usable_token,
     use_email_code,
 )
-from app.accounts.user_id_rules import is_reserved, plain_word, shape_problem
+from app.accounts.user_id_rules import CATEGORIES, is_reserved, plain_word, shape_problem, split_entry
 from app.audit.service import SYSTEM, Actor, record
 from app.core.constants import (
     EMAIL_CODE_DIGITS,
@@ -882,11 +882,16 @@ def _user_id_open(db: Session, user_id: str, discom: Organisation) -> bool:
     return not _user_id_reserved(db, user_id, discom) and not _user_id_taken(db, user_id)
 
 
-def reserved_words(db: Session, where: str) -> list[str]:
-    """Return one reserved list: "anywhere" or "parts"."""
+def reserved_entries(db: Session, where: str) -> list[tuple[str, str]]:
+    """Return one reserved list, "anywhere" or "parts", as (category, word)."""
     stored = get_setting(db, f"reserved_user_id_{where}")
     assert isinstance(stored, list)  # noqa: S101 - the setting's rule allows nothing else
-    return stored
+    return [split_entry(entry) for entry in stored]
+
+
+def reserved_words(db: Session, where: str) -> list[str]:
+    """Return just the words of one reserved list."""
+    return [word for _, word in reserved_entries(db, where)]
 
 
 def reserve_word(db: Session, actor: Actor, form: ReservedWordForm) -> None:
@@ -895,21 +900,63 @@ def reserve_word(db: Session, actor: Actor, form: ReservedWordForm) -> None:
     smallest = RESERVED_ANYWHERE_MIN if form.where == "anywhere" else RESERVED_WORD_MIN
     if not re.fullmatch(r"[a-z0-9]+", word) or not smallest <= len(word) <= RESERVED_WORD_MAX:
         raise AccountRuleError(f"Use {smallest} to {RESERVED_WORD_MAX} letters or numbers.")
-    words = reserved_words(db, form.where)
-    if word in words:
+    if form.category not in CATEGORIES:
+        raise AccountRuleError("Choose a category from the list.")
+    entries = reserved_entries(db, form.where)
+    if word in reserved_words(db, form.where):
         raise AccountRuleError("That word is already reserved.")
-    if len(words) >= RESERVED_WORDS_LIMIT:
+    if len(entries) >= RESERVED_WORDS_LIMIT:
         raise AccountRuleError("The list is full. Remove a word first.")
-    set_setting(db, f"reserved_user_id_{form.where}", sorted([*words, word]), actor)
+    _save_reserved(db, actor, form.where, [*entries, (form.category, word)])
+    _forget_removed(db, actor, form.where, word)
 
 
 def free_word(db: Session, actor: Actor, form: ReservedWordForm) -> None:
     """Take a word off a reserved list."""
-    words = reserved_words(db, form.where)
-    if form.word not in words:
+    entries = reserved_entries(db, form.where)
+    remaining = [entry for entry in entries if entry[1] != form.word]
+    if len(remaining) == len(entries):
         raise AccountRuleError("That word is not on the list.")
-    remaining = [word for word in words if word != form.word]
-    set_setting(db, f"reserved_user_id_{form.where}", remaining, actor)
+    _save_reserved(db, actor, form.where, remaining)
+    category = next(category for category, word in entries if word == form.word)
+    _forget_removed(db, actor, form.where, form.word)
+    removed = [*_removed_stored(db), f"{form.where}:{category}:{form.word}"]
+    set_setting(db, "reserved_user_id_removed", removed, actor)
+
+
+def removed_words(db: Session) -> list[tuple[str, str, str]]:
+    """Return the words taken off the lists, as (word, category, where)."""
+    parts = (entry.split(":", 2) for entry in _removed_stored(db))
+    return sorted((word, category, where) for where, category, word in parts)
+
+
+def restore_word(db: Session, actor: Actor, form: ReservedWordForm) -> None:
+    """Put a removed word back on the list it came from, with its category."""
+    for word, category, where in removed_words(db):
+        if word == form.word and where == form.where:
+            reserve_word(db, actor, ReservedWordForm(word=word, where=where, category=category))
+            return
+    raise AccountRuleError("That word is not among the removed ones.")
+
+
+def _removed_stored(db: Session) -> list[str]:
+    stored = get_setting(db, "reserved_user_id_removed")
+    assert isinstance(stored, list)  # noqa: S101 - the setting's rule allows nothing else
+    return stored
+
+
+def _forget_removed(db: Session, actor: Actor, where: str, word: str) -> None:
+    """Drop a word from the removed ones, when it is reserved again."""
+    stored = _removed_stored(db)
+    kept = [entry for entry in stored if entry.split(":", 2)[::2] != [where, word]]
+    if kept != stored:
+        set_setting(db, "reserved_user_id_removed", kept, actor)
+
+
+def _save_reserved(db: Session, actor: Actor, where: str, entries: list[tuple[str, str]]) -> None:
+    """Store a list as "category:word" entries; set_setting audits the change."""
+    stored = sorted((f"{category}:{word}" for category, word in entries), key=lambda e: split_entry(e)[1])
+    set_setting(db, f"reserved_user_id_{where}", stored, actor)
 
 
 def _user_id_reserved(db: Session, user_id: str, own: Organisation | None) -> bool:

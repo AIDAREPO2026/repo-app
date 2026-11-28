@@ -153,9 +153,10 @@
   gives the <thead> and <tbody>. label names the table; search is the search box's label,
   and without one there is no box. static/js/shell.js does the filtering.
 #}
-{% macro data_table(label, total, search="", columns=[], copy_label="Copy", file="records") %}
+{% macro data_table(label, total, search="", columns=[], copy_label="Copy", file="records", compact=false, batch=0, groups=[], group_label="") %}
 {% from "macros/icons.html" import icon %}
-<section class="card card-flush data-table"
+<section class="card card-flush data-table{% if compact %} data-table-compact{% endif %}"
+  {%- if batch %} data-batch="{{ batch }}"{% endif %}
   {%- if columns %} data-columns='{{ columns|tojson }}' data-file="{{ file }}"
   data-select-all="{{ _('Select all rows shown') }}" data-select-row="{{ _('Select') }}"
   data-tick="{{ _('Select row') }}" data-untick="{{ _('Deselect row') }}"
@@ -166,11 +167,20 @@
       {{ icon("search") }}
       <input type="search" class="input find-input" data-filter-table placeholder="{{ _(search) }}" aria-label="{{ _(search) }}">
     </div>
+    {# groups is a list of names; each row says its own in data-group. #}
+    {% if groups %}
+    {% from "macros/forms.html" import select %}
+    {% set choices = [("all", _("All"))] %}
+    {% for name in groups %}{% set choices = choices.append((name, _(name))) or choices %}{% endfor %}
+    <div class="data-group" data-filter-group>{{ select("group", group_label, choices, value="all", id="table-group") }}</div>
+    {% endif %}
   </div>
   {% endif %}
   {# Focusable, so the keyboard can scroll it. #}
   <div class="data-scroll" role="region" aria-label="{{ _(label) }}" tabindex="0">
     <table class="table">{{ caller() }}</table>
+    {# Coming into view, it asks table.js for the next batch of rows. #}
+    {% if batch %}<div class="data-more" aria-hidden="true"></div>{% endif %}
   </div>
   <p class="data-footer" role="status">{{ _("Rows shown:") }} <span data-shown>{{ total }}</span> / {{ total }}</p>
   {% if columns %}{{ row_actions(copy_label) }}{% endif %}
@@ -273,6 +283,28 @@
 {% macro dialog_actions(id, label, icon_name, variant="primary") %}
 {{ button("Cancel", "secondary", type="button", commandfor=id, command="close", icon_name="close") }}
 {{ button(label, variant, icon_name=icon_name) }}
+{% endmacro %}
+
+{# The one confirmation step for serious actions: a form with data-confirm opens it before it
+   is sent (static/js/shell.js). base.html renders it once. #}
+{% macro confirm_dialog() %}
+<dialog id="confirm-dialog" class="modal" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-text">
+  <h2 id="confirm-dialog-title" class="section-title">{{ _("Are you sure?") }}</h2>
+  <p id="confirm-dialog-text" class="text-sm text-muted"></p>
+  <div class="dialog-actions">
+    {{ button("Cancel", "secondary", type="button", commandfor="confirm-dialog", command="close", icon_name="close") }}
+    <button type="button" class="btn btn-primary" data-confirm-yes></button>
+  </div>
+</dialog>
+{% endmacro %}
+
+{# Views of one list, as links. items: (label, href, count); current is the href shown now. #}
+{% macro tabs(label, items, current) %}
+<nav class="tabs" aria-label="{{ _(label) }}">
+  {% for name, href, count in items %}
+  <a href="{{ href }}" class="tab"{% if href == current %} aria-current="page"{% endif %}>{{ _(name) }} <span class="tab-count">{{ count }}</span></a>
+  {% endfor %}
+</nav>
 {% endmacro %}
 
 {# A modal dialog. Open it with button(..., commandfor=id, command="show-modal"). #}

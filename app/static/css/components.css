@@ -1980,6 +1980,92 @@
     background: transparent;
   }
 
+  /* Long lists with few columns: tighter rows, so more fit on the screen. */
+  .data-table-compact .table th {
+    padding-block: var(--aida-space-2);
+  }
+
+  .data-table-compact .table td {
+    padding-block: 0.125rem;
+  }
+
+  .data-table-compact .btn.btn-sm.btn-icon {
+    min-height: 1.75rem;
+    min-width: 1.75rem;
+  }
+
+  .data-more {
+    height: 1px;
+  }
+
+  /* Views of one list. */
+  .tabs {
+    display: flex;
+    gap: var(--aida-space-1);
+    width: fit-content;
+    margin-bottom: var(--aida-space-3);
+    padding: var(--aida-space-1);
+    border: 1px solid var(--aida-border);
+    border-radius: var(--aida-radius-md);
+    background: var(--aida-surface-sunken);
+  }
+
+  .tab {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--aida-space-2);
+    padding: var(--aida-space-1) var(--aida-space-3);
+    border-radius: var(--aida-radius-sm);
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-sm);
+    text-decoration: none;
+  }
+
+  .tab:hover {
+    color: var(--aida-text);
+  }
+
+  .tab[aria-current="page"] {
+    background: var(--aida-surface);
+    box-shadow: var(--aida-shadow-0);
+    color: var(--aida-text);
+    font-weight: 600;
+  }
+
+  .tab-count {
+    font-size: var(--aida-text-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The group picker beside the search box: its label is for screen readers only. */
+  .data-toolbar:not([hidden]) {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--aida-space-3);
+  }
+
+  .data-group {
+    width: min(15rem, 100%);
+  }
+
+  .data-group .field {
+    margin: 0;
+  }
+
+  .data-group .field-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .data-group .input:not(.find-input) {
+    min-height: 2.25rem;
+    font-size: var(--aida-text-sm);
+  }
+
   /* ---------- Selected rows, their actions and the row menu ---------- */
 
   .table .row-select {

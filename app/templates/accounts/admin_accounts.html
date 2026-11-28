@@ -66,13 +66,13 @@
         {% if account.password_hash is none or account.login_type == "reviewer" %}
         <div class="mt-5 flex flex-wrap gap-2">
           {% if account.password_hash is none %}
-          <form method="post" action="/admin/accounts/{{ account.id }}/set-password-link">
+          <form method="post" action="/admin/accounts/{{ account.id }}/set-password-link" data-confirm="{{ _('The person gets a new link to set their password. Any earlier link stops mattering once this one is used.') }}" data-confirm-title="{{ _('Send a new link?') }}" data-confirm-action="{{ _('Send link') }}">
             {{ csrf_field() }}
             {{ button("Send a new set-password link", "secondary", size="sm", icon_name="mail") }}
           </form>
           {% endif %}
           {% if account.login_type == "reviewer" %}
-          <form method="post" action="/admin/accounts/{{ account.id }}/reviewer-role">
+          <form method="post" action="/admin/accounts/{{ account.id }}/reviewer-role" data-confirm="{{ _('The primary and alternate Reviewer swap places.') }}" data-confirm-title="{{ _('Change the Reviewer role?') }}" data-confirm-action="{{ _('Change role') }}">
             {{ csrf_field() }}
             <input type="hidden" name="is_alternate" value="{{ 'false' if account.is_alternate else 'true' }}">
             {{ button("Make primary" if account.is_alternate else "Make alternate", "secondary", size="sm", icon_name="swap") }}
@@ -84,7 +84,7 @@
         {% if account.mfa_method %}
         <h3 class="section-title mt-8">{{ _("Two-step sign-in") }}</h3>
         <p class="mb-4 text-sm text-muted">{{ _("Reset it if the person has lost their phone or cannot get codes. Their sessions end, and they set it up again at their next sign-in.") }}</p>
-        <form method="post" action="/admin/accounts/{{ account.id }}/reset-mfa">
+        <form method="post" action="/admin/accounts/{{ account.id }}/reset-mfa" data-confirm="{{ _('Their sessions end and they set it up again at their next sign-in.') }}" data-confirm-title="{{ _('Reset two-step sign-in?') }}" data-confirm-action="{{ _('Reset') }}">
           {{ csrf_field() }}
           {{ button("Reset two-step sign-in", "secondary", icon_name="refresh") }}
         </form>
@@ -92,7 +92,7 @@
 
         <h3 class="section-title mt-8">{{ _("Reassign this role") }}</h3>
         <p class="mb-5 text-sm text-muted">{{ _("%(name)s is deactivated and their sessions end. The new person gets the same role and a link to set their password.", name=account.full_name) }}</p>
-        <form method="post" action="/admin/accounts/{{ account.id }}/reassign">
+        <form method="post" action="/admin/accounts/{{ account.id }}/reassign" data-confirm="{{ _('The current person can no longer sign in, and the new person gets this role. This cannot be undone.') }}" data-confirm-title="{{ _('Deactivate and replace?') }}" data-confirm-action="{{ _('Deactivate and replace') }}">
           {{ csrf_field() }}
           {{ person_fields("reassign-" ~ account.id ~ "-") }}
           {{ button("Deactivate and replace", "danger", icon_name="swap") }}
@@ -105,7 +105,7 @@
 
         {% call modal("deactivate-" ~ account.id, "Deactivate this account?") %}
         <p class="text-sm text-muted">{{ _("%(name)s can no longer sign in, and every session they have open ends at once. This cannot be undone; create a new account to give them access again.", name=account.full_name) }}</p>
-        <form method="post" action="/admin/accounts/{{ account.id }}/deactivate" class="dialog-actions">
+        <form method="post" action="/admin/accounts/{{ account.id }}/deactivate" data-confirmed-by="dialog" class="dialog-actions">
           {{ csrf_field() }}
           {{ dialog_actions("deactivate-" ~ account.id, "Deactivate", "power", "danger") }}
         </form>
@@ -124,7 +124,7 @@
 
 {% call modal("add-account", "Add an account") %}
 <p class="mb-5 text-sm text-muted">{{ _("They get an email with a link to set their password. The link works once, for 60 minutes.") }}</p>
-<form method="post" action="/admin/accounts">
+<form method="post" action="/admin/accounts" data-confirm="{{ _('This person will be able to sign in with the role chosen, after setting a password.') }}" data-confirm-title="{{ _('Create this account?') }}" data-confirm-action="{{ _('Create account') }}">
   {{ csrf_field() }}
   {{ select("login_type", "Role", [("admin", _("Admin")), ("reviewer", _("Reviewer")), ("approver", _("Approver"))], value="admin", required=true) }}
   <label class="check">

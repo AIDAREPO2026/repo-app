@@ -55,6 +55,8 @@ SETTING_RULES: dict[str, SettingRule] = {
     # P1-ACC-02: User IDs nobody may choose, refused anywhere or as a whole part.
     "reserved_user_id_anywhere": SettingRule(default=list(DEFAULT_ANYWHERE), words=True),
     "reserved_user_id_parts": SettingRule(default=list(DEFAULT_PARTS), words=True),
+    # Words Admin took off either list, as "where:category:word", so they can be restored.
+    "reserved_user_id_removed": SettingRule(default=[], words=True),
 }
 
 

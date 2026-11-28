@@ -127,7 +127,7 @@ Before writing a helper, search the codebase. These shared functions must be use
 | Render a button, card, badge, modal or other UI element | `templates/macros/ui.html` and the tokens in `static/css/tokens.css` | `P1-UI-02` |
 | Offer the light or dark theme | `theme_switcher()` in `templates/macros/ui.html` (works through `static/js/shell.js`) | `P1-UI-02` |
 | Open a menu from a button | `menu_panel()` and `page_items()` in `templates/macros/ui.html`, opened with `popovertarget` | `P1-UI-02` |
-| List records in a table | `data_table()` in `templates/macros/ui.html` (search, fixed header, fits the screen height, row count). With `columns`, and `data-export` and `data-copy` on each row, it adds checkboxes, copy and CSV export, and a row menu (`static/js/table.js`) | `P1-UI-02` |
+| List records in a table | `data_table()` in `templates/macros/ui.html` (search, fixed header, fits the screen height, row count; `compact` for long narrow lists, `batch` to show rows as the reader scrolls). With `columns`, and `data-export` and `data-copy` on each row, it adds checkboxes, copy and CSV export, and a row menu (`static/js/table.js`) | `P1-UI-02` |
 | Put a page's actions beside the breadcrumbs | `{% block page_actions %}` in a page that extends `templates/base.html` (see `accounts/admin_discoms.html`) | `P1-UI-02` |
 | Render a sign-in, registration or other page shown before signing in | Extend `templates/layouts/auth.html` and start with `auth_heading()` | `P1-UI-02` |
 
@@ -155,6 +155,10 @@ Before writing a helper, search the codebase. These shared functions must be use
 - Pages meet WCAG 2.1 AA: labels on every input, visible focus, landmarks, a skip link, and errors linked to their fields.
 - Wrap user-facing text in `_()` so Hindi can be added later (SRS 5.5).
 - Never render an admin-only field in a Member or public template. Pass view schemas that do not contain those fields (`P2-CON-02`).
+
+**Confirm before anything serious**
+
+Any action that removes, deactivates, resets, grants or changes who can do what asks first, everywhere in the system. Put `data-confirm`, `data-confirm-title` and `data-confirm-action` on its form; `static/js/shell.js` shows the shared dialog and sends nothing until the person agrees. Say what will happen and whether it can be undone. If another step already confirms it, mark the form `data-confirmed-by` (`dialog`, `checkbox` or `preview`). A form that is not serious is listed in `SAFE_ACTIONS` in `tests/core/test_ui_rules.py`, and that test fails for any other.
 
 **Checks every UI change must pass**
 

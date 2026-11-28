@@ -54,3 +54,24 @@ def test_p1_ui_02_scripts_never_declare_the_same_top_level_name() -> None:
         for name in names:
             assert name not in seen, f"{name} is declared in {seen[name]} and {script.name}"
             seen[name] = script.name
+
+
+# Actions that are not serious: they start or end the person's own session, finish a step they
+# are in the middle of, or can be undone at once without changing who may do what.
+SAFE_ACTIONS = {
+    "/logout", "/login", "/register", "/register/code", "/register/account", "/set-password/{{ token }}",
+    "/mfa", "/mfa/setup", "/mfa/send-code", "/mfa/cancel", "/account/security/send-code",
+    "/account/security/mfa-on", "/admin/discoms/import/preview", "/admin/reserved-ids",
+    "/admin/reserved-ids/restore",
+}  # fmt: skip
+POST_FORM = re.compile(r'<form method="post" action="(.*?)"((?:[^>]|(?<=%)>)*)>', re.S)
+
+
+@pytest.mark.parametrize("template", TEMPLATES, ids=lambda path: path.name)
+def test_p1_ui_02_serious_actions_are_confirmed(template: Path) -> None:
+    for action, attributes in POST_FORM.findall(template.read_text()):
+        confirmed = "data-confirm=" in attributes or "data-confirmed-by=" in attributes
+        assert confirmed or action in SAFE_ACTIONS, (
+            f"{action}: add data-confirm (see docs/conventions.md), "
+            "or add it to SAFE_ACTIONS if it is not serious"
+        )

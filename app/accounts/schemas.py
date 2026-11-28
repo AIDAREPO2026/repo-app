@@ -51,6 +51,8 @@ class ReservedWordForm(BaseModel):
 
     word: str = Field(min_length=1, max_length=60)
     where: Literal["anywhere", "parts"]
+    # Why it is reserved. Not needed to remove a word.
+    category: str = Field(default="other", max_length=30)
 
 
 class SetPasswordForm(BaseModel):

@@ -65,9 +65,11 @@ from app.accounts.service import (
     reassign_account,
     register_member,
     registration_discoms,
+    removed_words,
     reserve_word,
-    reserved_words,
+    reserved_entries,
     reset_mfa,
+    restore_word,
     send_email_code,
     send_registration_code,
     send_set_password_link,
@@ -85,6 +87,7 @@ from app.accounts.service import (
     user_id_state,
     verified_registration,
 )
+from app.accounts.user_id_rules import CATEGORIES
 from app.audit.service import Actor
 from app.core import captcha
 from app.core.constants import LOGIN_TYPES
@@ -779,21 +782,40 @@ RESERVED_PATH = "/admin/reserved-ids"
 RESERVED_DONE_MESSAGES = {
     "added": "Word reserved. It applies to new User IDs from now.",
     "removed": "Word removed. It can be used in new User IDs again.",
+    "restored": "Word restored. It is reserved again.",
 }
 
 
 def render_reserved(
-    request: Request, db: Session, admin: Login, error: str = "", done: str = "", status_code: int = 200
+    request: Request,
+    db: Session,
+    admin: Login,
+    error: str = "",
+    done: str = "",
+    view: str = "",
+    status_code: int = 200,
 ) -> HTMLResponse:
     """Render the words nobody may use in a User ID."""
     messages = [("error", error)] if error else []
     messages += done_message(done, RESERVED_DONE_MESSAGES)
-    words = [(word, where) for where in ("anywhere", "parts") for word in reserved_words(db, where)]
+    words = [
+        (word, CATEGORIES.get(category, CATEGORIES["other"]), where)
+        for where in ("anywhere", "parts")
+        for category, word in reserved_entries(db, where)
+    ]
+    removed = [
+        (word, CATEGORIES.get(category, CATEGORIES["other"]), where)
+        for word, category, where in removed_words(db)
+    ]
+    show_removed = view == "removed"
     context = {
+        "show_removed": show_removed,
+        "counts": (len(words), len(removed)),
         "title": "Reserved IDs",
         "nav": nav_for("admin"),
         "breadcrumbs": breadcrumbs("admin", Crumb("Reserved IDs")),
-        "words": sorted(words),
+        "words": removed if show_removed else sorted(words),
+        "categories": list(CATEGORIES.items()),
         "messages": messages,
     }
     return templates.TemplateResponse(
@@ -802,9 +824,11 @@ def render_reserved(
 
 
 @router.get(RESERVED_PATH, response_class=HTMLResponse)
-def reserved_ids_page(request: Request, db: DbSession, admin: AdminLogin, done: str = "") -> HTMLResponse:
-    """Show the reserved words."""
-    return render_reserved(request, db, admin, done=done)
+def reserved_ids_page(
+    request: Request, db: DbSession, admin: AdminLogin, done: str = "", view: str = ""
+) -> HTMLResponse:
+    """Show the reserved words, or the removed ones."""
+    return render_reserved(request, db, admin, done=done, view=view)
 
 
 @router.post(RESERVED_PATH)
@@ -830,6 +854,19 @@ def reserved_ids_remove(
         free_word(db, actor, form)
 
     done_url = f"{RESERVED_PATH}?done=removed"
+    return run_admin_change(request, db, admin, change, done_url, render_reserved)
+
+
+@router.post(RESERVED_PATH + "/restore")
+def reserved_ids_restore(
+    request: Request, db: DbSession, admin: AdminLogin, form: Annotated[ReservedWordForm, Form()]
+) -> Response:
+    """Reserve a removed word again."""
+
+    def change(actor: Actor) -> None:
+        restore_word(db, actor, form)
+
+    done_url = f"{RESERVED_PATH}?done=restored&view=removed"
     return run_admin_change(request, db, admin, change, done_url, render_reserved)
 
 
