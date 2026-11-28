@@ -30,7 +30,6 @@
                placeholder="{{ _('Find a page…') }}" aria-label="{{ _('Find a page') }}">
       </div>
       <div class="sidebar-nav">{{ nav_menu(nav) }}</div>
-      {{ account_panel(login, "sidebar") }}
     </aside>
 
     <header class="topbar mobile-bar">
@@ -45,7 +44,6 @@
         <button type="button" class="icon-button" commandfor="menu-drawer" command="close" aria-label="{{ _('Close menu') }}">{{ icon("close") }}</button>
       </div>
       <div class="flex-1">{{ nav_menu(nav, "Menu") }}</div>
-      {{ account_panel(login, "drawer") }}
     </dialog>
 
     <div class="app-main">
@@ -60,7 +58,10 @@
           {{ breadcrumb_trail(breadcrumbs, nav) }}
         </div>
         {% endif %}
-        {% if page_actions|trim %}<div class="page-actions">{{ page_actions }}</div>{% endif %}
+        <div class="page-tools">
+          {% if page_actions|trim %}<div class="page-actions">{{ page_actions }}</div>{% endif %}
+          {{ account_panel(login, "top") }}
+        </div>
       </div>
       {{ flash_messages(messages|default([])) }}
       <main id="main" tabindex="-1" class="page flex-1 focus:outline-none">

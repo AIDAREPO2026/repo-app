@@ -163,7 +163,8 @@
   /* Signed-in pages float: the sidebar, the breadcrumb pill, the page actions and each card
      are separate surfaces on the canvas. */
   .app-shell {
-    background: var(--aida-canvas);
+    background: var(--aida-backdrop), var(--aida-canvas);
+    background-attachment: fixed;
   }
 
   .app-main {
@@ -377,25 +378,34 @@
   }
 
   .page-bar,
-  .page-actions {
+  .page-actions,
+  .page-tools,
+  .account-panel {
     display: flex;
     align-items: center;
-    gap: var(--aida-space-1);
+    gap: var(--aida-space-2);
     max-width: 100%;
+  }
+
+  .page-bar {
+    gap: var(--aida-space-1);
     padding: var(--aida-space-1);
     border: 1px solid var(--aida-border);
     border-radius: var(--aida-radius-lg);
-    background: var(--aida-surface);
+    background: var(--aida-surface-glass);
     box-shadow: var(--aida-shadow-1);
+  }
+
+  /* The right end of the row: the page's actions, then the theme and account buttons. */
+  .page-tools {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--aida-space-4);
+    margin-left: auto;
   }
 
   .page-actions {
     flex-wrap: wrap;
-    margin-left: auto;
-  }
-
-  .page-actions .btn {
-    border-radius: var(--aida-radius-md);
   }
 
   /* Only wide screens have a sidebar to hide. A rule separates it from the trail. */
@@ -405,18 +415,9 @@
     height: 2rem;
   }
 
-  /* On wide screens the row stays in view. It is the canvas colour and covers the gap above,
-     so scrolled content never shows around the floating pills. */
+  /* The row scrolls with the page: pinning it needed a strip behind it, which read as a
+     box around the buttons. Lists keep it in view anyway, since only their rows scroll. */
   @media (min-width: 64rem) {
-    .page-dock {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      margin-top: calc(-1 * var(--aida-space-3));
-      padding-block: var(--aida-space-3) var(--aida-space-1);
-      background: var(--aida-canvas);
-    }
-
     .page-bar .sidebar-toggle:not([hidden]) {
       display: grid;
       margin-right: var(--aida-space-1);
@@ -691,13 +692,20 @@
     background: var(--aida-surface-hover);
   }
 
-  .account-panel {
-    display: flex;
-    align-items: center;
-    gap: var(--aida-space-3);
-    margin-top: var(--aida-space-4);
-    padding: var(--aida-space-3) var(--aida-space-2) 0;
-    border-top: 1px solid color-mix(in srgb, var(--aida-border) 60%, transparent);
+  .account-panel .avatar {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--aida-accent) 40%, transparent);
+  }
+
+  /* On phones the avatar stands for the account; the name stays for screen readers. */
+  @media (max-width: 47.99rem) {
+    .account-panel .account-name {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
   }
 
   /* An enrolment QR code (P1-ACC-10). Always dark on white, which scanners need in dark mode too. */
@@ -984,6 +992,90 @@
   .item-card:active {
     transform: scale(var(--aida-press-scale-large));
     transition: transform var(--aida-duration-fast) var(--aida-ease-enter);
+  }
+
+  /* ---------- Glass: panels let the backdrop through ---------- */
+
+  .app-shell .sidebar,
+  .app-shell .card,
+  .page-bar,
+  .menu,
+  .modal,
+  .drawer {
+    background: var(--aida-surface-glass);
+    -webkit-backdrop-filter: var(--aida-glass-filter);
+    backdrop-filter: var(--aida-glass-filter);
+    /* A bright inner edge, like light catching the pane. */
+    border-color: color-mix(in srgb, var(--aida-border) 70%, transparent);
+  }
+
+  /* Without backdrop-filter, translucency would leave text over busy content: go solid. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .app-shell .sidebar,
+    .app-shell .card,
+    .page-bar,
+    .menu,
+    .modal,
+    .drawer {
+      background: var(--aida-surface);
+    }
+  }
+
+  /* ---------- Forms: filled fields that clear to the surface when used ---------- */
+
+  .modal .field-label,
+  .drawer .field-label,
+  .card .field-label,
+  .auth-main .field-label {
+    margin-bottom: var(--aida-space-1);
+    color: var(--aida-text-muted);
+    font-size: var(--aida-text-xs);
+    font-weight: 650;
+  }
+
+  .input:not(.find-input) {
+    min-height: 3rem;
+    padding-inline: var(--aida-space-4);
+    background-color: color-mix(in srgb, var(--aida-surface-sunken) 70%, transparent);
+    box-shadow: none;
+  }
+
+  .input:not(.find-input):focus-visible {
+    background-color: var(--aida-surface);
+    box-shadow: var(--aida-field-halo);
+  }
+
+  .input[type="file"] {
+    padding: var(--aida-space-2);
+  }
+
+  .input[type="file"]::file-selector-button {
+    margin-right: var(--aida-space-3);
+    padding: var(--aida-space-1) var(--aida-space-3);
+    border: 1px solid var(--aida-border);
+    border-radius: var(--aida-radius-sm);
+    background: var(--aida-surface);
+    color: var(--aida-text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .check input {
+    width: 1.125rem;
+    height: 1.125rem;
+    accent-color: var(--aida-accent);
+  }
+
+  /* A dialog's heading and its buttons are set off by hairlines. */
+  .dialog-header {
+    padding-bottom: var(--aida-space-3);
+    border-bottom: 1px solid var(--aida-border);
+  }
+
+  .dialog-actions {
+    padding-top: var(--aida-space-4);
+    border-top: 1px solid var(--aida-border);
   }
 
   /* ---------- Hiding and showing the sidebar ---------- */

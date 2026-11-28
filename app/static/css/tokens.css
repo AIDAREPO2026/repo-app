@@ -107,9 +107,9 @@
   --aida-space-8: 4rem;
 
   /* Corner radii. */
-  --aida-radius-sm: 0.25rem;
-  --aida-radius-md: 0.375rem;
-  --aida-radius-lg: 0.5rem;
+  --aida-radius-sm: 0.5rem;
+  --aida-radius-md: 0.75rem;
+  --aida-radius-lg: 1.125rem;
   --aida-radius-full: 999px;
 
   /* Shadow depths: resting cards, and things that float (menus, modals). By night
@@ -166,7 +166,15 @@
   /* The loading placeholder's pulse (keyframes in components.css). */
   --aida-skeleton-animation: aida-pulse 1.6s ease-in-out infinite;
 
-  /* Translucent glass, used only by the top bar and modal scrims. */
+  /* Panels of the signed-in pages: a translucent surface over a soft brand wash, so the
+     blur has something to show. Solid for reduced transparency and more contrast. */
+  --aida-surface-glass: light-dark(rgb(255 255 255 / 0.66), rgb(33 36 42 / 0.66));
+  --aida-backdrop:
+    radial-gradient(48rem 30rem at 100% 0%, color-mix(in srgb, var(--aida-brand-blue) 16%, transparent), transparent 70%),
+    radial-gradient(40rem 28rem at 0% 100%, color-mix(in srgb, var(--aida-brand-amber) 10%, transparent), transparent 70%),
+    radial-gradient(36rem 24rem at 35% 0%, color-mix(in srgb, var(--aida-brand-blue) 8%, transparent), transparent 70%);
+
+  /* Translucent glass, used by the top bar and modal scrims. */
   --aida-glass: light-dark(rgb(255 255 255 / 0.72), rgb(28 30 35 / 0.72));
   --aida-glass-filter: blur(20px) saturate(180%);
   --aida-scrim: rgb(6 12 22 / 0.45);
@@ -202,6 +210,7 @@
 @media (prefers-reduced-transparency: reduce) {
   :root {
     --aida-glass: var(--aida-surface);
+    --aida-surface-glass: var(--aida-surface);
     --aida-glass-filter: none;
     --aida-scrim: rgb(6 12 22 / 0.7);
     --aida-scrim-filter: none;
@@ -215,6 +224,7 @@
     --aida-border-strong: light-dark(#0f1b2d, #edf2f8);
     --aida-text-muted: light-dark(#2c3a4e, #d2dbe6);
     --aida-glass: var(--aida-surface);
+    --aida-surface-glass: var(--aida-surface);
     --aida-glass-filter: none;
     --aida-scrim: rgb(6 12 22 / 0.8);
     --aida-scrim-filter: none;

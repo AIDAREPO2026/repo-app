@@ -68,12 +68,13 @@
 </footer>
 {% endmacro %}
 
-{# Who is signed in: a button opening their account menu, with the theme button beside it. #}
+{# Who is signed in, at the top right: the theme button and a button opening the account menu. #}
 {% macro account_panel(login, id) %}
 {% from "macros/forms.html" import csrf_field with context %}
 {% from "macros/ui.html" import menu_panel, theme_switcher with context %}
 {% set name = login.full_name or login.user_id %}
 <div class="account-panel">
+  {{ theme_switcher(id ~ "-theme") }}
   <button type="button" class="account-button" popovertarget="{{ id }}-account">
     <span class="avatar" aria-hidden="true">{{ name[:1]|upper }}</span>
     <span class="account-name">{{ name }}<span class="account-role">{{ _(ROLE_NAMES[login.login_type]) }}</span></span>
@@ -85,6 +86,5 @@
     <button type="submit" class="menu-item"><span class="menu-icon">{{ icon("sign-out") }}</span><span class="menu-text">{{ _("Sign out") }}</span></button>
   </form>
   {% endcall %}
-  {{ theme_switcher(id ~ "-theme") }}
 </div>
 {% endmacro %}

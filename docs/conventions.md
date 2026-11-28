@@ -161,7 +161,7 @@ The `apple-design` skill in `.claude/skills/` is the reference for look and feel
 - Use CSS transitions and the View Transitions API (`hx-swap="... transition:true"` for HTMX swaps). Spring or animation libraries need tech lead approval and are only for real gesture features.
 - Do not add drag, flick or rubber-band physics, sound or haptics to the web portal.
 - Open and close modals, drawers and menus along the same path, and from the control that opened them.
-- Use translucent glass (`backdrop-filter`) only for the top bar and modal scrims. Text on it must pass WCAG AA contrast, with a solid fallback.
+- Use translucent glass (`backdrop-filter`) for the panels of signed-in pages (sidebar, cards, breadcrumb bar), menus, dialogs, the top bar and modal scrims, through `--aida-surface-glass` and `--aida-glass`. Text on it must pass WCAG AA contrast, with a solid fallback.
 - Respect `prefers-reduced-motion` (switch to a short cross-fade or no motion), `prefers-reduced-transparency` (solid surfaces) and `prefers-contrast: more` (solid surfaces, stronger borders). Nothing may flash more than three times a second.
 - Use the `system-ui` font stack, with size in `rem`, tighter letter-spacing on large headings and none on body text. Do not use Apple's SF Pro font files on the web, and do not copy Apple's own designs, icons or assets.
 - Keep the tone calm and professional: no confetti, looping or attention-seeking motion; the only bounce is the short spring on a control the person is using on a governed knowledge portal.
