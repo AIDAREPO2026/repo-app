@@ -76,6 +76,15 @@ packages = ["app"]
 module = ["qrcode", "qrcode.*"]
 ignore_missing_imports = true
 
+# Celery ships without type hints either, so its task decorator cannot be typed.
+[[tool.mypy.overrides]]
+module = ["celery", "celery.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["workers.email"]
+disallow_untyped_decorators = false
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # Lets tests import `app` without installing the project as a package.

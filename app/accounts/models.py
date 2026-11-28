@@ -72,6 +72,7 @@ class Login(Base):
         CheckConstraint("login_type = 'member' OR full_name IS NOT NULL", name="privileged_has_name"),
         CheckConstraint("NOT is_alternate OR login_type = 'reviewer'", name="alternate_is_reviewer"),
         CheckConstraint("failed_count >= 0", name="failed_count_not_negative"),
+        CheckConstraint("status <> 'declined' OR decline_reason IS NOT NULL", name="declined_has_reason"),
         CheckConstraint(one_of("mfa_method", MFA_METHODS), name="mfa_method"),
         CheckConstraint(
             "mfa_method IS DISTINCT FROM 'totp' OR mfa_totp_secret IS NOT NULL", name="totp_has_secret"
@@ -119,6 +120,10 @@ class Login(Base):
     login_type: Mapped[str] = mapped_column(Text)
     organisation_id: Mapped[uuid.UUID | None] = mapped_column(UUID, ForeignKey("organisation.id"))
     organisation: Mapped[Organisation | None] = relationship()
+    # FR-1.3: who approved or declined a Member registration, when, and why it was declined.
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    verified_by: Mapped[uuid.UUID | None] = mapped_column(UUID, ForeignKey("login.id"))
+    decline_reason: Mapped[str | None] = mapped_column(String(1000))
     full_name: Mapped[str | None] = mapped_column(String(200))
     is_alternate: Mapped[bool] = mapped_column(Boolean, server_default="false")
     status: Mapped[str] = mapped_column(Text, server_default="pending")

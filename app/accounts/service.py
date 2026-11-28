@@ -633,6 +633,69 @@ TEST_DISCOMS = (
 SEED_ENVIRONMENTS = ("local", "development", "test", "staging")
 
 
+def pending_registrations(db: Session) -> list[Login]:
+    """Return the Member registrations waiting for ITPED, oldest first (FR-1.3)."""
+    query = (
+        select(Login)
+        .where(Login.login_type == "member", Login.status == "pending")
+        .order_by(Login.created_at)
+    )
+    return list(db.scalars(query))
+
+
+def approve_registration(db: Session, actor: Actor, login_id: uuid.UUID, sign_in_url: str) -> None:
+    """Activate a pending Member login and tell the Discom (FR-1.4)."""
+    login = _undecided_registration(db, login_id)
+    if _discom_inactive(login):
+        raise AccountRuleError("This Discom is deactivated. Reactivate it first, or decline the request.")
+    _decide(db, actor, login, "active", "accounts.registration_approve")
+    context = {"discom": _discom_name(login), "user_id": login.user_id, "link": sign_in_url}
+    send_email(login.email, "Your AIDA portal login is active", "email/registration_approved.txt", context)
+
+
+def decline_registration(db: Session, actor: Actor, login_id: uuid.UUID, reason: str) -> None:
+    """Decline a pending registration with a reason, which frees the Discom to register again."""
+    reason = reason.strip()
+    if not reason:
+        raise AccountRuleError("Give a reason for declining. The Discom receives it.")
+    login = _undecided_registration(db, login_id)
+    login.decline_reason = reason
+    _decide(db, actor, login, "declined", "accounts.registration_decline", {"reason": reason})
+    context = {"discom": _discom_name(login), "reason": reason}
+    send_email(login.email, "Your AIDA portal registration", "email/registration_declined.txt", context)
+
+
+def _undecided_registration(db: Session, login_id: uuid.UUID) -> Login:
+    """Return a pending Member login, locked so two Admins cannot both decide it."""
+    login = db.get(Login, login_id, with_for_update=True, populate_existing=True)
+    if login is None or login.login_type != "member" or login.status != "pending":
+        raise AccountRuleError("This request is not waiting for a decision. Someone may have decided it.")
+    return login
+
+
+def _decide(
+    db: Session,
+    actor: Actor,
+    login: Login,
+    status: str,
+    action: str,
+    details: dict[str, str] | None = None,
+) -> None:
+    """Save the decision with who made it and when, and audit it."""
+    login.status = status
+    login.verified_at = utc_now()
+    login.verified_by = actor.login_id
+    login.updated_at = login.verified_at
+    db.flush()
+    record(db, actor, action, "login", str(login.id), "success", details)
+
+
+def _discom_name(login: Login) -> str:
+    """Return the name of a Member login's Discom."""
+    assert login.organisation is not None  # noqa: S101 - the database requires it for a Member
+    return login.organisation.name
+
+
 def admin_overview(db: Session) -> dict[str, int]:
     """Return the figures on the Admin dashboard: Discoms, waiting requests and ITPED accounts."""
     count = select(func.count()).select_from(Login)

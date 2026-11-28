@@ -11,7 +11,7 @@
     {% if overview is not none %}
     <div class="figures">
       {{ figure("Active Discoms", overview.active_discoms, "On the master list and able to register.", "/admin/discoms") }}
-      {{ figure("Pending requests", overview.pending_requests, "Discom logins waiting for ITPED to verify.") }}
+      {{ figure("Pending requests", overview.pending_requests, "Discom logins waiting for ITPED to verify.", "/admin/registrations") }}
       {{ figure("ITPED accounts", overview.itped_accounts, "Active Admins, Reviewers and the Approver.", "/admin/accounts") }}
     </div>
     {% else %}

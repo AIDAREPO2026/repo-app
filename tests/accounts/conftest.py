@@ -3,6 +3,7 @@
 import hashlib
 import hmac
 import re
+import smtplib
 import uuid
 from collections.abc import Callable, Iterator
 from email.message import EmailMessage
@@ -17,7 +18,6 @@ from sqlalchemy.orm import Session
 
 from app.accounts.guards import current_login
 from app.accounts.models import Login, Organisation
-from app.core import email
 from app.core.sessions import CSRF_HEADER, VISITOR_CSRF_COOKIE
 from tests.conftest import TEST_ENV
 
@@ -49,6 +49,7 @@ def build_login(login_type: str, status: str = "active", organisation: Organisat
         organisation=organisation,
         full_name=None if is_member else "Test Person",
         status=status,
+        decline_reason="Test reason" if status == "declined" else None,
     )
 
 
@@ -130,7 +131,7 @@ class FakeSMTP:
 @pytest.fixture
 def outbox(monkeypatch: pytest.MonkeyPatch) -> list[EmailMessage]:
     FakeSMTP.sent = []
-    monkeypatch.setattr(email.smtplib, "SMTP", FakeSMTP)
+    monkeypatch.setattr(smtplib, "SMTP", FakeSMTP)
     return FakeSMTP.sent
 
 

@@ -28,6 +28,11 @@ TEST_ENV = {
 }
 os.environ.update(TEST_ENV)
 
+# Imported after the environment is set. Jobs run at once in tests, with no worker or queue.
+from workers.celery_app import celery_app  # noqa: E402
+
+celery_app.conf.task_always_eager = True
+
 
 def alembic_config() -> AlembicConfig:
     """Return an Alembic config pointed at the test database."""

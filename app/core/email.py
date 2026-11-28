@@ -1,27 +1,27 @@
-"""Send an email from a plain-text template (security.md: never log the message body)."""
+"""Queue an email rendered from a template (security.md: never log the message body)."""
 
-import smtplib
-from email.message import EmailMessage
+import logging
 from typing import Any
 
-from app.core.config import load_config
 from app.core.templates import templates
+from workers.email import deliver
+
+logger = logging.getLogger(__name__)
 
 
 def send_email(to: str, subject: str, template: str, context: dict[str, Any]) -> None:
-    """Render a template under templates/email/ and send it through SMTP now.
+    """Render a template under templates/email/ and hand it to the worker to send.
 
-    ponytail: sends inside the request, so a mail server outage shows the person an error page;
-    P1-ACC-03 moves sending to a Celery task with retries, keeping this signature.
+    A ".html" template beside the ".txt" one is sent as the formatted version. A mail or
+    queue failure never undoes the change that caused the email; it is logged.
     """
-    config = load_config()
-    message = EmailMessage()
-    message["From"] = config.mail_from
-    message["To"] = to
-    message["Subject"] = subject
-    message.set_content(templates.env.get_template(template).render(context))
-    with smtplib.SMTP(config.smtp_host, config.smtp_port, timeout=10) as smtp:
-        if config.smtp_username:
-            smtp.starttls()
-            smtp.login(config.smtp_username, config.smtp_password)
-        smtp.send_message(message)
+    text = templates.env.get_template(template).render(context)
+    html_name = template.removesuffix(".txt") + ".html"
+    html = ""
+    if html_name in templates.env.list_templates():
+        html = templates.env.get_template(html_name).render(context)
+    try:
+        # The arguments can hold a sign-in code or link, so keep them out of the worker's logs.
+        deliver.apply_async((to, subject, text, html), argsrepr="(hidden)", kwargsrepr="{}")
+    except Exception:  # noqa: BLE001 - any queue error must not fail the person's request
+        logger.exception("Could not queue an email: %s", subject)
