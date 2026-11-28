@@ -9,7 +9,7 @@ from typing import Annotated, Any
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from sqlalchemy.orm import Session
 
 from app.accounts.discom_csv import DiscomCsvError, ImportRow
@@ -21,6 +21,7 @@ from app.accounts.guards import (
     mfa_pending_login,
     public_route,
     require_login_type,
+    visitor_actor,
 )
 from app.accounts.models import Login, Organisation
 from app.accounts.schemas import (
@@ -32,6 +33,7 @@ from app.accounts.schemas import (
     NextForm,
     PersonForm,
     PrivilegedAccountForm,
+    RegistrationForm,
     ReviewerRoleForm,
     SetPasswordForm,
     SignInForm,
@@ -52,6 +54,8 @@ from app.accounts.service import (
     privileged_account,
     privileged_accounts,
     reassign_account,
+    register_member,
+    registration_discoms,
     reset_mfa,
     send_email_code,
     send_set_password_link,
@@ -66,16 +70,15 @@ from app.accounts.service import (
     turn_on_member_mfa,
 )
 from app.audit.service import Actor
+from app.core import captcha
 from app.core.constants import LOGIN_TYPES
 from app.core.db import DbSession
 from app.core.navigation import Crumb, breadcrumbs, nav_for
 from app.core.sessions import (
     VISITOR_CSRF_COOKIE,
     clear_session_cookie,
-    client_ip,
     new_visitor_csrf_cookie,
     set_cookie,
-    user_agent,
 )
 from app.core.templates import templates
 
@@ -554,7 +557,7 @@ def set_password_submit(
     request: Request, db: DbSession, token: str, form: Annotated[SetPasswordForm, Form()]
 ) -> Response:
     """Set the password once, then send the person to sign in."""
-    actor = Actor(kind="anonymous", ip=client_ip(request), user_agent=user_agent(request))
+    actor = visitor_actor(request)
     try:
         problems = set_password_from_link(db, token, form.password, form.confirm_password, actor)
     except AccountRuleError:
@@ -562,6 +565,58 @@ def set_password_submit(
     if problems:
         return render_set_password(request, token, usable=True, problems=problems, status_code=400)
     return RedirectResponse(LOGIN_PATH, status_code=303)
+
+
+# FR-1.1, FR-1.2: a Discom asks for its Member login through a public, CAPTCHA-protected form.
+REGISTER_PATH = "/register"
+
+
+def render_registration(
+    request: Request,
+    db: Session,
+    form: RegistrationForm | None = None,
+    errors: dict[str, str] | None = None,
+    status_code: int = 200,
+) -> HTMLResponse:
+    """Render the registration form, with the visitor's answers and problems when sent back."""
+    context = {
+        "title": "Register your Discom",
+        "discoms": registration_discoms(db),
+        "form": form or RegistrationForm(),
+        "errors": errors or {},
+    }
+    return render_visitor_form(request, "accounts/register.html", context, status_code)
+
+
+@router.get(REGISTER_PATH, response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def register_page(request: Request, db: DbSession) -> HTMLResponse:
+    """Show the registration form."""
+    return render_registration(request, db)
+
+
+@router.post(REGISTER_PATH, response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def register_submit(request: Request, db: DbSession, form: Annotated[RegistrationForm, Form()]) -> Response:
+    """Check the CAPTCHA, record the request, then show the one "sent to ITPED" page."""
+    state = request.app.state
+    captcha_passed = captcha.verify(form.altcha, state.secret_key, state.redis)
+    errors = register_member(db, visitor_actor(request), form, captcha_passed)
+    if errors:
+        return render_registration(request, db, form, errors, status_code=400)
+    return RedirectResponse(REGISTER_PATH + "/sent", status_code=303)
+
+
+@router.get(REGISTER_PATH + "/sent", response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def registration_sent(request: Request) -> HTMLResponse:
+    """Confirm the request was sent. Shown for every accepted form, valid domain or not."""
+    context = {"title": "Request sent", "nav": nav_for(None)}
+    return templates.TemplateResponse(request, "accounts/registration_sent.html", context)
+
+
+@router.get("/captcha/challenge", dependencies=[Depends(public_route)])
+def captcha_challenge(request: Request) -> JSONResponse:
+    """Return a new signed CAPTCHA challenge for the ALTCHA widget (decision record 0006)."""
+    challenge = captcha.new_challenge(request.app.state.secret_key)
+    return JSONResponse(challenge, headers={"Cache-Control": "no-store"})
 
 
 @router.get("/_styleguide", response_class=HTMLResponse, dependencies=[Depends(public_route)])
