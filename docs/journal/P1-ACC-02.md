@@ -2,10 +2,10 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In progress |
+| Status | In review |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p1-acc-02-registration` |
-| Pull request | Not opened |
+| Pull request | [#19](https://github.com/AIDAREPO2026/repo-app/pull/19) |
 | Started | 2026-11-28 |
 | Finished | Not finished |
 
@@ -17,7 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
-| 2026-11-28 | Raghvendra Singh | Built the public `/register` form, the `/captcha/challenge` route, the vendored ALTCHA widget (3.7.0, external build) and the registration rules. Checked in the browser: the real widget solves our challenge under the CSP and a request creates a pending Member login. Unit tests (279), e2e and axe pass. Next: review. |
+| 2026-11-28 | Raghvendra Singh | Built the public `/register` form, the `/captcha/challenge` route, the vendored ALTCHA widget (3.7.0, external build) and the registration rules. Checked in the browser: the real widget solves our challenge under the CSP and a request creates a pending Member login. Unit tests (279), e2e and axe pass. Opened #19 and set the tracker row to In review. Next: review. |
 | 2026-11-28 | Raghvendra Singh | Started the task. |
 
 ## Decisions and deviations
