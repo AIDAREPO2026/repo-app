@@ -5,7 +5,7 @@
 | Status | In review |
 | Owner | Raghvendra Singh |
 | Branch | `feat/p1-acc-03-admin-verification` |
-| Pull request | Not opened |
+| Pull request | [#33](https://github.com/AIDAREPO2026/repo-app/pull/33) |
 | Started | 2026-11-28 |
 | Finished | Not finished |
 
