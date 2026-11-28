@@ -43,8 +43,8 @@ def test_p1_ui_02_breadcrumbs_start_at_the_dashboard_and_end_unlinked() -> None:
     trail = breadcrumbs("admin", Crumb("Accounts", "/admin/accounts"), Crumb("Asha Rao", "/ignored"))
 
     assert trail == [
-        Crumb("Dashboard", "/dashboard/admin"),
-        Crumb("Accounts", "/admin/accounts"),
+        Crumb("Dashboard", "/dashboard/admin", "grid"),
+        Crumb("Accounts", "/admin/accounts", "users"),
         Crumb("Asha Rao"),
     ]
 
@@ -55,8 +55,11 @@ def test_p1_ui_02_breadcrumbs_markup_marks_the_current_page() -> None:
     html = str(macro(breadcrumbs("reviewer", Crumb("Style guide"))))
 
     assert '<nav aria-label="Breadcrumb">' in html
-    assert '<a href="/dashboard/reviewer" class="crumb-link">Dashboard</a>' in html
-    assert '<span class="crumb-current" aria-current="page">Style guide</span>' in html
+    # The way home shows its icon; the name stays for screen readers.
+    assert '<a href="/dashboard/reviewer" class="crumb-link" title="Dashboard">' in html
+    assert '<span class="sr-only">Dashboard</span></a>' in html
+    assert 'aria-current="page"' in html
+    assert '<span class="crumb-label">Style guide</span>' in html
 
 
 def test_p1_ui_02_theme_switcher_offers_three_choices_hidden_without_script() -> None:

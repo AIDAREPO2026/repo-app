@@ -23,9 +23,12 @@
 
 {# System, light or dark. static/js/theme.js shows it, marks the choice and remembers it. #}
 {% macro theme_switcher() %}
+{% from "macros/icons.html" import icon %}
 <div class="theme-switcher" role="group" aria-label="{{ _('Theme') }}" hidden>
-  {% for value, label in [("system", "System"), ("light", "Light"), ("dark", "Dark")] %}
-  <button type="button" class="theme-option" data-theme-choice="{{ value }}" aria-pressed="false">{{ _(label) }}</button>
+  {% for value, label, icon_name in [("system", "System", "monitor"), ("light", "Light", "sun"), ("dark", "Dark", "moon")] %}
+  {# Icon only: the label names the button for screen readers, and shows on hover. #}
+  <button type="button" class="theme-option" data-theme-choice="{{ value }}" aria-pressed="false"
+          aria-label="{{ _(label) }}" title="{{ _(label) }}">{{ icon(icon_name) }}</button>
   {% endfor %}
 </div>
 {% endmacro %}
@@ -46,8 +49,17 @@
     {% for crumb in trail %}
     <li class="crumb">
       {% if not loop.first %}<span class="crumb-separator">{{ icon("chevron") }}</span>{% endif %}
-      {% if crumb.path %}<a href="{{ crumb.path }}" class="crumb-link">{{ _(crumb.label) }}</a>
-      {% else %}<span class="crumb-current" aria-current="page">{{ _(crumb.label) }}</span>{% endif %}
+      {% if crumb.path %}
+      {# The way home is its icon alone; every other step keeps its name. #}
+      {% set icon_only = loop.first and crumb.icon %}
+      <a href="{{ crumb.path }}" class="crumb-link"{% if icon_only %} title="{{ _(crumb.label) }}"{% endif %}>
+        {%- if crumb.icon %}{{ icon(crumb.icon) }}{% endif -%}
+        <span{% if icon_only %} class="sr-only"{% endif %}>{{ _(crumb.label) }}</span></a>
+      {% else %}
+      <span class="crumb-current" aria-current="page">
+        {%- if crumb.icon %}{{ icon(crumb.icon) }}{% endif -%}
+        <span class="crumb-label">{{ _(crumb.label) }}</span></span>
+      {% endif %}
     </li>
     {% endfor %}
   </ol>

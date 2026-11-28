@@ -43,6 +43,8 @@ class Crumb(NamedTuple):
 
     label: str
     path: str | None = None
+    # Filled by breadcrumbs() for pages that are in the menu, so both show the same drawing.
+    icon: str = ""
 
 
 def breadcrumbs(login_type: str, *pages: Crumb) -> list[Crumb]:
@@ -55,7 +57,8 @@ def breadcrumbs(login_type: str, *pages: Crumb) -> list[Crumb]:
     trail = [Crumb(home.label, home.path), *pages]
     # The last crumb is where the reader is, so it is never a link.
     trail[-1] = Crumb(trail[-1].label)
-    return trail
+    icons = {link.label: link.icon for link in NAV_BY_LOGIN_TYPE[login_type]}
+    return [crumb._replace(icon=icons.get(crumb.label, "")) for crumb in trail]
 
 
 def nav_for(login_type: str | None) -> list[NavLink]:

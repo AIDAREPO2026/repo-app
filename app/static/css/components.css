@@ -396,6 +396,7 @@
 
   .page-bar-inner {
     display: flex;
+    padding-inline: var(--aida-space-3);
     align-items: center;
     min-height: 3rem;
   }
@@ -428,25 +429,43 @@
     height: 0.75rem;
   }
 
-  .crumb-link {
-    padding: 0.125rem 0.25rem;
+  .crumb-link,
+  .crumb-current {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--aida-space-2);
+    min-height: 2rem;
+    padding: 0 var(--aida-space-2);
     border-radius: var(--aida-radius-sm);
+  }
+
+  .crumb-link {
     color: var(--aida-text-muted);
     text-decoration: none;
   }
 
   .crumb-link:hover {
+    background: var(--aida-surface-hover);
     color: var(--aida-text);
-    text-decoration: underline;
   }
 
   .crumb-current {
-    padding: 0.125rem 0.25rem;
+    min-width: 0;
+    background: var(--aida-accent-subtle);
+    color: var(--aida-accent);
+    font-weight: 600;
+  }
+
+  .crumb-label {
     overflow: hidden;
-    color: var(--aida-text);
-    font-weight: 500;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .crumb-link .icon,
+  .crumb-current .icon {
+    width: 1rem;
+    height: 1rem;
   }
 
   .icon {
@@ -491,12 +510,14 @@
   }
 
   .theme-option {
-    padding: var(--aida-space-1) var(--aida-space-3);
+    display: grid;
+    place-items: center;
+    min-width: 2.5rem;
+    height: 2rem;
     border: 0;
     border-radius: var(--aida-radius-sm);
     background: transparent;
     color: var(--aida-text-muted);
-    font-size: var(--aida-text-sm);
     cursor: pointer;
     /* Above the thumb. */
     position: relative;
@@ -916,6 +937,7 @@
   .nav-link,
   .side-link,
   .page-link,
+  .crumb-link,
   .icon-button,
   .theme-option,
   .action-card,
@@ -927,6 +949,7 @@
   .nav-link:active,
   .side-link:active,
   .page-link:active,
+  .crumb-link:active,
   .icon-button:active,
   .theme-option:active {
     transform: scale(var(--aida-press-scale));
