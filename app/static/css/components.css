@@ -1516,7 +1516,8 @@
     pointer-events: none;
   }
 
-  /* Solid in the colour of its kind: green done, blue note, amber warning, red failure. */
+  /* A white card with a soft shadow; the colour of its kind is on the text, icon and line:
+     green done, blue note, amber warning, red failure. */
   .toast {
     display: flex;
     align-items: center;
@@ -1527,9 +1528,11 @@
     max-width: calc(100vw - 2rem);
     padding: var(--aida-space-3) var(--aida-space-3) var(--aida-space-3) var(--aida-space-3);
     border-radius: var(--aida-radius-lg);
-    background: var(--aida-success);
+    --tone: var(--aida-success);
+    border: 1px solid var(--aida-border);
+    background: var(--aida-surface);
     box-shadow: var(--aida-shadow-2);
-    color: var(--aida-text-on-accent);
+    color: var(--tone);
     font-size: var(--aida-text-sm);
     font-weight: 500;
     pointer-events: auto;
@@ -1563,6 +1566,11 @@
     transition: transform var(--aida-duration-base) var(--aida-ease-settle);
   }
 
+  /* The close button stays quiet, so the message is what carries the colour. */
+  .toast-close {
+    color: var(--aida-text-muted);
+  }
+
   .toast-close:hover {
     background: color-mix(in srgb, currentColor 16%, transparent);
   }
@@ -1572,15 +1580,15 @@
   }
 
   .toast-info {
-    background: var(--aida-info);
+    --tone: var(--aida-info);
   }
 
   .toast-warning {
-    background: var(--aida-warning);
+    --tone: var(--aida-warning);
   }
 
   .toast-danger {
-    background: var(--aida-danger);
+    --tone: var(--aida-danger);
   }
 
   .toast .icon {
@@ -1597,7 +1605,6 @@
     border: 0;
     border-radius: var(--aida-radius-sm);
     background: transparent;
-    color: inherit;
     cursor: pointer;
   }
 
@@ -1620,7 +1627,7 @@
     bottom: 0;
     left: 0;
     height: 3px;
-    background: color-mix(in srgb, currentColor 45%, transparent);
+    background: var(--tone);
     transform-origin: left;
     animation: aida-toast-clock 3s linear forwards;
   }
