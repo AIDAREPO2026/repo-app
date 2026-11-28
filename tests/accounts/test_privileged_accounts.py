@@ -271,3 +271,20 @@ def test_p1_acc_09_create_admin_command_refuses_weak_password(monkeypatch: pytes
     argv = ["create-admin", "--user-id", values["user_id"], "--full-name", "A", "--email", values["email"]]
 
     assert cli.main(argv) == 1
+
+
+def test_fr_2_7_a_filled_role_is_not_offered(sign_in: SignIn, outbox: list[EmailMessage]) -> None:
+    sign_in(APP, "admin")
+    client = csrf_client(APP)
+
+    def offered(value: str) -> bool:
+        return f'<option value="{value}"' in client.get("/admin/accounts").text
+
+    assert offered("approver") and offered("reviewer") and offered("alternate_reviewer")
+    for role in ("approver", "alternate_reviewer"):
+        data = person() | {"login_type": role}
+        assert client.post("/admin/accounts", data=data, follow_redirects=False).status_code == 303
+
+    assert not offered("approver")
+    assert not offered("alternate_reviewer")
+    assert offered("reviewer") and offered("admin")

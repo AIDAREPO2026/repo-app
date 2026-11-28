@@ -17,6 +17,7 @@ Newest first. One line per working session: what was done, what is next.
 
 | Date | Who | Entry |
 | --- | --- | --- |
+| 2026-11-28 | Raghvendra Singh | Add account offered filled Reviewer and Approver seats and refused them on submit. Only free roles are listed now. Branch `fix/p1-acc-09-offer-only-open-roles`. |
 | 2026-11-28 | Raghvendra Singh | With #30: account actions that change access now ask for confirmation first. |
 | 2026-11-28 | Raghvendra Singh | With `P1-UI-02`: deactivating an account and resetting MFA now report as warnings. `done_message()` is shared by the account and Discom pages. (#25) |
 | 2026-11-28 | Raghvendra Singh | Merged and closed #15; the tracker row now says Done. |

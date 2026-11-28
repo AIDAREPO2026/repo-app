@@ -156,6 +156,10 @@ Before writing a helper, search the codebase. These shared functions must be use
 - Wrap user-facing text in `_()` so Hindi can be added later (SRS 5.5).
 - Never render an admin-only field in a Member or public template. Pass view schemas that do not contain those fields (`P2-CON-02`).
 
+**Never offer what will be refused**
+
+A list, menu, button or suggestion shows only what the service would accept now. Leave out a choice that is taken, filled or not allowed, and say why where someone may look for it. The service still checks, for a change made in between. Every `select()` is listed in `OFFERED_CHOICES` in `tests/core/test_ui_rules.py` with how its choices stay acceptable, and that test fails for any other. Buttons and menus are checked in review: look at each in the state where the action is not possible.
+
 **Confirm before anything serious**
 
 Any action that removes, deactivates, resets, grants or changes who can do what asks first, everywhere in the system. Put `data-confirm`, `data-confirm-title` and `data-confirm-action` on its form; `static/js/shell.js` shows the shared dialog and sends nothing until the person agrees. Say what will happen and whether it can be undone. Give its submit button `needs_script=true`, so the form cannot be sent when the script that asks is not running. If another step already confirms it, mark the form `data-confirmed-by` (`dialog`, `checkbox` or `preview`). A form that is not serious is listed in `SAFE_ACTIONS` in `tests/core/test_ui_rules.py`, and that test fails for any other.
