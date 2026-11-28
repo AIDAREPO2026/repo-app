@@ -30,7 +30,7 @@ def test_p1_ui_02_every_result_in_an_address_is_forgotten_once_shown() -> None:
 
 
 def test_p1_ui_02_changes_that_take_something_away_are_never_a_plain_success() -> None:
-    for texts in (router.DONE_MESSAGES, router.DISCOM_DONE_MESSAGES):
+    for texts in (router.DONE_MESSAGES, router.DISCOM_DONE_MESSAGES, router.RESERVED_DONE_MESSAGES):
         for key in texts:
             if TAKES_AWAY.search(key):
                 assert router.done_message(key, texts)[0][0] == "warning", key
@@ -54,3 +54,36 @@ def test_p1_ui_02_scripts_never_declare_the_same_top_level_name() -> None:
         for name in names:
             assert name not in seen, f"{name} is declared in {seen[name]} and {script.name}"
             seen[name] = script.name
+
+
+# Actions that are not serious: they start or end the person's own session, finish a step they
+# are in the middle of, or can be undone at once without changing who may do what.
+SAFE_ACTIONS = {
+    "/logout", "/login", "/register", "/register/code", "/register/account", "/set-password/{{ token }}",
+    "/mfa", "/mfa/setup", "/mfa/send-code", "/mfa/cancel", "/account/security/send-code",
+    "/account/security/mfa-on", "/admin/discoms/import/preview", "/admin/reserved-ids",
+    "/admin/reserved-ids/restore",
+}  # fmt: skip
+CONFIRMING_FORM = re.compile(
+    r'<form method="post"(?:(?!</form>).)*?data-confirm=(?:(?!</form>).)*</form>', re.S
+)
+POST_FORM = re.compile(r'<form method="post" action="(.*?)"((?:[^>]|(?<=%)>)*)>', re.S)
+
+
+@pytest.mark.parametrize("template", TEMPLATES, ids=lambda path: path.name)
+def test_p1_ui_02_serious_actions_are_confirmed(template: Path) -> None:
+    for action, attributes in POST_FORM.findall(template.read_text()):
+        confirmed = "data-confirm=" in attributes or "data-confirmed-by=" in attributes
+        assert confirmed or action in SAFE_ACTIONS, (
+            f"{action}: add data-confirm (see docs/conventions.md), "
+            "or add it to SAFE_ACTIONS if it is not serious"
+        )
+
+
+@pytest.mark.parametrize("template", TEMPLATES, ids=lambda path: path.name)
+def test_p1_ui_02_a_form_that_asks_cannot_be_sent_without_the_script(template: Path) -> None:
+    for form in CONFIRMING_FORM.findall(template.read_text()):
+        # button() and dialog_actions() are the two ways a form gets its submit button.
+        calls = re.findall(r"\{\{ (?:button|dialog_actions)\(.*?\) \}\}", form)
+        submits = [call for call in calls if 'type="button"' not in call]
+        assert submits and all("needs_script=true" in call for call in submits), submits

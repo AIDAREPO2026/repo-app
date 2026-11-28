@@ -1,5 +1,5 @@
 // The page shell's choices (P1-UI-02), kept in this browser: theme, and whether the sidebar
-// shows. Also the search boxes: "Find a page" and the one above a data table. Loaded in <head> without defer, so the page
+// shows. Also the sidebar's "Find a page" box. Loaded in <head> without defer, so the page
 // never flashes the wrong theme or layout.
 const THEME_KEY = "aida-theme";
 const SIDEBAR_KEY = "aida-sidebar";
@@ -67,20 +67,6 @@ function findPage(box) {
   }
 }
 
-// Show only the rows holding the text. Dialogs inside a row are not part of what it says.
-function filterTable(box) {
-  const table = box.closest(".data-table");
-  const text = box.value.trim().toLowerCase();
-  let shown = 0;
-  for (const row of table.querySelectorAll("tbody tr")) {
-    const copy = row.cloneNode(true);
-    copy.querySelectorAll("dialog").forEach((dialog) => dialog.remove());
-    row.hidden = !copy.textContent.toLowerCase().includes(text);
-    if (!row.hidden) shown += 1;
-  }
-  table.querySelector("[data-shown]").textContent = shown;
-}
-
 function closeToast(toast) {
   toast.classList.add("is-leaving");
   toast.addEventListener("animationend", (event) => {
@@ -110,6 +96,26 @@ function fillDiscom(holder, value) {
   if (confirmation) confirmation.checked = false;
 }
 
+// A serious action waits for a yes. Runs on submit, so the browser has already checked the
+// form's fields, and the same button that was pressed is sent on.
+function askBeforeSending(event) {
+  const form = event.target;
+  if (!form.dataset.confirm || form.dataset.confirmed) return;
+  event.preventDefault();
+  const dialog = document.getElementById("confirm-dialog");
+  dialog.querySelector("#confirm-dialog-title").textContent = form.dataset.confirmTitle;
+  dialog.querySelector("#confirm-dialog-text").textContent = form.dataset.confirm;
+  const yes = dialog.querySelector("[data-confirm-yes]");
+  yes.textContent = form.dataset.confirmAction;
+  yes.onclick = () => {
+    dialog.close();
+    form.dataset.confirmed = "yes";
+    form.requestSubmit(event.submitter);
+    delete form.dataset.confirmed; // Asked again if the page stays and they press again.
+  };
+  dialog.showModal();
+}
+
 function applyAll() {
   applyTheme(read(THEME_KEY, "light"));
   applySidebar(read(SIDEBAR_KEY, "shown"));
@@ -123,6 +129,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Hidden in the HTML, because without this script they would do nothing.
   for (const control of document.querySelectorAll(".theme-switcher, [data-needs-script]")) {
     control.hidden = false;
+    // Buttons that must not work without the script start disabled as well.
+    if (control.matches("button")) control.disabled = false;
   }
 });
 
@@ -148,6 +156,8 @@ document.addEventListener("change", (event) => {
   if (holder && event.target.matches("select") && event.target.value) fillDiscom(holder, event.target.value);
 });
 
+document.addEventListener("submit", askBeforeSending);
+
 // A toast's bar running out closes it.
 document.addEventListener("animationend", (event) => {
   if (event.target.matches(".toast-timer")) closeToast(event.target.closest(".toast"));
@@ -155,5 +165,4 @@ document.addEventListener("animationend", (event) => {
 
 document.addEventListener("input", (event) => {
   if (event.target.matches("[data-find-page]")) findPage(event.target);
-  if (event.target.matches("[data-filter-table]")) filterTable(event.target);
 });

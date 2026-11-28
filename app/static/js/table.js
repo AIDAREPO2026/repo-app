@@ -5,6 +5,9 @@
 // Everything here only reads the page: it copies or downloads what the reader already sees.
 // Actions that change records belong on the server, behind a route guard and an audit event.
 
+// The search box and the group picker above a table.
+const FILTERS = "[data-filter-table], [data-filter-group] select";
+
 function rowsOf(table) {
   return [...table.querySelectorAll("tbody tr[data-export]")];
 }
@@ -161,6 +164,66 @@ function enhanceTable(table) {
   });
 }
 
+// Show the rows that match the search box, but no more than the batch reached so far. Dialogs
+// inside a row are not part of what it says.
+function showRows(table) {
+  const box = table.querySelector("[data-filter-table]");
+  const text = box ? box.value.trim().toLowerCase() : "";
+  const picker = table.querySelector("[data-filter-group] select");
+  const group = picker && picker.value !== "all" ? picker.value : "";
+  const limit = Number(table.dataset.limit) || Infinity;
+  let matched = 0;
+  let shown = 0;
+  for (const row of table.querySelectorAll("tbody tr")) {
+    const copy = row.cloneNode(true);
+    copy.querySelectorAll("dialog").forEach((dialog) => dialog.remove());
+    const matches = copy.textContent.toLowerCase().includes(text) && (!group || row.dataset.group === group);
+    if (matches) matched += 1;
+    row.hidden = !matches || matched > limit;
+    if (!row.hidden) shown += 1;
+  }
+  table.querySelector("[data-shown]").textContent = shown;
+  return matched > shown;
+}
+
+// Infinite scroll over rows already in the page.
+// ponytail: every row arrives with the page, which suits lists of a few thousand at most;
+// fetch pages from the server for anything longer.
+function revealAsScrolled(table) {
+  const marker = table.querySelector(".data-more");
+  const step = Number(table.dataset.batch);
+  table.dataset.limit = step;
+  let waiting = showRows(table);
+  const observer = new IntersectionObserver((entries) => {
+    if (!entries[0].isIntersecting || !waiting) return;
+    table.dataset.limit = Number(table.dataset.limit) + step;
+    waiting = showRows(table);
+    // Watch again, in case the marker is still on screen after the new rows.
+    observer.unobserve(marker);
+    observer.observe(marker);
+  });
+  observer.observe(marker);
+  const filterChanged = (event) => {
+    if (!event.target.matches(FILTERS)) return;
+    table.dataset.limit = step; // A new search or filter starts from the top again.
+    waiting = showRows(table);
+    observer.unobserve(marker);
+    observer.observe(marker);
+  };
+  table.addEventListener("input", filterChanged);
+  table.addEventListener("change", filterChanged);
+}
+
+// Tables without batches only need their rows shown again when a filter changes.
+function filterWholeTable(event) {
+  const table = event.target.matches?.(FILTERS) && event.target.closest(".data-table");
+  if (table && !table.dataset.batch) showRows(table);
+}
+
+document.addEventListener("input", filterWholeTable);
+document.addEventListener("change", filterWholeTable);
+
 document.addEventListener("DOMContentLoaded", () => {
+  for (const table of document.querySelectorAll(".data-table[data-batch]")) revealAsScrolled(table);
   for (const table of document.querySelectorAll("[data-columns]")) enhanceTable(table);
 });

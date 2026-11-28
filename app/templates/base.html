@@ -16,6 +16,7 @@
 {% from "macros/ui.html" import flash_messages, breadcrumbs as breadcrumb_trail with context %}
 {% from "macros/layout.html" import brand, nav_menu, top_nav, account_panel, site_footer with context %}
 {% from "macros/ui.html" import theme_switcher with context %}
+{% from "macros/ui.html" import confirm_dialog with context %}
 {% from "macros/icons.html" import icon %}
 {% set login = request.state.login %}
 <body>
@@ -87,5 +88,6 @@
   </div>
   {% endblock %}
   {% endif %}
+  {{ confirm_dialog() }}
 </body>
 </html>

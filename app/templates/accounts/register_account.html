@@ -14,6 +14,8 @@
            error=errors.get("user_id", "")) }}
   {# static/js/register.js says here whether the typed ID is free. #}
   <p class="id-state" id="user-id-state" role="status" data-check-user-id
+     data-reserved="{{ _('That User ID is not allowed.') }}"
+     data-invalid="{{ _('Start with a letter; use at least 3 letters and no .. or --.') }}"
      data-free="{{ _('This User ID is available.') }}" data-taken="{{ _('That User ID is taken.') }}"
      data-limit="{{ _('Too many checks. It is checked again when you send.') }}"></p>
   <div class="id-suggestions" role="group" aria-labelledby="user-id-suggestions-label">

@@ -44,10 +44,10 @@
         </div>
 
         {% call drawer("manage-" ~ discom.id, discom.name) %}
-        <form method="post" action="/admin/discoms/{{ discom.id }}/edit">
+        <form method="post" action="/admin/discoms/{{ discom.id }}/edit" data-confirm="{{ _('The email domain decides who can ask for this Discom\'s login.') }}" data-confirm-title="{{ _('Save these changes?') }}" data-confirm-action="{{ _('Save changes') }}">
           {{ csrf_field() }}
           {{ discom_fields("edit-" ~ discom.id ~ "-", discom) }}
-          {{ button("Save changes", icon_name="check") }}
+          {{ button("Save changes", icon_name="check", needs_script=true) }}
         </form>
 
         {% if active %}
@@ -57,9 +57,9 @@
         {% else %}
         <h3 class="section-title mt-8">{{ _("Reactivate") }}</h3>
         <p class="mb-4 text-sm text-muted">{{ _("The Discom can register again, and its Member login can sign in.") }}</p>
-        <form method="post" action="/admin/discoms/{{ discom.id }}/reactivate">
+        <form method="post" action="/admin/discoms/{{ discom.id }}/reactivate" data-confirm="{{ _('It can register again, and its Member login can sign in.') }}" data-confirm-title="{{ _('Reactivate this Discom?') }}" data-confirm-action="{{ _('Reactivate') }}">
           {{ csrf_field() }}
-          {{ button("Reactivate Discom", "secondary", icon_name="refresh") }}
+          {{ button("Reactivate Discom", "secondary", icon_name="refresh", needs_script=true) }}
         </form>
         {% endif %}
         {% endcall %}
@@ -67,7 +67,7 @@
         {% if active %}
         {% call modal("deactivate-" ~ discom.id, "Deactivate this Discom?") %}
         <p class="text-sm text-muted">{{ _("%(name)s can no longer register, and its Member login is signed out at once. You can reactivate it later.", name=discom.name) }}</p>
-        <form method="post" action="/admin/discoms/{{ discom.id }}/deactivate" class="dialog-actions">
+        <form method="post" action="/admin/discoms/{{ discom.id }}/deactivate" data-confirmed-by="dialog" class="dialog-actions">
           {{ csrf_field() }}
           {{ dialog_actions("deactivate-" ~ discom.id, "Deactivate", "power", "danger") }}
         </form>
@@ -85,7 +85,7 @@
 {% endif %}
 
 {% call modal("add-discom", "Add a Discom") %}
-<form method="post" action="/admin/discoms">
+<form method="post" action="/admin/discoms" data-confirmed-by="checkbox">
   {{ csrf_field() }}
   <div class="mb-4">
     {{ alert(_("The list is a draft and is not verified. Check the name and email domain with the Discom: anyone with an email on that domain can ask for its login."), "warning") }}

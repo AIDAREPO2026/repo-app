@@ -8,12 +8,13 @@ from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
+from app.accounts.user_id_rules import DEFAULT_ANYWHERE, DEFAULT_PARTS
 from app.audit.service import Actor, record
 from app.core.constants import IMAGE_LIMIT_MAX_MB
 from app.core.db import Base
 from app.core.time import utc_now
 
-SettingValue = int | str
+SettingValue = int | str | list[str]
 
 
 class AppSetting(Base):
@@ -35,6 +36,8 @@ class SettingRule:
     minimum: int | None = None
     maximum: int | None = None
     choices: tuple[str, ...] = field(default_factory=tuple)
+    # A list of short words, such as the User IDs nobody may choose.
+    words: bool = False
 
 
 # The settings table in docs/architecture.md. Change both together.
@@ -49,6 +52,11 @@ SETTING_RULES: dict[str, SettingRule] = {
     # D-14: share of the data disk kept free. Uploads are refused when they would eat into it.
     "storage_reserve_percent": SettingRule(default=10, minimum=5, maximum=50),
     "digest_frequency": SettingRule(default="daily", choices=("daily", "weekly")),  # FR-6.5
+    # P1-ACC-02: User IDs nobody may choose, refused anywhere or as a whole part.
+    "reserved_user_id_anywhere": SettingRule(default=list(DEFAULT_ANYWHERE), words=True),
+    "reserved_user_id_parts": SettingRule(default=list(DEFAULT_PARTS), words=True),
+    # Words Admin took off either list, as "where:category:word", so they can be restored.
+    "reserved_user_id_removed": SettingRule(default=[], words=True),
 }
 
 
@@ -91,6 +99,9 @@ def _rule_for(key: str) -> SettingRule:
 def _validate(key: str, value: SettingValue) -> None:
     """Refuse a value of the wrong type or outside the setting's bounds."""
     rule = _rule_for(key)
+    if rule.words:
+        _validate_words(key, value)
+        return
     if rule.choices:
         if value not in rule.choices:
             raise SettingError(f"{key} must be one of {', '.join(rule.choices)}")
@@ -102,3 +113,9 @@ def _validate(key: str, value: SettingValue) -> None:
         raise SettingError(f"{key} must be at least {rule.minimum}")
     if rule.maximum is not None and value > rule.maximum:
         raise SettingError(f"{key} must not be above {rule.maximum}")
+
+
+def _validate_words(key: str, value: SettingValue) -> None:
+    """Refuse anything but a list of text."""
+    if not isinstance(value, list) or not all(isinstance(word, str) and word for word in value):
+        raise SettingError(f"{key} must be a list of words")

@@ -49,7 +49,8 @@ pytestmark = pytest.mark.usefixtures("no_active_reviewers_or_approvers")
 def person(name: str = "Asha Rao") -> dict[str, str]:
     """Return form values for a new person with a unique User ID and email."""
     tag = uuid.uuid4().hex[:10]
-    return {"full_name": name, "email": f"{tag}@itped.example", "user_id": f"p.{tag}"}
+    user_id = "zq." + "".join("bfghjkqvxz"[int(c, 16) % 10] for c in tag)
+    return {"full_name": name, "email": f"{tag}@itped.example", "user_id": user_id}
 
 
 def account_form(login_type: str, is_alternate: bool = False) -> PrivilegedAccountForm:

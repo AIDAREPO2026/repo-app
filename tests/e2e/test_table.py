@@ -83,3 +83,49 @@ def test_p1_ui_02_right_click_opens_the_row_menu_inside_the_window(table: Page) 
 
     menu.get_by_role("button", name="Select row").click()
     expect(table.get_by_role("checkbox", name="Select North")).to_be_checked()
+
+
+def test_p1_ui_02_long_table_shows_more_rows_as_it_scrolls(page: Page) -> None:
+    long_table = templates.env.from_string(
+        '{% from "macros/ui.html" import data_table %}'
+        '{% call data_table("Words", 120, search="Search words", compact=true, batch=50) %}'
+        "<tbody>{% for n in range(120) %}<tr><td>word {{ n }}</td></tr>{% endfor %}</tbody>{% endcall %}"
+    )
+    open_login_with(page, long_table.render())
+    shown = page.locator("[data-shown]")
+    expect(shown).to_have_text("50")
+
+    page.locator("tbody tr:not([hidden])").last.scroll_into_view_if_needed()
+    expect(shown).not_to_have_text("50")
+    for _ in range(4):
+        page.locator("tbody tr:not([hidden])").last.scroll_into_view_if_needed()
+    expect(shown).to_have_text("120")
+
+    # A search covers every row, including ones that had not been shown yet.
+    page.get_by_label("Search words").fill("word 119")
+    expect(shown).to_have_text("1")
+
+
+def test_p1_ui_02_table_filters_by_group_and_search_together(page: Page) -> None:
+    grouped = templates.env.from_string(
+        '{% from "macros/ui.html" import data_table %}'
+        '{% call data_table("Words", 3, search="Search words", batch=2,'
+        ' groups=["Web", "Pages"], group_label="Category") %}'
+        '<tbody><tr data-group="Web"><td>ftp</td></tr><tr data-group="Pages"><td>login</td></tr>'
+        '<tr data-group="Web"><td>www</td></tr></tbody>{% endcall %}'
+    )
+    open_login_with(page, grouped.render())
+    shown = page.locator("[data-shown]")
+
+    page.get_by_role("button", name="Category").click()
+    page.get_by_role("option", name="Web").click()
+    expect(shown).to_have_text("2")
+    expect(page.get_by_role("row", name="login")).to_have_count(0)
+
+    page.get_by_label("Search words").fill("www")
+    expect(shown).to_have_text("1")
+
+    page.get_by_label("Search words").fill("")
+    page.get_by_role("button", name="Category").click()
+    page.get_by_role("option", name="All").click()
+    expect(page.locator("tbody tr:not([hidden])")).to_have_count(3)  # scrolled into view, so all show
