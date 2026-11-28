@@ -44,3 +44,13 @@ def test_p1_ui_02_choices_use_the_select_component(template: Path) -> None:
     if template.name == "forms.html":
         return
     assert "<select" not in template.read_text(), "use select() from macros/forms.html"
+
+
+def test_p1_ui_02_scripts_never_declare_the_same_top_level_name() -> None:
+    # Plain scripts share one scope: a repeated const stops the second file from running at all.
+    seen: dict[str, str] = {}
+    for script in sorted((APP_DIR / "static" / "js").glob("*.js")):
+        names = re.findall(r"^(?:async )?(?:function|const|let|class) (\w+)", script.read_text(), re.M)
+        for name in names:
+            assert name not in seen, f"{name} is declared in {seen[name]} and {script.name}"
+            seen[name] = script.name

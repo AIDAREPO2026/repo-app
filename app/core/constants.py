@@ -9,6 +9,11 @@ RESUMABLE_CHUNK_MB = 50  # FR-3.12
 AUDIT_ONLINE_DAYS = 180  # FR-12.1
 EXPERT_DELETION_WORKING_DAYS = 2  # FR-8.3
 
+# P1-ACC-02: after proving their email, a visitor has this long to finish registering, and may
+# ask whether a User ID is free this many times.
+REGISTRATION_VERIFIED_MINUTES = 30
+USER_ID_CHECKS = 30
+
 # D-01: images must never exceed 20 MB, whatever Admin sets.
 IMAGE_LIMIT_MAX_MB = 20
 

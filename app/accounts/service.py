@@ -4,10 +4,12 @@ Business rules. Functions take `db` and `actor` explicitly, so every caller can 
 """
 
 import re
+import secrets
 import uuid
 from datetime import timedelta
 
 from fastapi import Request, Response
+from redis import Redis
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -23,6 +25,15 @@ from app.accounts.mfa import (
 )
 from app.accounts.models import Login, LoginAttempt, LoginToken, Organisation, UserSession
 from app.accounts.passwords import check_password_policy, hash_password, verify_password
+from app.accounts.registration_store import (
+    count_user_id_check,
+    forget_verified,
+    may_send_code,
+    remember_request,
+    save_code,
+    use_code,
+    verified_request,
+)
 from app.accounts.schemas import (
     EMAIL_PATTERN,
     USER_ID_PATTERN,
@@ -30,6 +41,7 @@ from app.accounts.schemas import (
     PersonForm,
     PrivilegedAccountForm,
     RegistrationForm,
+    RegistrationStartForm,
 )
 from app.accounts.tokens import (
     issue_email_code,
@@ -41,6 +53,7 @@ from app.accounts.tokens import (
 )
 from app.audit.service import SYSTEM, Actor, record
 from app.core.constants import (
+    EMAIL_CODE_DIGITS,
     EMAIL_CODE_MINUTES,
     EMAIL_CODE_RESEND_SECONDS,
     LINK_TOKEN_MINUTES,
@@ -749,6 +762,7 @@ def _discom_with_domain(db: Session, email_domain: str) -> Organisation | None:
     return db.scalars(select(Organisation).where(Organisation.email_domain == email_domain)).one_or_none()
 
 
+WRONG_REGISTRATION_CODE = "That code is not right or has expired. Check the email, or start again."
 CAPTCHA_FAILED = (
     "The check that you are not a robot did not finish. Tick the box, wait for it, then send the form again."
 )
@@ -757,35 +771,132 @@ DISCOM_TAKEN = (
 )
 
 
-def register_member(
-    db: Session, actor: Actor, form: RegistrationForm, captcha_passed: bool
-) -> dict[str, str]:
-    """Record a Discom's request for its Member login (FR-1.1). Returns problems by field; empty means sent.
+def start_registration(
+    db: Session, redis: Redis, actor: Actor, form: RegistrationStartForm, captcha_passed: bool
+) -> tuple[dict[str, str], str, str]:
+    """Take step 1 of a request. Returns (problems by field, visitor token, code to email).
 
-    A visitor is told only about the CAPTCHA, format problems and a Discom that already has a
-    login. An email outside the Discom's domain, or a User ID or email already in use, gets the
-    same "sent" answer as a good request, so the form cannot be used to learn Discom domains or
-    existing User IDs (spec security). The audit event records why nothing was created.
+    With no problems the visitor gets a token and the code page, whatever the address. A code
+    is returned only when the address may register this Discom, so the page cannot be used to
+    learn Discom domains or who has a login (spec security). The audit records why not.
     """
     # Spec: the CAPTCHA is checked before anything else, so bots cost us no database work.
     if not captcha_passed:
-        _audit_registration(db, actor, "denied", {"reason": "captcha"})
-        return {"altcha": CAPTCHA_FAILED}
-    problems = _registration_format_problems(db, form)
+        _audit_code(db, actor, "denied", {"reason": "captcha"})
+        return {"altcha": CAPTCHA_FAILED}, "", ""
+    problems = _start_format_problems(db, form)
     if problems:
-        _audit_registration(db, actor, "denied", {"reason": "format", "fields": sorted(problems)})
-        return problems
+        _audit_code(db, actor, "denied", {"reason": "format", "fields": sorted(problems)})
+        return problems, "", ""
     discom = db.get_one(Organisation, uuid.UUID(form.organisation_id))
+    details: dict[str, object] = {"organisation_id": str(discom.id)}
+    if _discom_has_member_login(db, discom):
+        _audit_code(db, actor, "denied", details | {"reason": "discom_has_login"})
+        return {"organisation_id": DISCOM_TAKEN}, "", ""
+    token = remember_request(redis, str(discom.id), form.email)
+    refusal = _email_refusal(db, discom, form.email)
+    if refusal is None and not may_send_code(redis, form.email):
+        refusal = "too_soon"
+    if refusal:
+        _audit_code(db, actor, "denied", details | {"reason": refusal})
+        return {}, token, ""
+    code = f"{secrets.randbelow(10**EMAIL_CODE_DIGITS):0{EMAIL_CODE_DIGITS}d}"
+    save_code(redis, str(discom.id), form.email, code)
+    _audit_code(db, actor, "success", details)
+    return {}, token, code
+
+
+def send_registration_code(email: str, code: str) -> None:
+    """Email the code. The route sends it after answering, so timing does not tell who got one."""
+    context = {"code": code, "minutes": EMAIL_CODE_MINUTES}
+    send_email(email, "Your AIDA portal registration code", "email/registration_code.txt", context)
+
+
+def check_registration_code(db: Session, redis: Redis, actor: Actor, token: str, code: str) -> str | None:
+    """Return the verified visitor's new token if the code is right, else None."""
+    verified = use_code(redis, token, code)
+    if verified is None:
+        _audit_code(db, actor, "denied", {"reason": "wrong_code"})
+    return verified
+
+
+def verified_registration(db: Session, redis: Redis, token: str) -> tuple[Organisation, str] | None:
+    """Return the Discom and email a visitor has proved, while the Discom can still register."""
+    request = verified_request(redis, token)
+    if request is None:
+        return None
+    discom = _active_discom(db, request["organisation_id"])
+    if discom is None or _email_refusal(db, discom, request["email"]):
+        return None
+    return discom, request["email"]
+
+
+def user_id_state(db: Session, redis: Redis, token: str, user_id: str) -> str:
+    """Say whether a User ID is "free", "taken" or "invalid", or "limit" after too many asks.
+
+    Only for a verified visitor: the caller must have checked verified_registration() first.
+    """
+    if not count_user_id_check(redis, token):
+        return "limit"
+    if not re.fullmatch(USER_ID_PATTERN, user_id):
+        return "invalid"
+    return "taken" if _user_id_taken(db, user_id) else "free"
+
+
+def suggest_user_ids(db: Session, discom_name: str, email: str, wanted: int = 3) -> list[str]:
+    """Return User IDs that are free now, built from the email and the Discom's name."""
+    person = _user_id_part(email.partition("@")[0])
+    code = _discom_code(discom_name)
+    bases = [person, f"{code}.{person}" if code and person else "", f"{code}.portal" if code else ""]
+    bases = [base for base in bases if base] or ["discom.portal"]
+    suggestions: list[str] = []
+    # The plain forms first, then the same with a number, until enough free ones are found.
+    for number in ["", *range(2, 100)]:
+        for base in bases:
+            candidate = f"{base}{number}"
+            fits = re.fullmatch(USER_ID_PATTERN, candidate) and candidate not in suggestions
+            if fits and not _user_id_taken(db, candidate):
+                suggestions.append(candidate)
+            if len(suggestions) == wanted:
+                return suggestions
+    return suggestions
+
+
+def _user_id_part(text: str) -> str:
+    """Keep only the characters a User ID may have, without dots or dashes at the ends."""
+    return re.sub(r"[^a-z0-9._-]", "", text.lower()).strip("._-")
+
+
+def _discom_code(name: str) -> str:
+    """Return a short code for a Discom: the one in brackets, such as (MSEDCL), else its first word."""
+    bracketed = re.search(r"\(([A-Za-z0-9-]{2,15})\)", name)
+    words = name.split()
+    return _user_id_part(bracketed.group(1) if bracketed else (words[0] if words else ""))
+
+
+def register_member(
+    db: Session, redis: Redis, actor: Actor, token: str, form: RegistrationForm
+) -> dict[str, str] | None:
+    """Create the pending Member login for a verified visitor (FR-1.1).
+
+    Returns problems by field, empty when the request was sent, or None when the visitor's
+    verification is missing or no longer holds, so they must start again.
+    """
+    verified = verified_registration(db, redis, token)
+    if verified is None:
+        return None
+    discom, email = verified
     details: dict[str, object] = {"organisation_id": str(discom.id), "user_id": form.user_id}
     if _discom_has_member_login(db, discom):
         _audit_registration(db, actor, "denied", details | {"reason": "discom_has_login"})
-        return {"organisation_id": DISCOM_TAKEN}
-    hidden_reason = _hidden_registration_problem(db, form, discom)
-    if hidden_reason:
-        _audit_registration(db, actor, "denied", details | {"reason": hidden_reason})
-        return {}
-    login = _add_pending_member(db, form, discom)
+        return {"user_id": DISCOM_TAKEN}
+    problems = _account_problems(db, form)
+    if problems:
+        _audit_registration(db, actor, "denied", details | {"reason": "format", "fields": sorted(problems)})
+        return problems
+    login = _add_pending_member(db, form, discom, email)
     record(db, actor, "accounts.register", "login", str(login.id), "success", details)
+    forget_verified(redis, token)
     return {}
 
 
@@ -797,15 +908,23 @@ def registration_discoms(db: Session) -> list[Organisation]:
     return list(db.scalars(query))
 
 
-def _registration_format_problems(db: Session, form: RegistrationForm) -> dict[str, str]:
-    """Return the problems a visitor can fix on the form, by field name."""
+def _start_format_problems(db: Session, form: RegistrationStartForm) -> dict[str, str]:
+    """Return the step 1 problems a visitor can fix, by field name."""
     problems = {}
     if _active_discom(db, form.organisation_id) is None:
         problems["organisation_id"] = "Choose your Discom from the list."
     if not re.fullmatch(EMAIL_PATTERN, form.email):
         problems["email"] = "Enter your official email address, such as name@yourdiscom.co.in."
+    return problems
+
+
+def _account_problems(db: Session, form: RegistrationForm) -> dict[str, str]:
+    """Return the step 3 problems, by field name."""
+    problems = {}
     if not re.fullmatch(USER_ID_PATTERN, form.user_id):
         problems["user_id"] = "Use 4 to 50 lowercase letters, numbers, dots, dashes or underscores."
+    elif _user_id_taken(db, form.user_id):
+        problems["user_id"] = "That User ID is taken. Choose another."
     password_problems = check_password_policy(form.password, form.user_id)
     if form.password != form.confirm_password:
         password_problems.append("The two passwords do not match.")
@@ -836,25 +955,23 @@ def _discom_has_member_login(db: Session, discom: Organisation) -> bool:
     return db.scalar(query) is not None
 
 
-def _hidden_registration_problem(db: Session, form: RegistrationForm, discom: Organisation) -> str | None:
-    """Return why a well-formed request cannot be accepted, for the audit only, or None."""
+def _email_refusal(db: Session, discom: Organisation, email: str) -> str | None:
+    """Return why this address may not register this Discom, for the audit only, or None."""
     # D-11: the email must be on the Discom's own domain, not a subdomain or a lookalike.
     # A public domain is refused here too, for a Discom listed before it was blocked.
-    domain = form.email.rpartition("@")[2]
+    domain = email.rpartition("@")[2]
     if domain != discom.email_domain or domain in PUBLIC_EMAIL_DOMAINS:
         return "email_domain"
-    if _user_id_taken(db, form.user_id):
-        return "user_id_taken"
-    if _current_email_taken(db, form.email):
+    if _current_email_taken(db, email):
         return "email_taken"
     return None
 
 
-def _add_pending_member(db: Session, form: RegistrationForm, discom: Organisation) -> Login:
+def _add_pending_member(db: Session, form: RegistrationForm, discom: Organisation, email: str) -> Login:
     """Add the Discom's Member login, pending until ITPED verifies it (P1-ACC-03)."""
     login = Login(
         user_id=form.user_id,
-        email=form.email,
+        email=email,
         login_type="member",
         organisation_id=discom.id,
         password_hash=hash_password(form.password),
@@ -863,6 +980,11 @@ def _add_pending_member(db: Session, form: RegistrationForm, discom: Organisatio
     db.add(login)
     db.flush()
     return login
+
+
+def _audit_code(db: Session, actor: Actor, result: str, details: dict[str, object]) -> None:
+    """Audit asking for, or entering, a registration code. The code itself is never logged."""
+    record(db, actor, "accounts.register_code", "login", None, result, details)
 
 
 def _audit_registration(db: Session, actor: Actor, result: str, details: dict[str, object]) -> None:

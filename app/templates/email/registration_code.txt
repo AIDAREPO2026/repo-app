@@ -1,0 +1,4 @@
+{{ _("Your AIDA portal registration code is %(code)s.", code=code) }}
+{{ _("It works once, for %(minutes)s minutes.", minutes=minutes) }}
+
+{{ _("If you did not ask to register your Discom, ignore this email and tell an ITPED Admin.") }}

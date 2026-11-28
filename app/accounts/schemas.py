@@ -119,8 +119,8 @@ class DiscomImportForm(BaseModel):
     csv_text: str = Field(min_length=1, max_length=100_000)
 
 
-class RegistrationForm(BaseModel):
-    """A Discom's request for its Member login (FR-1.1).
+class RegistrationStartForm(BaseModel):
+    """Step 1 of registration: which Discom, and an address on its domain (FR-1.1, D-11).
 
     Only lengths are checked here. The formats are checked by the service after the CAPTCHA,
     so the page can show each problem next to its field instead of a bare 422.
@@ -128,14 +128,37 @@ class RegistrationForm(BaseModel):
 
     organisation_id: str = Field(default="", max_length=36)
     email: str = Field(default="", max_length=254)
-    user_id: str = Field(default="", max_length=254)
-    password: str = Field(default="", max_length=1024)
-    confirm_password: str = Field(default="", max_length=1024)
     # The ALTCHA widget's answer (app.core.captcha). Empty when the widget did not run.
     altcha: str = Field(default="", max_length=MAX_PAYLOAD_LENGTH)
 
-    @field_validator("email", "user_id", "organisation_id", mode="before")
+    @field_validator("email", "organisation_id", mode="before")
     @classmethod
     def tidy_text(cls, value: object) -> object:
-        """Drop spaces and use lowercase, as User IDs and email domains are stored."""
+        """Drop spaces and use lowercase, as email domains are stored."""
+        return value.strip().lower() if isinstance(value, str) else value
+
+
+class RegistrationCodeForm(BaseModel):
+    """Step 2: the code from the email."""
+
+    code: str = Field(default="", max_length=20)
+
+    @field_validator("code", mode="before")
+    @classmethod
+    def drop_spaces(cls, value: object) -> object:
+        """People often copy a code with spaces."""
+        return value.replace(" ", "") if isinstance(value, str) else value
+
+
+class RegistrationForm(BaseModel):
+    """Step 3: the login a verified visitor asks for (FR-1.1)."""
+
+    user_id: str = Field(default="", max_length=254)
+    password: str = Field(default="", max_length=1024)
+    confirm_password: str = Field(default="", max_length=1024)
+
+    @field_validator("user_id", mode="before")
+    @classmethod
+    def tidy_user_id(cls, value: object) -> object:
+        """Drop spaces and use lowercase, as User IDs are stored."""
         return value.strip().lower() if isinstance(value, str) else value

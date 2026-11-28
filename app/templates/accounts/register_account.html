@@ -1,0 +1,35 @@
+{% extends "layouts/auth.html" %}
+{% from "macros/forms.html" import field, csrf_field with context %}
+{% from "macros/ui.html" import alert, auth_heading, button with context %}
+{% block head %}
+<script src="{{ url_for('static', path='js/register.js') }}"></script>
+{% endblock %}
+{% block content %}
+{{ auth_heading("Choose your User ID", "Step 3 of 3. Your email is confirmed.") }}
+<div class="mb-5">{{ alert(discom.name ~ " · " ~ email, "success") }}</div>
+<form method="post" action="/register/account" novalidate>
+  {{ csrf_field() }}
+  {{ field("user_id", "User ID", value=form.user_id, autocomplete="username", required=true, maxlength=50,
+           help="4 to 50 lowercase letters, numbers, dots, dashes or underscores. You sign in with it.",
+           error=errors.get("user_id", "")) }}
+  {# static/js/register.js says here whether the typed ID is free. #}
+  <p class="id-state" id="user-id-state" role="status" data-check-user-id
+     data-free="{{ _('This User ID is available.') }}" data-taken="{{ _('That User ID is taken.') }}"
+     data-limit="{{ _('Too many checks. It is checked again when you send.') }}"></p>
+  <div class="id-suggestions" role="group" aria-labelledby="user-id-suggestions-label">
+    <p id="user-id-suggestions-label" class="id-suggestions-label">{{ _("Available now. Pick one or type your own.") }}</p>
+    <div class="id-suggestions-list">
+      {% for suggestion in suggestions %}
+      <button type="button" class="id-suggestion" data-use-user-id>{{ suggestion }}</button>
+      {% endfor %}
+    </div>
+  </div>
+  {{ field("password", "Password", type="password", autocomplete="new-password", required=true,
+           help="At least 12 characters, with letters, numbers and symbols.", error=errors.get("password", "")) }}
+  {{ field("confirm_password", "Type the password again", type="password", autocomplete="new-password", required=true) }}
+
+  {% include "accounts/_privacy_notice.html" %}
+
+  <div class="mt-6">{{ button("Send request", block=true, icon_name="mail") }}</div>
+</form>
+{% endblock %}

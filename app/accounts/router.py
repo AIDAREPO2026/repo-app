@@ -8,7 +8,7 @@ from collections.abc import Callable
 from typing import Annotated, Any
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from sqlalchemy.orm import Session
 
@@ -35,17 +35,21 @@ from app.accounts.schemas import (
     NextForm,
     PersonForm,
     PrivilegedAccountForm,
+    RegistrationCodeForm,
     RegistrationForm,
+    RegistrationStartForm,
     ReviewerRoleForm,
     SetPasswordForm,
     SignInForm,
 )
 from app.accounts.service import (
+    WRONG_REGISTRATION_CODE,
     AccountRuleError,
     add_discom,
     admin_overview,
     after_sign_in_path,
     app_enrolment_details,
+    check_registration_code,
     create_privileged_account,
     deactivate_account,
     discoms,
@@ -61,6 +65,7 @@ from app.accounts.service import (
     registration_discoms,
     reset_mfa,
     send_email_code,
+    send_registration_code,
     send_set_password_link,
     set_discom_active,
     set_password_from_link,
@@ -69,8 +74,12 @@ from app.accounts.service import (
     sign_in,
     sign_out,
     start_app_enrolment,
+    start_registration,
+    suggest_user_ids,
     turn_off_member_mfa,
     turn_on_member_mfa,
+    user_id_state,
+    verified_registration,
 )
 from app.audit.service import Actor
 from app.core import captcha
@@ -584,47 +593,156 @@ def set_password_submit(
     return RedirectResponse(LOGIN_PATH, status_code=303)
 
 
-# FR-1.1, FR-1.2: a Discom asks for its Member login through a public, CAPTCHA-protected form.
+# FR-1.1, FR-1.2: a Discom asks for its Member login in three public steps: Discom and email
+# (CAPTCHA protected), the emailed code, then the User ID and password.
 REGISTER_PATH = "/register"
+# Holds the visitor's token between steps. It is not a session: it only names what they asked.
+REGISTER_COOKIE = "drr_register"
 
 
 def render_registration(
     request: Request,
     db: Session,
-    form: RegistrationForm | None = None,
+    form: RegistrationStartForm | None = None,
     errors: dict[str, str] | None = None,
     status_code: int = 200,
 ) -> HTMLResponse:
-    """Render the registration form, with the visitor's answers and problems when sent back."""
+    """Render step 1, with the visitor's answers and problems when sent back."""
     context = {
         "title": "Register your Discom",
         "discoms": registration_discoms(db),
-        "form": form or RegistrationForm(),
+        "form": form or RegistrationStartForm(),
         "errors": errors or {},
     }
     return render_visitor_form(request, "accounts/register.html", context, status_code)
 
 
+def render_registration_code(request: Request, error: str = "", status_code: int = 200) -> HTMLResponse:
+    """Render step 2, the same for every address, so it never says whether a code was sent."""
+    context = {"title": "Enter your code", "error": error}
+    return render_visitor_form(request, "accounts/register_code.html", context, status_code)
+
+
+def render_registration_account(
+    request: Request,
+    db: Session,
+    verified: tuple[Organisation, str],
+    form: RegistrationForm | None = None,
+    errors: dict[str, str] | None = None,
+    status_code: int = 200,
+) -> HTMLResponse:
+    """Render step 3 for a visitor who has proved their email."""
+    discom, email = verified
+    context = {
+        "title": "Choose your User ID",
+        "discom": discom,
+        "email": email,
+        "suggestions": suggest_user_ids(db, discom.name, email),
+        "form": form or RegistrationForm(),
+        "errors": errors or {},
+    }
+    return render_visitor_form(request, "accounts/register_account.html", context, status_code)
+
+
+def _registration_token(request: Request) -> str:
+    return request.cookies.get(REGISTER_COOKIE, "")
+
+
 @router.get(REGISTER_PATH, response_class=HTMLResponse, dependencies=[Depends(public_route)])
 def register_page(request: Request, db: DbSession) -> HTMLResponse:
-    """Show the registration form."""
+    """Show step 1."""
     return render_registration(request, db)
 
 
 @router.post(REGISTER_PATH, response_class=HTMLResponse, dependencies=[Depends(public_route)])
-def register_submit(request: Request, db: DbSession, form: Annotated[RegistrationForm, Form()]) -> Response:
-    """Check the CAPTCHA, record the request, then show the one "sent to ITPED" page."""
+def register_start(
+    request: Request,
+    db: DbSession,
+    background: BackgroundTasks,
+    form: Annotated[RegistrationStartForm, Form()],
+) -> Response:
+    """Check the CAPTCHA, email a code if the address may register, and show the code page."""
     state = request.app.state
     captcha_passed = captcha.verify(form.altcha, state.secret_key, state.redis)
-    errors = register_member(db, visitor_actor(request), form, captcha_passed)
+    errors, token, code = start_registration(db, state.redis, visitor_actor(request), form, captcha_passed)
     if errors:
         return render_registration(request, db, form, errors, status_code=400)
-    return RedirectResponse(REGISTER_PATH + "/sent", status_code=303)
+    if code:
+        background.add_task(send_registration_code, form.email, code)
+    response = RedirectResponse(REGISTER_PATH + "/code", status_code=303)
+    set_cookie(response, REGISTER_COOKIE, token)
+    return response
+
+
+@router.get(REGISTER_PATH + "/code", response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def register_code_page(request: Request) -> Response:
+    """Show step 2."""
+    if not _registration_token(request):
+        return RedirectResponse(REGISTER_PATH, status_code=303)
+    return render_registration_code(request)
+
+
+@router.post(REGISTER_PATH + "/code", response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def register_code_submit(
+    request: Request, db: DbSession, form: Annotated[RegistrationCodeForm, Form()]
+) -> Response:
+    """Check the emailed code and let the visitor choose their login."""
+    redis = request.app.state.redis
+    verified = check_registration_code(
+        db, redis, visitor_actor(request), _registration_token(request), form.code
+    )
+    if verified is None:
+        return render_registration_code(request, WRONG_REGISTRATION_CODE, status_code=400)
+    response = RedirectResponse(REGISTER_PATH + "/account", status_code=303)
+    set_cookie(response, REGISTER_COOKIE, verified)
+    return response
+
+
+@router.get(REGISTER_PATH + "/account", response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def register_account_page(request: Request, db: DbSession) -> Response:
+    """Show step 3 to a verified visitor."""
+    verified = verified_registration(db, request.app.state.redis, _registration_token(request))
+    if verified is None:
+        return RedirectResponse(REGISTER_PATH, status_code=303)
+    return render_registration_account(request, db, verified)
+
+
+@router.get(REGISTER_PATH + "/user-id", dependencies=[Depends(public_route)])
+def register_user_id_state(
+    request: Request, db: DbSession, value: Annotated[str, Query(max_length=254)] = ""
+) -> JSONResponse:
+    """Tell a verified visitor whether a User ID is free. Anyone else gets 404."""
+    redis = request.app.state.redis
+    token = _registration_token(request)
+    if verified_registration(db, redis, token) is None:
+        raise HTTPException(status_code=404)
+    state = user_id_state(db, redis, token, value.strip().lower())
+    return JSONResponse({"state": state}, headers={"Cache-Control": "no-store"})
+
+
+@router.post(REGISTER_PATH + "/account", response_class=HTMLResponse, dependencies=[Depends(public_route)])
+def register_account_submit(
+    request: Request, db: DbSession, form: Annotated[RegistrationForm, Form()]
+) -> Response:
+    """Record the request, then show the "sent to ITPED" page."""
+    redis = request.app.state.redis
+    token = _registration_token(request)
+    errors = register_member(db, redis, visitor_actor(request), token, form)
+    if errors is None:
+        return RedirectResponse(REGISTER_PATH, status_code=303)
+    if errors:
+        verified = verified_registration(db, redis, token)
+        if verified is None:
+            return RedirectResponse(REGISTER_PATH, status_code=303)
+        return render_registration_account(request, db, verified, form, errors, status_code=400)
+    response = RedirectResponse(REGISTER_PATH + "/sent", status_code=303)
+    response.delete_cookie(REGISTER_COOKIE, path="/")
+    return response
 
 
 @router.get(REGISTER_PATH + "/sent", response_class=HTMLResponse, dependencies=[Depends(public_route)])
 def registration_sent(request: Request) -> HTMLResponse:
-    """Confirm the request was sent. Shown for every accepted form, valid domain or not."""
+    """Confirm the request was sent."""
     context = {"title": "Request sent", "nav": nav_for(None)}
     return templates.TemplateResponse(request, "accounts/registration_sent.html", context)
 
