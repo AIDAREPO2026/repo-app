@@ -28,3 +28,5 @@ LINK_TOKEN_MINUTES = 60
 EMAIL_CODE_DIGITS = 6
 EMAIL_CODE_MINUTES = 10
 EMAIL_CODE_MAX_TRIES = 5
+# P1-ACC-10: a new emailed code at most once a minute, so the form cannot be used to flood an inbox.
+EMAIL_CODE_RESEND_SECONDS = 60

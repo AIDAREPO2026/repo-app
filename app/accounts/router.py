@@ -24,6 +24,7 @@ from app.accounts.guards import (
 from app.accounts.models import Login
 from app.accounts.schemas import (
     MfaCodeForm,
+    MfaOffForm,
     MfaSetupForm,
     NextForm,
     PersonForm,
@@ -132,6 +133,7 @@ def sign_in_submit(request: Request, db: DbSession, form: Annotated[SignInForm, 
 # routes serve a session that is not signed in yet; mfa_pending_login refuses anyone else.
 MfaLogin = Annotated[Login, Depends(mfa_pending_login)]
 WRONG_CODE = "That code is not right, has been used or has expired. Check it and try again."
+WAIT_FOR_CODE = "A code was sent less than a minute ago. Use that one, or wait a minute and ask again."
 
 
 def mfa_page_path(next_path: str, method: str = "") -> str:
@@ -143,7 +145,13 @@ def mfa_page_path(next_path: str, method: str = "") -> str:
 
 
 def render_mfa(
-    request: Request, login: Login, next_path: str, method: str = "", error: str = "", status_code: int = 200
+    request: Request,
+    login: Login,
+    next_path: str,
+    method: str = "",
+    error: str = "",
+    notice: str = "",
+    status_code: int = 200,
 ) -> HTMLResponse:
     """Render the code page, or the choice of method for a login that has no second factor yet."""
     method = login.mfa_method or method
@@ -155,6 +163,7 @@ def render_mfa(
         "enrolling": login.mfa_method is None,
         "app_setup": app_enrolment_details(login) if method == "totp" else None,
         "error": error,
+        "messages": [("info", notice)] if notice else [],
     }
     return templates.TemplateResponse(request, "accounts/mfa.html", context, status_code=status_code)
 
@@ -188,10 +197,12 @@ def mfa_setup(
 def mfa_send_code(
     request: Request, db: DbSession, pending: MfaLogin, form: Annotated[NextForm, Form()]
 ) -> Response:
-    """Email a new code, replacing the last one."""
+    """Email a new code, replacing the last one, or ask the person to wait a minute."""
     login = db.get_one(Login, pending.id)
-    if login.mfa_method in (None, "email"):
-        send_email_code(db, login)
+    if login.mfa_method not in (None, "email"):
+        return RedirectResponse(mfa_page_path(form.next), status_code=303)
+    if not send_email_code(db, login):
+        return render_mfa(request, login, form.next, "email", notice=WAIT_FOR_CODE, status_code=429)
     return RedirectResponse(mfa_page_path(form.next, "email"), status_code=303)
 
 
@@ -221,7 +232,27 @@ def mfa_cancel(request: Request, db: DbSession, pending: MfaLogin) -> Response:
 
 
 SECURITY_PATH = "/account/security"
-SECURITY_DONE = {"mfa_off": "Two-step sign-in is now off for this account."}
+SECURITY_DONE = {
+    "mfa_off": ("success", "Two-step sign-in is now off for this account."),
+    "code_sent": ("info", "We have emailed you a 6-digit code. It works once, for 10 minutes."),
+    "wait": ("info", WAIT_FOR_CODE),
+}
+
+
+def render_security(
+    request: Request, db: Session, signed_in: Login, done: str = "", error: str = "", status_code: int = 200
+) -> HTMLResponse:
+    """Render the Security page, with a message after a change or an error for the code field."""
+    messages = [SECURITY_DONE[done]] if done in SECURITY_DONE else []
+    context = {
+        "title": "Security",
+        "nav": nav_for(signed_in.login_type),
+        "breadcrumbs": breadcrumbs(signed_in.login_type, Crumb("Security")),
+        "login": db.get_one(Login, signed_in.id),
+        "messages": messages,
+        "error": error,
+    }
+    return templates.TemplateResponse(request, "accounts/security.html", context, status_code=status_code)
 
 
 @router.get(SECURITY_PATH, response_class=HTMLResponse)
@@ -232,17 +263,7 @@ def security_page(
     done: str = "",
 ) -> HTMLResponse:
     """Show whether two-step sign-in is on, with the Member's switch to turn it on or off (FR-2.8)."""
-    messages = []
-    if done in SECURITY_DONE:
-        messages.append(("success", SECURITY_DONE[done]))
-    context = {
-        "title": "Security",
-        "nav": nav_for(signed_in.login_type),
-        "breadcrumbs": breadcrumbs(signed_in.login_type, Crumb("Security")),
-        "login": db.get_one(Login, signed_in.id),
-        "messages": messages,
-    }
-    return templates.TemplateResponse(request, "accounts/security.html", context)
+    return render_security(request, db, signed_in, done)
 
 
 MemberLogin = Annotated[Login, Depends(require_login_type("member"))]
@@ -258,11 +279,32 @@ def member_mfa_on(request: Request, db: DbSession, member: MemberLogin) -> Respo
     return RedirectResponse(mfa_page_path(SECURITY_PATH), status_code=303)
 
 
-@router.post(SECURITY_PATH + "/mfa-off")
-def member_mfa_off(request: Request, db: DbSession, member: MemberLogin) -> Response:
-    """Turn the Member's second factor off."""
-    turn_off_member_mfa(db, actor_for(request, member), member)
-    return RedirectResponse(f"{SECURITY_PATH}?done=mfa_off", status_code=303)
+@router.post(SECURITY_PATH + "/send-code")
+def member_send_code(request: Request, db: DbSession, member: MemberLogin) -> Response:
+    """Email a code to a Member who uses email codes, so they can turn two-step sign-in off."""
+    login = db.get_one(Login, member.id)
+    if login.mfa_method != "email":
+        return RedirectResponse(SECURITY_PATH, status_code=303)
+    done = "code_sent" if send_email_code(db, login) else "wait"
+    return RedirectResponse(f"{SECURITY_PATH}?done={done}", status_code=303)
+
+
+@router.post(SECURITY_PATH + "/mfa-off", response_class=HTMLResponse)
+def member_mfa_off(
+    request: Request, db: DbSession, member: MemberLogin, form: Annotated[MfaOffForm, Form()]
+) -> Response:
+    """Turn the Member's second factor off, once they give a current code."""
+    try:
+        result = turn_off_member_mfa(db, member, form.code, request)
+    except AccountRuleError:
+        return RedirectResponse(SECURITY_PATH, status_code=303)
+    if result == "ok":
+        return RedirectResponse(f"{SECURITY_PATH}?done=mfa_off", status_code=303)
+    if result == "locked":
+        locked_out = RedirectResponse(LOGIN_PATH, status_code=303)
+        clear_session_cookie(locked_out)
+        return locked_out
+    return render_security(request, db, member, error=WRONG_CODE, status_code=400)
 
 
 @router.post("/logout")

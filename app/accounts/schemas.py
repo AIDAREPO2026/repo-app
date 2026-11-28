@@ -67,6 +67,12 @@ class MfaCodeForm(BaseModel):
     next: str = Field(default="", max_length=2000)
 
 
+class MfaOffForm(BaseModel):
+    """A current code, asked for before a Member turns two-step sign-in off."""
+
+    code: str = Field(min_length=1, max_length=12)
+
+
 class NextForm(BaseModel):
     """A form whose only field is where to go afterwards."""
 

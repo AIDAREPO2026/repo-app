@@ -22,9 +22,22 @@ from app.accounts.mfa import (
 from app.accounts.models import Login, LoginAttempt, LoginToken, UserSession
 from app.accounts.passwords import check_password_policy, hash_password, verify_password
 from app.accounts.schemas import PersonForm, PrivilegedAccountForm
-from app.accounts.tokens import issue_email_code, issue_link_token, mark_used, usable_token, use_email_code
+from app.accounts.tokens import (
+    issue_email_code,
+    issue_link_token,
+    last_email_code_at,
+    mark_used,
+    usable_token,
+    use_email_code,
+)
 from app.audit.service import SYSTEM, Actor, record
-from app.core.constants import EMAIL_CODE_MINUTES, LINK_TOKEN_MINUTES, LOCKOUT_ATTEMPTS, LOCKOUT_MINUTES
+from app.core.constants import (
+    EMAIL_CODE_MINUTES,
+    EMAIL_CODE_RESEND_SECONDS,
+    LINK_TOKEN_MINUTES,
+    LOCKOUT_ATTEMPTS,
+    LOCKOUT_MINUTES,
+)
 from app.core.email import send_email
 from app.core.sessions import clear_session_cookie, client_ip, end_session, start_session, user_agent
 from app.core.time import utc_now
@@ -167,11 +180,18 @@ def needs_mfa(login: Login) -> bool:
     return login.login_type != "member" or login.mfa_method is not None
 
 
-def send_email_code(db: Session, login: Login) -> None:
-    """Email a new sign-in code, replacing any earlier one."""
+def send_email_code(db: Session, login: Login) -> bool:
+    """Email a new sign-in code, replacing any earlier one, unless one was sent in the last minute.
+
+    Returns whether a code was sent. The earlier code still works while it lasts.
+    """
+    last_sent = last_email_code_at(db, login)
+    if last_sent is not None and utc_now() - last_sent < timedelta(seconds=EMAIL_CODE_RESEND_SECONDS):
+        return False
     code = issue_email_code(db, login)
     context = {"full_name": login.full_name or login.user_id, "code": code, "minutes": EMAIL_CODE_MINUTES}
     send_email(login.email, "Your AIDA portal sign-in code", "email/mfa_code.txt", context)
+    return True
 
 
 def start_app_enrolment(db: Session, login: Login) -> None:
@@ -204,11 +224,11 @@ def finish_mfa(
         return "locked"
     login = locked
     method = login.mfa_method or method
-    if not _code_is_right(db, login, method, code.strip()):
-        return _refuse_code(db, login, request)
+    result = _check_code(db, login, method, code, request)
+    if result != "ok":
+        return result
     if login.mfa_method is None:
         _enrol(db, login, method, request)
-    login.failed_count = 0
     start_session(db, login, request, response)
     return "ok"
 
@@ -220,10 +240,28 @@ def reset_mfa(db: Session, actor: Actor, admin: Login, target: Login) -> None:
     """
     if target.id == admin.id:
         raise AccountRuleError("You cannot reset your own MFA. Ask another Admin.")
+    _reset(db, actor, target)
+
+
+def reset_mfa_on_server(db: Session, user_id: str) -> Login:
+    """Reset a login's second factor from the server's command line, for when no other Admin can.
+
+    Running it needs shell access and the database settings on the server, which is the
+    second person's agreement that a reset through the portal would need.
+    """
+    target = _lock_login(db, user_id.strip().lower())
+    if target is None:
+        raise AccountRuleError("No login has that User ID.")
+    _reset(db, SYSTEM, target, {"via": "command_line"})
+    return target
+
+
+def _reset(db: Session, actor: Actor, target: Login, details: dict[str, str] | None = None) -> None:
+    """Clear a login's second factor, end its sessions and audit the reset."""
     _clear_mfa(target)
     db.flush()
     end_all_sessions(db, target, actor.ip)
-    record(db, actor, "accounts.mfa_reset", "login", str(target.id), "success")
+    record(db, actor, "accounts.mfa_reset", "login", str(target.id), "success", details)
 
 
 def turn_on_member_mfa(db: Session, login: Login, request: Request) -> None:
@@ -235,14 +273,32 @@ def turn_on_member_mfa(db: Session, login: Login, request: Request) -> None:
     db.flush()
 
 
-def turn_off_member_mfa(db: Session, actor: Actor, login: Login) -> None:
-    """Turn a Member's second factor off. Privileged logins must keep theirs (FR-2.8)."""
+def turn_off_member_mfa(db: Session, login: Login, code: str, request: Request) -> str:
+    """Turn a Member's second factor off once they give a current code, and return "ok", "wrong" or "locked".
+
+    The code means a session left open on someone else's computer cannot remove the
+    protection. Privileged logins must keep theirs (FR-2.8).
+    """
     if login.login_type != "member":
         raise AccountRuleError("MFA is required for Admin, Reviewer and Approver accounts.")
-    member = db.get_one(Login, login.id)
+    member = _lock_login(db, login.user_id)
+    if member is None or member.mfa_method is None:
+        raise AccountRuleError("MFA is already off for this account.")
+    result = _check_code(db, member, member.mfa_method, code, request)
+    if result != "ok":
+        return result
     _clear_mfa(member)
     db.flush()
-    record(db, actor, "accounts.mfa_off", "login", str(member.id), "success")
+    record(db, actor_for(request, member), "accounts.mfa_off", "login", str(member.id), "success")
+    return "ok"
+
+
+def _check_code(db: Session, login: Login, method: str, code: str, request: Request) -> str:
+    """Check a code for a login held under its row lock, counting a wrong one towards the lockout."""
+    if not _code_is_right(db, login, method, code.strip()):
+        return _refuse_code(db, login, request)
+    login.failed_count = 0
+    return "ok"
 
 
 def _code_is_right(db: Session, login: Login, method: str, code: str) -> bool:
@@ -259,7 +315,7 @@ def _code_is_right(db: Session, login: Login, method: str, code: str) -> bool:
 
 
 def _refuse_code(db: Session, login: Login, request: Request) -> str:
-    """Count and audit a wrong code, and end the half-signed-in session if the login is now locked."""
+    """Count and audit a wrong code, and end the current session if the login is now locked."""
     ip = client_ip(request)
     record_failed_attempt(db, login, ip, user_agent(request), reason="mfa_failed")
     record(db, actor_for(request, login), "accounts.mfa", "login", str(login.id), "failure")

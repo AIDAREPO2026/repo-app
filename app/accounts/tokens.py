@@ -7,7 +7,7 @@ import hmac
 import secrets
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.accounts.models import Login, LoginToken
@@ -90,6 +90,14 @@ def use_email_code(db: Session, login: Login, code: str) -> bool:
     if current.attempts >= EMAIL_CODE_MAX_TRIES:
         mark_used(current)
     return False
+
+
+def last_email_code_at(db: Session, login: Login) -> datetime | None:
+    """Return when the login's most recent sign-in code was issued, used or not."""
+    query = select(func.max(LoginToken.created_at)).where(
+        LoginToken.login_id == login.id, LoginToken.purpose == EMAIL_CODE
+    )
+    return db.scalar(query)
 
 
 def _unused_email_codes(db: Session, login: Login) -> list[LoginToken]:
