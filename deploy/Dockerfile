@@ -7,7 +7,9 @@ WORKDIR /build
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY app/templates ./app/templates
-COPY app/static/css/app.src.css ./app/static/css/
+# The whole folder: app.src.css imports tokens.css and components.css (P1-UI-02).
+# .dockerignore keeps a locally built app.css out.
+COPY app/static/css ./app/static/css/
 RUN npm run build:css
 
 
